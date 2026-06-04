@@ -731,3 +731,47 @@ html, body {
 /* 미니게임: 헤더(그만두기)가 게임 영역 위에 오도록 (클릭 가로채임 수정) */
 .dht .app-header { position: relative; z-index: 5; }
 .dht-wrap { z-index: 1; }
+
+/* ---- 로그인 페이지 ---- */
+.login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: radial-gradient(900px 600px at 50% -10%, #1d3a6b 0%, transparent 60%), var(--bg); }
+.login-card { width: min(960px, 96%); display: grid; grid-template-columns: 1fr 1fr; overflow: hidden;
+  background: var(--bg-elev); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 24px 70px rgba(0,0,0,.5); }
+@media (max-width: 760px) { .login-card { grid-template-columns: 1fr; } .login-brand { display: none; } }
+.login-brand { padding: 38px; background: linear-gradient(160deg, #1f3a6e, #2a1d52); display: flex; flex-direction: column; }
+.lb-tag { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: #cfe0ff;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); padding: 5px 12px; border-radius: 999px; margin-bottom: 14px; }
+.login-brand .intro-title.gradient { font-size: 40px; }
+.lb-desc { color: #aebfdc; font-size: 13px; line-height: 1.6; margin-top: 6px; }
+.lb-eddie { width: 150px; height: 170px; margin-top: auto; }
+.lb-eddie svg { width: 130px; height: 160px; overflow: visible; }
+.login-form { padding: 38px; }
+.lf-tabs { display: flex; gap: 4px; background: var(--bg-elev-2); border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+.lf-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); border-radius: 8px; cursor: pointer; font-size: 14px; }
+.lf-tab.active { background: var(--accent); color: #08172e; font-weight: 700; }
+.lf-title { margin: 0 0 4px; font-family: 'Space Grotesk', var(--sans); }
+.lf-sub { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+.lf-open { color: var(--accent-2); }
+.lf-label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 6px; }
+.lf-input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-elev-2); color: var(--text); font-size: 14px; }
+.lf-input:focus { outline: none; border-color: var(--accent); }
+.lf-actions { display: flex; gap: 10px; margin-top: 20px; }
+.lf-actions .btn { flex: 1; padding: 12px; }
+.lf-foot { text-align: right; color: #4b5e80; font-size: 12px; margin-top: 16px; }
+
+/* ---- 피날레(폭죽) ---- */
+.finale { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center;
+  background: rgba(4,9,18,.72); backdrop-filter: blur(4px); }
+.finale-canvas { position: absolute; inset: 0; }
+.finale-msg { position: relative; text-align: center; background: var(--bg-elev); border: 1px solid var(--line);
+  border-radius: 20px; padding: 34px 42px; box-shadow: 0 24px 70px rgba(0,0,0,.55); }
+.fm-emoji { font-size: 56px; }
+.finale-msg h1 { margin: 6px 0 8px; font-family: 'Orbitron','Space Grotesk',var(--sans); letter-spacing: .03em; }
+.finale-msg p { color: var(--muted); line-height: 1.6; margin: 0 0 18px; }
+
+/* ---- EDDIE 말풍선 ---- */
+.eddie-say { position: absolute; left: 50%; top: 100px; transform: translateX(-50%) translateY(-6px); z-index: 6;
+  background: #fff; color: #1a2433; font-weight: 600; font-size: 14px; padding: 9px 16px; border-radius: 14px;
+  opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,.35); max-width: 70%; }
+.eddie-say::after { content: ''; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #fff; }
+.eddie-say.show { opacity: 1; transform: translateX(-50%) translateY(0); }

@@ -6,6 +6,11 @@ import { mountQuest } from '../app/quest.js';
 import { openWiring } from './wiring.js';
 import { WIRING } from '../content/wiring.js';
 import { SENSORS } from '../content/sensors.js';
+import { progress } from '../app/progress.js';
+import { mountSay, eddieRandom } from '../app/eddieSay.js';
+import { showFinale } from './finale.js';
+
+let finaleShown = false;
 
 const MAP_H = 560;
 const DOOR_W = 120, GAP = 210, START = 80;
@@ -26,15 +31,19 @@ export function showLab(root, { onEnter } = {}) {
       <div class="world-host" id="world-host"></div>
       <div class="hud-top">
         <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong><span class="brand-sep">:</span><b class="brand-sub">스타터 키트</b><span class="crumb">연구소 복도</span></div>
-        <div class="phase-badge">학습방 선택</div>
+        <div class="phase-badge">학습 진척 <span id="lab-prog">${progress.count()} / ${progress.total()}</span></div>
       </div>
       <div class="hud-hint" id="hud-hint"></div>
       <div class="hud-toast" id="hud-toast"></div>
-      <div class="hud-controls">⬅➡ 이동 · Space 입장</div>
+      <div class="hud-controls">⬅➡ 이동 · Space 입장 · EDDIE 클릭!</div>
     </div>
   `;
   const hintEl = root.querySelector('#hud-hint');
   const toastEl = root.querySelector('#hud-toast');
+  const say = mountSay(root.querySelector('.game-scene'));
+
+  // 모든 학습 완료 시 폭죽 피날레(세션 1회)
+  if (progress.allDone() && !finaleShown) { finaleShown = true; setTimeout(() => showFinale({}), 500); }
 
   mountQuest(root.querySelector('.game-scene'), {
     title: '학습방 찾기',
@@ -58,19 +67,37 @@ export function showLab(root, { onEnter } = {}) {
   const world = createWorld(root.querySelector('#world-host'), map, {
     onInteract: handle,
     onFrame: updateHint,
+    onEddieClick: () => say(eddieRandom()),
   });
+
+  function enterRoom(id) {
+    world.pause();
+    const w = WIRING[id];
+    const go = () => { world.destroy(); onEnter?.(id); };
+    if (w) openWiring(w, { onDone: go, onClose: () => world.resume() });
+    else go();
+  }
 
   function handle(id) {
     const s = SENSORS.find((x) => x.id === id);
-    if (s && s.unlocked) {
+    if (!s || !s.unlocked) { toast(`🔒 ${s ? s.icon + ' ' + s.name : ''} 학습방 — 곧 열려요!`); return; }
+    if (progress.isCleared(id)) {
       world.pause();
-      const w = WIRING[id];
-      const go = () => { world.destroy(); onEnter?.(id); };
-      if (w) openWiring(w, { onDone: go, onClose: () => world.resume() });
-      else go();
+      confirmReenter(s, () => enterRoom(id), () => world.resume());
     } else {
-      toast(`🔒 ${s ? s.icon + ' ' + s.name : ''} 학습방 — 곧 열려요!`);
+      enterRoom(id);
     }
+  }
+
+  function confirmReenter(s, yes, no) {
+    const m = document.createElement('div');
+    m.className = 'modal-backdrop';
+    m.innerHTML = `<div class="modal"><h3>✅ ${s.icon} ${s.name} — 클리어한 방</h3>
+      <p>이미 학습을 마친 방이에요. <b>다시 학습할까요?</b></p>
+      <div class="modal-actions"><button class="btn" id="re-no">아니오</button><button class="btn primary" id="re-yes">예, 다시 ▶</button></div></div>`;
+    document.body.appendChild(m);
+    m.querySelector('#re-no').onclick = () => { m.remove(); no(); };
+    m.querySelector('#re-yes').onclick = () => { m.remove(); yes(); };
   }
 
   function updateHint(state) {
@@ -127,11 +154,17 @@ function drawLab(ctx, st, doors, MAP_W) {
     }
     // 아이콘
     ctx.font = '26px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(d.icon, fx + fw / 2, fy + fh / 2 + 2);
+    // 클리어 마크
+    const clr = progress.isCleared(d.id);
+    if (clr) {
+      ctx.fillStyle = '#3ddc91'; ctx.beginPath(); ctx.arc(fx + fw - 14, fy + 14, 12, 0, 6.283); ctx.fill();
+      ctx.fillStyle = '#08172e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('✓', fx + fw - 14, fy + 19);
+    }
     // 명패
     const ny = top ? fy + fh + 6 : fy - 22;
-    ctx.fillStyle = lit ? '#ffd11a' : '#26344f'; rr(ctx, fx + 8, ny, fw - 16, 20, 5); ctx.fill();
-    ctx.fillStyle = lit ? '#2a1c00' : '#9aaccb'; ctx.font = 'bold 12px sans-serif';
-    ctx.fillText((lit ? '' : '🔒 ') + d.name, fx + fw / 2, ny + 14);
+    ctx.fillStyle = clr ? '#3ddc91' : (lit ? '#ffd11a' : '#26344f'); rr(ctx, fx + 8, ny, fw - 16, 20, 5); ctx.fill();
+    ctx.fillStyle = clr || lit ? '#08210f' : '#9aaccb'; ctx.font = 'bold 12px sans-serif';
+    ctx.fillText((lit ? '' : '🔒 ') + d.name + (clr ? ' ✓' : ''), fx + fw / 2, ny + 14);
   }
   ctx.textAlign = 'start';
 }

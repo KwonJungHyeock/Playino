@@ -1,139 +1,151 @@
-// dht11.js — DHT-11 온습도 학습 + 미니게임 "EDDIE의 쾌적 지키기"
-// 메인: 온도/습도 확인. 더울 때/추울 때 이벤트가 터지고, 알맞은 행동으로 쾌적 구간을 유지.
-// (실물 DHT11 읽기는 펌웨어 확장 예정 — 현재 값은 시뮬레이션)
+// dht11.js — DHT-11 미니게임 "배터리 구출"
+// EDDIE가 배터리를 가지러 가는 길에 3개 기후 구역(더움🔥/추움❄️/불쾌😣)이 막고 있다.
+// 각 구역 앞 장치에서 해소(냉방/난방/환기)해야 안전하게 통과. 해소 안 하고 들어가면
+// EDDIE 고장 → 재시도. 3구역 통과 후 배터리 획득 → 클리어.
 
-import eddieSvg from '../assets/eddie.svg?raw';
+import { createWorld } from '../engine/topdown.js';
+import { progress } from '../app/progress.js';
+import { mountSay, eddieRandom } from '../app/eddieSay.js';
 
-const T_LO = 18, T_HI = 26, H_LO = 40, H_HI = 60;   // 쾌적 구간
-const GAME_SEC = 45;
-
-const EVENTS = [
-  { msg: '☀️ 한낮 햇볕이 들어와요! 더워져요', t: 2.2, h: -0.6 },
-  { msg: '❄️ 창문이 열렸어요. 추워져요', t: -2.2, h: 0.2 },
-  { msg: '🌧️ 비가 내려 습해져요', t: -0.8, h: 2.6 },
-  { msg: '🔥 난로 과열! 온도 급상승', t: 3.0, h: -1.4 },
-  { msg: '🏜️ 건조 주의보, 습도가 떨어져요', t: 0.8, h: -2.6 },
-];
+const MAP_W = 900, MAP_H = 640;
+const BANDS = {
+  A: { rect: { x: 24, y: 430, w: 852, h: 60 }, pad: { x: 410, y: 502, w: 80, h: 34 }, name: '더움', icon: '🔥', fix: '❄️ 냉방', color: '255,90,40' },
+  B: { rect: { x: 24, y: 280, w: 852, h: 60 }, pad: { x: 410, y: 352, w: 80, h: 34 }, name: '추움', icon: '❄️', fix: '🔥 난방', color: '90,150,255' },
+  C: { rect: { x: 24, y: 130, w: 852, h: 60 }, pad: { x: 410, y: 202, w: 80, h: 34 }, name: '불쾌', icon: '😣', fix: '💨 환기', color: '200,60,180' },
+};
+const BATTERY = { x: 418, y: 44, w: 64, h: 60 };
 
 export function showDht11(root, { onQuit } = {}) {
-  const st = { temp: 24, hum: 50, score: 0, time: GAME_SEC, ev: null, evLeft: 0, running: false };
-  let timer = null;
+  const resolved = { A: false, B: false, C: false };
 
   root.innerHTML = `
-    <div class="dht scene-fade">
-      <header class="app-header">
-        <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong><span class="brand-sep">:</span><b class="brand-sub">DHT-11 온습도</b><span class="crumb">미니게임</span></div>
-        <button class="btn btn-sm" id="dht-exit">⏹ 그만두기</button>
-      </header>
-      <div class="dht-wrap" id="wrap"></div>
-      <div class="dht-sim">※ 미니게임 값은 조작용 시뮬레이션 (모니터링 방은 실물 연동)</div>
+    <div class="scene game-scene scene-fade dht-game">
+      <div class="world-host" id="world-host"></div>
+      <div class="hud-top">
+        <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong><span class="brand-sep">:</span><b class="brand-sub">DHT-11</b><span class="crumb">배터리 구출</span></div>
+        <button class="btn btn-sm" id="dg-quit">⏹ 그만두기</button>
+      </div>
+      <div class="hud-hint" id="hud-hint"></div>
+      <div class="hud-toast" id="hud-toast"></div>
+      <div class="hud-controls">⬆⬇⬅➡ 이동 · Space · 구역 앞에서 해소 후 통과!</div>
     </div>`;
 
-  root.querySelector('#dht-exit').onclick = () => { clearInterval(timer); onQuit?.(); };
-  const wrap = root.querySelector('#wrap');
+  const hintEl = root.querySelector('#hud-hint');
+  const toastEl = root.querySelector('#hud-toast');
+  const say = mountSay(root.querySelector('.game-scene'));
+  root.querySelector('#dg-quit').onclick = () => { world.destroy(); onQuit?.(); };
 
-  intro();
+  const map = {
+    width: MAP_W, height: MAP_H, bg: '#0a1422',
+    spawn: { x: 436, y: 556 },
+    walls: [
+      { x: 0, y: 0, w: MAP_W, h: 24 }, { x: 0, y: MAP_H - 24, w: MAP_W, h: 24 },
+      { x: 0, y: 0, w: 24, h: MAP_H }, { x: MAP_W - 24, y: 0, w: 24, h: MAP_H },
+    ],
+    triggers: [
+      { id: 'bandA', ...BANDS.A.rect, auto: true }, { id: 'bandB', ...BANDS.B.rect, auto: true }, { id: 'bandC', ...BANDS.C.rect, auto: true },
+      { id: 'padA', ...BANDS.A.pad }, { id: 'padB', ...BANDS.B.pad }, { id: 'padC', ...BANDS.C.pad },
+      { id: 'battery', ...BATTERY },
+    ],
+    draw: (ctx) => drawGame(ctx, resolved),
+  };
 
-  function intro() {
-    wrap.innerHTML = `
-      <div class="dht-eddie">${eddieSvg}</div>
-      <div class="room-card" style="max-width:520px;text-align:center">
-        <h2>🌡️ EDDIE의 쾌적 지키기</h2>
-        <p>DHT-11 로 <b>온도·습도</b>를 확인해요. 햇볕·비·한파 같은 사건이 터지면
-           <b>난방/냉방/환기/가습</b>으로 <b>쾌적 구간</b>(온도 ${T_LO}~${T_HI}℃, 습도 ${H_LO}~${H_HI}%)을 ${GAME_SEC}초간 지켜줘!</p>
-      </div>
-      <button class="btn primary lg" id="dht-start">게임 시작 ▶</button>`;
-    root.querySelector('#dht-start').onclick = start;
+  const world = createWorld(root.querySelector('#world-host'), map, {
+    onEddieClick: () => say(eddieRandom()),
+    onAuto: (id) => {
+      const k = id.slice(-1);
+      if (BANDS[k] && !resolved[k]) fail(k);
+    },
+    onInteract: (id) => {
+      if (id.startsWith('pad')) {
+        const k = id.slice(-1);
+        if (!resolved[k]) { resolved[k] = true; world.disableTrigger(id); toast(`${BANDS[k].fix} 완료! ${BANDS[k].name} 구역 통과 가능 ✅`); }
+      } else if (id === 'battery') {
+        if (resolved.A && resolved.B && resolved.C) win();
+        else toast('아직 위험 구역이 남았어! 먼저 해소하자.');
+      }
+    },
+    onFrame: (st) => {
+      const tr = st.activeTrigger;
+      if (tr && tr.id.startsWith('pad')) { const k = tr.id.slice(-1); hintEl.innerHTML = resolved[k] ? `${BANDS[k].name} 해소됨 ✅` : `Space · <b>${BANDS[k].fix}</b>로 ${BANDS[k].name} 해소`; hintEl.classList.add('show'); }
+      else if (tr && tr.id === 'battery') { hintEl.innerHTML = '🔋 Space · 배터리 획득!'; hintEl.classList.add('show'); }
+      else hintEl.classList.remove('show');
+      // EDDIE 색감: 현재 위치한 구역에 따라
+      const y = st.player.y + st.player.h / 2;
+      let tint = null;
+      if (y >= BANDS.A.rect.y && y <= BANDS.A.rect.y + BANDS.A.rect.h) tint = 'rgba(255,90,40,0.45)';
+      else if (y >= BANDS.B.rect.y && y <= BANDS.B.rect.y + BANDS.B.rect.h) tint = 'rgba(90,150,255,0.45)';
+      else if (y >= BANDS.C.rect.y && y <= BANDS.C.rect.y + BANDS.C.rect.h) tint = 'rgba(200,60,180,0.45)';
+      world.setTint(tint);
+    },
+  });
+
+  let tT = null;
+  function toast(m) { toastEl.textContent = m; toastEl.classList.add('show'); clearTimeout(tT); tT = setTimeout(() => toastEl.classList.remove('show'), 2200); }
+
+  function fail(k) {
+    world.pause();
+    overlay(`⚡ EDDIE 고장!`, `${BANDS[k].icon} ${BANDS[k].name} 구역을 해소하지 않고 들어갔어요.<br/>구역 앞 장치에서 <b>${BANDS[k].fix}</b> 한 뒤 통과해야 해요!`,
+      [{ label: '다시 시도 ▶', primary: true, act: reset }, { label: '그만두기', act: () => { world.destroy(); onQuit?.(); } }]);
+  }
+  function reset() {
+    resolved.A = resolved.B = resolved.C = false;
+    ['padA', 'padB', 'padC'].forEach((id) => world.enableTrigger(id));
+    world.teleport(map.spawn.x, map.spawn.y);
+    closeOverlay(); world.resume();
+  }
+  function win() {
+    progress.mark('dht11');
+    world.pause();
+    overlay(`🔋 배터리 획득! 클리어 🎉`, `3개 기후 구역을 모두 해소하고 배터리를 가져왔어요!<br/>온도·습도에 맞춰 환경을 다스리는 게 스마트홈의 핵심이에요.`,
+      [{ label: '모니터링 방으로 ▶', primary: true, act: () => { world.destroy(); onQuit?.(); } }, { label: '다시 플레이', act: reset }]);
   }
 
-  function start() {
-    st.running = true;
-    wrap.innerHTML = `
-      <div class="dht-eddie">${eddieSvg}</div>
-      <div class="dht-status" id="dht-status">😀</div>
-      <div class="dht-meta">
-        <div>남은 시간 <b id="dht-time">${GAME_SEC}</b>s</div>
-        <div>쾌적 점수 <b id="dht-score">0</b></div>
-        <div id="dht-comfort" class="dht-comfort ok">쾌적 😊</div>
-      </div>
-      <div class="dht-gauges">
-        <div class="dht-gauge"><div class="g-label">온도</div><div class="g-val"><span id="g-temp">24</span>℃</div>
-          <div class="dht-bar"><div id="bar-temp"></div></div><div class="dht-zone">쾌적 ${T_LO}~${T_HI}℃</div></div>
-        <div class="dht-gauge"><div class="g-label">습도</div><div class="g-val"><span id="g-hum">50</span>%</div>
-          <div class="dht-bar"><div id="bar-hum"></div></div><div class="dht-zone">쾌적 ${H_LO}~${H_HI}%</div></div>
-      </div>
-      <div class="dht-event" id="dht-event">버튼으로 환경을 조절해 쾌적하게!</div>
-      <div class="dht-actions">
-        <button class="btn dht-act" id="a-heat">🔥 난방</button>
-        <button class="btn dht-act" id="a-cool">❄️ 냉방</button>
-        <button class="btn dht-act" id="a-vent">💨 환기</button>
-        <button class="btn dht-act" id="a-humid">💧 가습</button>
-      </div>`;
-    root.querySelector('#a-heat').onclick = () => act(3, 0);
-    root.querySelector('#a-cool').onclick = () => act(-3, 0);
-    root.querySelector('#a-vent').onclick = () => act(-1, -4);
-    root.querySelector('#a-humid').onclick = () => act(0, 4);
-    render();
-    timer = setInterval(tick, 1000);
+  let ov = null;
+  function overlay(title, html, buttons) {
+    ov = document.createElement('div'); ov.className = 'modal-backdrop';
+    ov.innerHTML = `<div class="modal"><h3>${title}</h3><p>${html}</p><div class="modal-actions" id="ov-act"></div></div>`;
+    document.body.appendChild(ov);
+    const act = ov.querySelector('#ov-act');
+    buttons.forEach((b) => { const el = document.createElement('button'); el.className = 'btn' + (b.primary ? ' primary' : ''); el.textContent = b.label; el.onclick = b.act; act.appendChild(el); });
   }
+  function closeOverlay() { if (ov) { ov.remove(); ov = null; } }
+}
 
-  function act(dt, dh) { if (!st.running) return; st.temp = clamp(st.temp + dt, 0, 45); st.hum = clamp(st.hum + dh, 0, 100); render(); }
+function drawGame(ctx, resolved) {
+  // 바닥
+  ctx.fillStyle = '#16233c'; ctx.fillRect(0, 0, MAP_W, MAP_H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+  for (let y = 0; y < MAP_H; y += 44) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(MAP_W, y); ctx.stroke(); }
+  // 벽
+  ctx.fillStyle = '#2b3552'; ctx.fillRect(0, 0, MAP_W, 24); ctx.fillRect(0, MAP_H - 24, MAP_W, 24); ctx.fillRect(0, 0, 24, MAP_H); ctx.fillRect(MAP_W - 24, 0, 24, MAP_H);
 
-  function tick() {
-    // 이벤트 발생/지속
-    if (st.evLeft > 0) { st.temp += st.ev.t; st.hum += st.ev.h; st.evLeft--; }
-    else if (Math.random() < 0.45) { st.ev = EVENTS[Math.floor(Math.random() * EVENTS.length)]; st.evLeft = 4; evMsg(st.ev.msg); }
-    // 미세 드리프트
-    st.temp += (Math.random() - 0.5) * 0.6;
-    st.hum += (Math.random() - 0.5) * 1.0;
-    st.temp = clamp(st.temp, 0, 45); st.hum = clamp(st.hum, 0, 100);
-
-    if (comfy()) st.score += 1;
-    st.time -= 1;
-    render();
-    if (st.time <= 0) end();
+  ctx.textAlign = 'center';
+  for (const k of ['A', 'B', 'C']) {
+    const b = BANDS[k], r = b.rect, ok = resolved[k];
+    ctx.fillStyle = ok ? 'rgba(61,220,145,0.22)' : `rgba(${b.color},0.32)`;
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.strokeStyle = ok ? 'rgba(61,220,145,0.8)' : `rgba(${b.color},0.9)`; ctx.lineWidth = 2; ctx.strokeRect(r.x, r.y, r.w, r.h);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(ok ? `✅ ${b.name} 해소 — 통과 OK` : `${b.icon} ${b.name} 구역 — 위험! 먼저 해소`, r.x + r.w / 2, r.y + r.h / 2 + 5);
+    // 해소 장치(패드)
+    const p = b.pad;
+    ctx.fillStyle = ok ? '#2a5a40' : '#2a3a66'; rr(ctx, p.x, p.y, p.w, p.h, 8); ctx.fill();
+    ctx.strokeStyle = ok ? '#3ddc91' : '#6fb7ff'; ctx.lineWidth = 2; rr(ctx, p.x, p.y, p.w, p.h, 8); ctx.stroke();
+    ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(ok ? '✓ 완료' : b.fix, p.x + p.w / 2, p.y + p.h / 2 + 5);
   }
+  // 배터리
+  const g = ctx.createRadialGradient(BATTERY.x + 32, BATTERY.y + 30, 0, BATTERY.x + 32, BATTERY.y + 30, 80);
+  g.addColorStop(0, 'rgba(61,220,145,0.4)'); g.addColorStop(1, 'rgba(61,220,145,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(BATTERY.x + 32, BATTERY.y + 30, 80, 0, 6.283); ctx.fill();
+  ctx.font = '44px sans-serif'; ctx.fillText('🔋', BATTERY.x + 32, BATTERY.y + 46);
+  ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('배터리', BATTERY.x + 32, BATTERY.y + 70);
+  ctx.textAlign = 'start';
+}
 
-  const comfy = () => st.temp >= T_LO && st.temp <= T_HI && st.hum >= H_LO && st.hum <= H_HI;
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
-  function statusFace() {
-    if (comfy()) return '😀';
-    if (st.temp > T_HI) return '🥵';
-    if (st.temp < T_LO) return '🥶';
-    if (st.hum > H_HI) return '💦';
-    return '🏜️';
-  }
-
-  function render() {
-    set('#g-temp', Math.round(st.temp)); set('#g-hum', Math.round(st.hum));
-    set('#dht-time', st.time); set('#dht-score', st.score); set('#dht-status', statusFace());
-    bar('#bar-temp', st.temp / 45, st.temp > T_HI ? '#ff6b6b' : st.temp < T_LO ? '#6fb7ff' : '#3ddc91');
-    bar('#bar-hum', st.hum / 100, st.hum > H_HI ? '#6fb7ff' : st.hum < H_LO ? '#ffb020' : '#3ddc91');
-    const c = root.querySelector('#dht-comfort');
-    if (c) { c.className = 'dht-comfort ' + (comfy() ? 'ok' : 'bad'); c.textContent = comfy() ? '쾌적 😊' : '불쾌 😣'; }
-  }
-  function bar(sel, ratio, color) { const el = root.querySelector(sel); if (el) { el.style.width = clamp(ratio * 100, 0, 100) + '%'; el.style.background = color; } }
-  function set(sel, v) { const el = root.querySelector(sel); if (el) el.textContent = v; }
-  let evT = null;
-  function evMsg(m) { const el = root.querySelector('#dht-event'); if (!el) return; el.textContent = m; el.style.color = 'var(--accent-2)'; clearTimeout(evT); evT = setTimeout(() => { if (root.querySelector('#dht-event')) root.querySelector('#dht-event').textContent = '버튼으로 환경을 조절해 쾌적하게!'; }, 2600); }
-
-  function end() {
-    clearInterval(timer); st.running = false;
-    const pct = Math.round((st.score / GAME_SEC) * 100);
-    const grade = pct >= 85 ? 'S' : pct >= 70 ? 'A' : pct >= 50 ? 'B' : 'C';
-    wrap.innerHTML = `
-      <div class="dht-eddie">${eddieSvg}</div>
-      <div class="room-card" style="max-width:480px;text-align:center">
-        <h2>결과 · 등급 ${grade} 🎉</h2>
-        <p>쾌적 점수 <b style="color:var(--accent-2)">${st.score} / ${GAME_SEC}</b> (${pct}%)<br/>
-           온습도 변화에 맞춰 환경을 조절했어요! 이게 바로 센서 값에 따라 반응하는 <b>스마트홈</b>의 원리예요.</p>
-        <div class="btn-row" style="justify-content:center">
-          <button class="btn primary" id="dht-again">다시 도전 ▶</button>
-          <button class="btn" id="dht-out">모니터링 방으로 ▶</button>
-        </div>
-      </div>`;
-    root.querySelector('#dht-again').onclick = () => { st.temp = 24; st.hum = 50; st.score = 0; st.time = GAME_SEC; st.ev = null; st.evLeft = 0; start(); };
-    root.querySelector('#dht-out').onclick = () => onQuit?.();
-  }
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }

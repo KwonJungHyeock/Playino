@@ -4,6 +4,7 @@
 
 import { showSplash } from './scenes/splash.js';
 import { showIntro } from './scenes/intro.js';
+import { showLogin } from './scenes/login.js';
 import { showSetup } from './scenes/setup.js';
 import { showLab } from './scenes/lab.js';
 import { showHouse } from './scenes/house.js';
@@ -14,7 +15,8 @@ import { showDht11 } from './scenes/dht11.js';
 const app = () => document.getElementById('app');
 
 function sceneSplash() { showSplash(app(), { onDone: sceneIntro }); }
-function sceneIntro() { showIntro(app(), { onDone: sceneSetup }); }
+function sceneIntro() { showIntro(app(), { onDone: sceneLogin }); }
+function sceneLogin() { showLogin(app(), { onDone: sceneSetup }); }
 function sceneSetup() { showSetup(app(), { onDone: sceneLab }); }
 function sceneLab() { showLab(app(), { onEnter: enterRoom }); }   // 연구소 복도 = 맵 허브(L0)
 

@@ -34,6 +34,7 @@ export function createWorld(container, map, handlers = {}) {
     firedAuto: new Set(),
     disabled: new Set(),
     cam: { x: 0, y: 0 },
+    tint: null,
     raf: 0,
   };
 
@@ -58,6 +59,17 @@ export function createWorld(container, map, handlers = {}) {
   const ku = (e) => onKey(e, false);
   window.addEventListener('keydown', kd);
   window.addEventListener('keyup', ku);
+
+  // EDDIE 클릭 → 랜덤 대사 콜백
+  const onPointer = (e) => {
+    if (state.paused) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left + state.cam.x;
+    const my = e.clientY - rect.top + state.cam.y;
+    const p = state.player;
+    if (mx >= p.x - 14 && mx <= p.x + p.w + 14 && my >= p.y - 46 && my <= p.y + p.h + 4) handlers.onEddieClick?.();
+  };
+  canvas.addEventListener('pointerdown', onPointer);
 
   function interact() {
     if (state.paused) return;
@@ -135,6 +147,12 @@ export function createWorld(container, map, handlers = {}) {
       ctx.translate(cx, feet - dh + bob);
       if (p.face < 0) ctx.scale(-1, 1);
       ctx.drawImage(eddieImg, -dw / 2, 0, dw, dh);
+      if (state.tint) {
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = state.tint;
+        ctx.fillRect(-dw / 2, 0, dw, dh);
+        ctx.globalCompositeOperation = 'source-over';
+      }
       ctx.restore();
     } else {
       ctx.fillStyle = '#f7b125';
@@ -169,6 +187,7 @@ export function createWorld(container, map, handlers = {}) {
     get activeTrigger() { return state.activeTrigger; },
     pause() { state.paused = true; state.keys.clear(); },
     resume() { state.paused = false; },
+    setTint(c) { state.tint = c; },
     disableTrigger(id) { state.disabled.add(id); },
     enableTrigger(id) { state.disabled.delete(id); },
     teleport(x, y) { state.player.x = x; state.player.y = y; },
@@ -177,6 +196,7 @@ export function createWorld(container, map, handlers = {}) {
       window.removeEventListener('resize', onResize);
       window.removeEventListener('keydown', kd);
       window.removeEventListener('keyup', ku);
+      canvas.removeEventListener('pointerdown', onPointer);
       canvas.remove();
     },
   };

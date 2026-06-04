@@ -5,6 +5,8 @@ import { createWorld } from '../engine/topdown.js';
 import { openRoom } from './room.js';
 import { mountQuest } from '../app/quest.js';
 import { ROOMS, LOCKED_ROOMS, TOTAL_ROOMS, getRoom } from '../content/rooms.js';
+import { progress } from '../app/progress.js';
+import { mountSay, eddieRandom } from '../app/eddieSay.js';
 
 const MAP_W = 1000, MAP_H = 660;
 
@@ -67,8 +69,10 @@ export function showHouse(root, { onExit } = {}) {
   const dark = document.createElement('canvas');
   const dctx = dark.getContext('2d');
 
+  const say = mountSay(root.querySelector('.game-scene'));
   const world = createWorld(root.querySelector('#world-host'), map, {
     onInteract: handle, onFrame: updateHint, onDrawOverlay: drawDarkness,
+    onEddieClick: () => say(eddieRandom()),
   });
 
   if (houseState.cleared < ROOMS.length) setTimeout(() => narrate('깜깜한 집… 가구 앞으로 가서 Space 로 불을 켜자!'), 400);
@@ -86,7 +90,7 @@ export function showHouse(root, { onExit } = {}) {
     houseState.lit.add(id); houseState.cleared += 1; progEl.textContent = String(houseState.cleared);
     const idx = ROOMS.findIndex((r) => r.id === id); if (idx >= 0) quest.setObjective(idx, true);
     quest.setSubtitle(`점등 ${houseState.cleared} / ${TOTAL_ROOMS}`);
-    if (houseState.cleared >= ROOMS.length) { toast('모든 방에 불이 들어왔어요! 🎉'); setTimeout(() => narrate('EDDIE가 LED로 집을 깨웠다! 복도의 다른 학습방도 곧 열려요.'), 1500); }
+    if (houseState.cleared >= ROOMS.length) { progress.mark('led'); toast('모든 방에 불이 들어왔어요! 🎉 LED 클리어!'); setTimeout(() => narrate('EDDIE가 LED로 집을 깨웠다! 복도로 나가면 클리어 ✓ 표시가 붙어요.'), 1500); }
     else toast(`${nameOf(id)}에 불이 들어왔어요! 🎉 (${houseState.cleared}/${TOTAL_ROOMS})`);
   }
   const nameOf = (id) => getRoom(id)?.name || LOCKED_ROOMS.find((r) => r.id === id)?.name || id;
