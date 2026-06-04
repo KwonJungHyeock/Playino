@@ -36,9 +36,8 @@ export function showIntro(root, { onDone }) {
 
   function renderEduino() {
     return `
-      <div class="logo-mark"><span>E</span><i class="logo-spark"></i></div>
       <div class="intro-brand">AI CODING PLATFORM</div>
-      <h1 class="intro-title gradient">Eduino <span>AI</span></h1>
+      <h1 class="intro-title gradient lb-logo">Eduino <span>AI</span></h1>
       <p class="intro-sub">브라우저로 직접 배우는 AI 실험실</p>
       <p class="intro-desc">코드가 진짜 세상을 움직이는 걸 경험하는<br/>AIoT 코딩·교구 학습 플랫폼.</p>
       ${dots(0)}
