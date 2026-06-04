@@ -19,13 +19,25 @@ export function mountBuzzer(root, ctx) {
         <button class="btn" id="bz-replay">🔁 다시 듣기</button>
       </div>
       <div class="rgb-status" id="bz-status">시작하면 경보 멜로디가 흘러나와요…</div>
+      <div class="game-hint">
+        <button class="hint-btn" id="bz-hint">💡 힌트 (다음 음 보기)</button>
+        <span class="hint-text" id="bz-htext"></span>
+      </div>
     </div>`;
 
   const pads = [...root.querySelectorAll('.bz-pad')];
   const prog = root.querySelector('#bz-prog');
   const stat = root.querySelector('#bz-status');
+  const htext = root.querySelector('#bz-htext');
   pads.forEach((b) => (b.onclick = () => press(+b.dataset.i)));
   root.querySelector('#bz-replay').onclick = () => { if (!lock) playSeq(); };
+  root.querySelector('#bz-hint').onclick = () => {
+    if (lock) { htext.textContent = '멜로디가 끝난 뒤에 눌러요'; return; }
+    const next = seq[input.length];
+    if (next == null) return;
+    htext.textContent = `다음은 ${['빨강', '노랑', '초록', '파랑'][next]} 칸!`;
+    flash(next, 220);
+  };
 
   function audio() { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume().catch(() => {}); return ac; }
   function beep(f, ms = 280) {

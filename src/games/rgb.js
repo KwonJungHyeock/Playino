@@ -22,16 +22,25 @@ export function mountRgb(root, ctx) {
         ${slider('B', 'b', cur.b, '#5a9bff')}
       </div>
       <div class="rgb-status" id="rgb-status">색 차이를 줄여보세요…</div>
+      <div class="game-hint">
+        <button class="hint-btn" id="rgb-hint">💡 힌트(코칭) 켜기</button>
+        <span class="hint-text" id="rgb-htext"></span>
+      </div>
     </div>`;
 
   const tEl = root.querySelector('#rgb-target');
   const cEl = root.querySelector('#rgb-cur');
   const stat = root.querySelector('#rgb-status');
+  const htext = root.querySelector('#rgb-htext');
+  const hintBtn = root.querySelector('#rgb-hint');
+  let hintOn = false;
   tEl.style.background = css(target);
+  hintBtn.onclick = () => { hintOn = !hintOn; hintBtn.textContent = hintOn ? '💡 코칭 끄기' : '💡 힌트(코칭) 켜기'; onInput(); };
 
+  const arrow = (cur, tgt) => { const d = tgt - cur; if (Math.abs(d) <= TOL) return '✅'; return d > 0 ? '↑ 더 높이기' : '↓ 더 낮추기'; };
   const inputs = [...root.querySelectorAll('input[type=range]')];
   const onInput = () => {
-    for (const inp of inputs) cur[inp.dataset.ch] = +inp.value;
+    for (const inp of inputs) { cur[inp.dataset.ch] = +inp.value; const v = inp.parentElement.querySelector('.rgb-val'); if (v) v.textContent = inp.value; }
     cEl.style.background = css(cur);
     if (ctx.board?.connected) { try { ctx.board.pwm(RGB_PINS[0], cur.r); ctx.board.pwm(RGB_PINS[1], cur.g); ctx.board.pwm(RGB_PINS[2], cur.b); } catch (_) {} }
     const dr = Math.abs(cur.r - target.r), dg = Math.abs(cur.g - target.g), db = Math.abs(cur.b - target.b);
@@ -39,11 +48,13 @@ export function mountRgb(root, ctx) {
     const dist = dr + dg + db;
     stat.textContent = near ? '거의 다 맞았어요! ✨' : dist < 160 ? '가까워지고 있어요…' : '색 차이를 줄여보세요…';
     stat.classList.toggle('near', near);
+    htext.innerHTML = hintOn ? `🔴 ${arrow(cur.r, target.r)} · 🟢 ${arrow(cur.g, target.g)} · 🔵 ${arrow(cur.b, target.b)}` : '';
     if (near && !solved) { solved = true; win(); }
   };
   inputs.forEach((i) => i.addEventListener('input', onInput));
   cEl.style.background = css(cur);
-  setTimeout(() => ctx.say?.('R·G·B를 섞어 목표 색을 만들면 문이 열려! 🌈'), 300);
+  onInput();
+  setTimeout(() => ctx.say?.('R·G·B를 섞어 목표 색을 만들면 문이 열려! 막히면 💡힌트(코칭)을 켜봐.'), 300);
 
   function win() {
     stat.textContent = '🔓 색 일치 — 봉인 해제!'; stat.classList.add('ok');
@@ -52,7 +63,7 @@ export function mountRgb(root, ctx) {
   }
   function slider(label, ch, val, color) {
     return `<label class="rgb-slider"><span style="color:${color}">${label}</span>
-      <input type="range" min="0" max="255" value="${val}" data-ch="${ch}" /></label>`;
+      <input type="range" min="0" max="255" value="${val}" data-ch="${ch}" /><span class="rgb-val">${val}</span></label>`;
   }
   return { destroy() { inputs.forEach((i) => i.removeEventListener('input', onInput)); } };
 }

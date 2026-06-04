@@ -16,6 +16,10 @@ export function mountSeg(root, ctx) {
       </div>
       <button class="btn primary lg" id="seg-stop">STOP !</button>
       <div class="rgb-status" id="seg-status">초록 구간에서 멈추세요…</div>
+      <div class="game-hint">
+        <button class="hint-btn" id="seg-hint">💡 힌트 (잠깐 느리게 · 3회)</button>
+        <span class="hint-text" id="seg-htext">표시가 느려질 때 STOP!</span>
+      </div>
     </div>`;
 
   const disp = root.querySelector('#seg-disp');
@@ -23,16 +27,25 @@ export function mountSeg(root, ctx) {
   const marker = root.querySelector('#seg-marker');
   const stat = root.querySelector('#seg-status');
   const stopBtn = root.querySelector('#seg-stop');
-  let zoneCenter = 50;
+  const hintBtn = root.querySelector('#seg-hint');
+  const htext = root.querySelector('#seg-htext');
+  let zoneCenter = 50, slowUntil = 0, hintsLeft = 3;
   placeZone();
   stopBtn.onclick = stop;
+  hintBtn.onclick = () => {
+    if (lock || hintsLeft <= 0) return;
+    hintsLeft--; slowUntil = performance.now() + 1800;
+    htext.textContent = `느려졌어요! 지금 노려요 (남은 힌트 ${hintsLeft})`;
+    hintBtn.textContent = `💡 힌트 (잠깐 느리게 · ${hintsLeft}회)`;
+    if (hintsLeft <= 0) hintBtn.disabled = true;
+  };
   const onKey = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stop(); } };
   window.addEventListener('keydown', onKey);
-  setTimeout(() => ctx.say?.('초록 구간에 올 때 STOP! 타이밍이 생명이야 ⏱️'), 300);
+  setTimeout(() => ctx.say?.('초록 구간에 올 때 STOP! 빠르면 💡힌트로 잠깐 느리게 만들 수 있어 ⏱️'), 300);
 
   loop();
   function loop() {
-    if (!lock) { pos += dir * speed; if (pos >= 100) { pos = 100; dir = -1; } else if (pos <= 0) { pos = 0; dir = 1; } marker.style.left = pos + '%'; }
+    if (!lock) { const f = performance.now() < slowUntil ? 0.32 : 1; pos += dir * speed * f; if (pos >= 100) { pos = 100; dir = -1; } else if (pos <= 0) { pos = 0; dir = 1; } marker.style.left = pos + '%'; }
     raf = requestAnimationFrame(loop);
   }
   function placeZone() { zoneCenter = 18 + Math.random() * 64; zoneEl.style.left = (zoneCenter - zoneW / 2) + '%'; zoneEl.style.width = zoneW + '%'; }
