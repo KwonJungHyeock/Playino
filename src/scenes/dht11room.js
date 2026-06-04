@@ -10,11 +10,11 @@ import { mountQuest } from '../app/quest.js';
 
 const MAP_W = 960, MAP_H = 620;
 const ZONES = {
-  bat0: { x: 150, y: 224, w: 96, h: 96, cx: 198, cy: 272, name: '더움', icon: '🔥', color: '255,90,40' },
-  bat1: { x: 432, y: 150, w: 96, h: 96, cx: 480, cy: 198, name: '추움', icon: '❄️', color: '90,150,255' },
-  bat2: { x: 714, y: 224, w: 96, h: 96, cx: 762, cy: 272, name: '불쾌', icon: '😣', color: '200,60,180' },
+  bat0: { x: 120, y: 224, w: 150, h: 150, cx: 195, cy: 299, name: '더움', icon: '🔥', color: '255,90,40', start: 33, target: 25, dir: 'down', verb: '냉방', emoji: '❄️' },
+  bat1: { x: 405, y: 120, w: 150, h: 150, cx: 480, cy: 195, name: '추움', icon: '❄️', color: '90,150,255', start: 13, target: 19, dir: 'up', verb: '난방', emoji: '🔥' },
+  bat2: { x: 690, y: 224, w: 150, h: 150, cx: 765, cy: 299, name: '불쾌', icon: '😣', color: '200,60,180', start: 31, target: 24, dir: 'down', verb: '환기', emoji: '💨' },
 };
-const PLAY = { x: 446, y: 430, w: 70, h: 70 };
+const PLAY = { x: 80, y: 446, w: 84, h: 84 };
 const EXIT = { x: 448, y: MAP_H - 56, w: 64, h: 38 };
 
 export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
@@ -116,14 +116,39 @@ export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
     m.querySelector('#ms-go').onclick = () => { m.remove(); world.resume(); };
   }
 
+  // 줍기 = 온도 챌린지 성공해야 획득
   function collect(id) {
     if (got[id]) { toast(`${ZONES[id].name} 배터리는 이미 가졌어요`); return; }
+    const z = ZONES[id];
+    world.pause();
+    let v = z.start;
+    const m = document.createElement('div'); m.className = 'modal-backdrop';
+    m.innerHTML = `<div class="modal"><h3>${z.icon} ${z.name} 구역 미션</h3>
+      <p>이 구역은 <b>${z.dir === 'down' ? '너무 더워요' : '너무 추워요'}</b>! <b>${z.emoji} ${z.verb}</b> 버튼을 눌러
+      온도를 ${z.dir === 'down' ? `<b>${z.target}℃ 이하로</b> 내려야` : `<b>${z.target}℃ 이상으로</b> 올려야`} 배터리를 주울 수 있어요.</p>
+      <div class="chal-temp">현재 <b id="chal-v">${v}</b>℃ <span class="chal-target">목표 ${z.dir === 'down' ? '≤' : '≥'} ${z.target}℃</span></div>
+      <div class="chal-bar"><div id="chal-fill"></div></div>
+      <div class="modal-actions"><button class="btn" id="chal-giveup">포기 (실패)</button><button class="btn primary" id="chal-act">${z.emoji} ${z.verb}</button></div></div>`;
+    document.body.appendChild(m);
+    const vEl = m.querySelector('#chal-v'), fill = m.querySelector('#chal-fill');
+    const upd = () => { vEl.textContent = v; fill.style.width = clamp(v / 45 * 100, 0, 100) + '%'; fill.style.background = v > 26 ? '#ff6b6b' : v < 18 ? '#6fb7ff' : '#3ddc91'; };
+    upd();
+    m.querySelector('#chal-act').onclick = () => {
+      v = clamp(v + (z.dir === 'down' ? -2 : 2), 0, 45); upd();
+      const ok = z.dir === 'down' ? v <= z.target : v >= z.target;
+      if (ok) { setTimeout(() => { m.remove(); world.resume(); doCollect(id); }, 220); }
+    };
+    m.querySelector('#chal-giveup').onclick = () => { m.remove(); world.resume(); toast(`${z.name} 구역 미션 실패 — 다시 도전하세요!`); };
+  }
+
+  function doCollect(id) {
+    if (got[id]) return;
     got[id] = true; world.disableTrigger(id);
     const n = Object.values(got).filter(Boolean).length;
     set('#dh-mission', `🔋 ${n} / 3`);
     quest.setObjective(['bat0', 'bat1', 'bat2'].indexOf(id), true);
     quest.setSubtitle(`배터리 ${n} / 3`);
-    toast(`${ZONES[id].icon} ${ZONES[id].name} 배터리 획득! (${n}/3)`);
+    toast(`${ZONES[id].icon} ${ZONES[id].name} 해소 & 배터리 획득! (${n}/3)`);
     if (n >= 3) {
       cleared = true; progress.mark('dht11');
       narrate('배터리 3개 모두 획득! DHT-11 방 미션 클리어 🎉 복도에 ✓ 표시가 붙어요.');
@@ -199,29 +224,30 @@ function drawRoom(ctx, got, cleared) {
   ctx.fillStyle = '#0e1726'; rr(ctx, 410, 30, 140, 14, 4); ctx.fill();
 
   ctx.textAlign = 'center';
-  // 배터리 구역
+  // 배터리 구역 (크게)
   for (const [k, z] of Object.entries(ZONES)) {
     const has = !got[k];
-    const g = ctx.createRadialGradient(z.cx, z.cy, 0, z.cx, z.cy, 64);
-    g.addColorStop(0, `rgba(${z.color},0.45)`); g.addColorStop(1, `rgba(${z.color},0)`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(z.cx, z.cy, 64, 0, 6.283); ctx.fill();
-    ctx.strokeStyle = `rgba(${z.color},0.9)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(z.cx, z.cy, 48, 0, 6.283); ctx.stroke();
-    ctx.font = '34px sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText(has ? '🔋' : '✅', z.cx, z.cy + 12);
-    ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 13px sans-serif'; ctx.fillText(`${z.icon} ${z.name}`, z.cx, z.cy + 44);
+    const g = ctx.createRadialGradient(z.cx, z.cy, 0, z.cx, z.cy, 92);
+    g.addColorStop(0, `rgba(${z.color},${has ? 0.5 : 0.18})`); g.addColorStop(1, `rgba(${z.color},0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(z.cx, z.cy, 92, 0, 6.283); ctx.fill();
+    ctx.setLineDash(has ? [10, 8] : []); ctx.strokeStyle = has ? `rgba(${z.color},0.95)` : 'rgba(61,220,145,0.9)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(z.cx, z.cy, 66, 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = '46px sans-serif'; ctx.fillStyle = '#fff';
+    ctx.fillText(has ? '🔋' : '✅', z.cx, z.cy + 14);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 15px sans-serif'; ctx.fillText(`${z.icon} ${z.name} 구역`, z.cx, z.cy + 54);
   }
-  // 게임하기 받침대
+  // 게임하기 받침대 (좌하단 — 미션 영역과 분리)
   const px = PLAY.x + PLAY.w / 2, py = PLAY.y + PLAY.h / 2;
-  const pg = ctx.createRadialGradient(px, py, 0, px, py, 70); pg.addColorStop(0, 'rgba(111,183,255,0.4)'); pg.addColorStop(1, 'rgba(111,183,255,0)');
-  ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(px, py, 70, 0, 6.283); ctx.fill();
-  ctx.fillStyle = '#2a3a66'; rr(ctx, PLAY.x, PLAY.y + 18, PLAY.w, PLAY.h - 18, 10); ctx.fill();
-  ctx.fillStyle = '#6fb7ff'; ctx.font = '26px sans-serif'; ctx.fillText('🎮', px, py + 10);
-  ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('게임하기 ▸', px, py + 46);
+  const pg = ctx.createRadialGradient(px, py, 0, px, py, 72); pg.addColorStop(0, 'rgba(111,183,255,0.4)'); pg.addColorStop(1, 'rgba(111,183,255,0)');
+  ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(px, py, 72, 0, 6.283); ctx.fill();
+  ctx.fillStyle = '#2a3a66'; rr(ctx, PLAY.x, PLAY.y + 20, PLAY.w, PLAY.h - 20, 10); ctx.fill();
+  ctx.strokeStyle = '#6fb7ff'; ctx.lineWidth = 2; rr(ctx, PLAY.x, PLAY.y + 20, PLAY.w, PLAY.h - 20, 10); ctx.stroke();
+  ctx.fillStyle = '#6fb7ff'; ctx.font = '28px sans-serif'; ctx.fillText('🎮', px, py + 10);
+  ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('게임하기 ▸', px, py + 50);
   // 나가기
   ctx.fillStyle = '#5a3a2a'; rr(ctx, EXIT.x - 6, MAP_H - 28, EXIT.w + 12, 24, 5); ctx.fill();
   ctx.fillStyle = '#caa15a'; rr(ctx, EXIT.x, MAP_H - 24, EXIT.w, 18, 4); ctx.fill();
   ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('🚪 복도로', EXIT.x + EXIT.w / 2, MAP_H - 36);
-  if (cleared) { ctx.fillStyle = '#3ddc91'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('✓ 미션 클리어', 480, 470); }
   ctx.textAlign = 'start';
 }
 

@@ -776,3 +776,8 @@ html, body {
 .eddie-say::after { content: ''; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #fff; }
 .eddie-say.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .dh-mission { font-size: 13px; color: var(--accent-2); font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(255,209,26,.12); }
+.chal-temp { font-size: 15px; margin: 8px 0 6px; color: var(--text); }
+.chal-temp b { color: var(--accent-2); font-size: 20px; }
+.chal-target { color: var(--muted); font-size: 13px; margin-left: 8px; }
+.chal-bar { height: 12px; background: #0a1120; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.chal-bar > div { height: 100%; width: 50%; transition: width .2s, background .2s; }

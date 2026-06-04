@@ -4,18 +4,19 @@
 
 import { board } from '../app/board.js';
 import { createEditor } from '../editor/codeEditor.js';
-import { createBlockEditor } from '../editor/blockEditor.js';
+import { createBlockEditor, TOOLBOX_LED, TOOLBOX_RELAY } from '../editor/blockEditor.js';
 import { judge, parseLoop, execute } from '../editor/interpreter.js';
 import eddieSvg from '../assets/eddie.svg?raw';
 
-// 미션 goal → 블록 시작 배치
-function presetFor(m, pin) {
+// 미션 goal → 블록 시작 배치 (방 종류에 맞는 블록셋)
+function presetFor(m, pin, set) {
+  const sb = set === 'relay' ? 'relay_state' : 'led_state';
   if (m.goal === 'pwm') return [{ type: 'led_pwm', fields: { PIN: pin, VAL: m.want ? 220 : 128 } }];
   if (m.goal === 'blink') return [
-    { type: 'led_state', fields: { PIN: pin, STATE: 'HIGH' } }, { type: 'wait', fields: { MS: 800 } },
-    { type: 'led_state', fields: { PIN: pin, STATE: 'LOW' } }, { type: 'wait', fields: { MS: 800 } },
+    { type: sb, fields: { PIN: pin, STATE: 'HIGH' } }, { type: 'wait', fields: { MS: 800 } },
+    { type: sb, fields: { PIN: pin, STATE: 'LOW' } }, { type: 'wait', fields: { MS: 800 } },
   ];
-  return [{ type: 'led_state', fields: { PIN: pin, STATE: m.goal === 'off' ? 'LOW' : 'HIGH' } }];
+  return [{ type: sb, fields: { PIN: pin, STATE: m.goal === 'off' ? 'LOW' : 'HIGH' } }];
 }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -138,7 +139,8 @@ export function openRoom(room, { onComplete, onClose }) {
       statusEl.textContent = res.ok ? '✅ 정답! [업로드]로 동작을 확인하세요' : '';
       statusEl.classList.toggle('ok', res.ok);
     };
-    blockEd = createBlockEditor($('#block-host'), { pin: room.pin, preset: presetFor(m, room.pin), onChange: live });
+    const toolbox = room.blockSet === 'relay' ? TOOLBOX_RELAY : TOOLBOX_LED;
+    blockEd = createBlockEditor($('#block-host'), { pin: room.pin, preset: presetFor(m, room.pin, room.blockSet), toolbox, onChange: live });
     setTimeout(() => live(blockEd.getCode()), 60);
     $('#b-run').onclick = () => runCode(blockEd.getCode(), m);
   }

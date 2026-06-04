@@ -32,6 +32,16 @@ Blockly.Blocks['wait'] = {
   },
 };
 
+Blockly.Blocks['relay_state'] = {
+  init() {
+    this.appendDummyInput()
+      .appendField('릴레이').appendField(new Blockly.FieldDropdown(() => CUR_PINS), 'PIN')
+      .appendField(new Blockly.FieldDropdown([['켜기 (ON)', 'HIGH'], ['끄기 (OFF)', 'LOW']]), 'STATE');
+    this.setPreviousStatement(true); this.setNextStatement(true);
+    this.setColour(160); this.setTooltip('릴레이를 켜거나 끕니다');
+  },
+};
+
 // DHT 블록
 Blockly.Blocks['dht_read'] = {
   init() { this.appendDummyInput().appendField('🌡️ 온습도 읽기'); this.setPreviousStatement(true); this.setNextStatement(true); this.setColour(20); },
@@ -46,6 +56,7 @@ Blockly.Blocks['dht_hum'] = {
 const gen = new Blockly.Generator('ARD');
 gen.forBlock = {
   led_state: (b) => `  digitalWrite(${b.getFieldValue('PIN')}, ${b.getFieldValue('STATE')});\n`,
+  relay_state: (b) => `  digitalWrite(${b.getFieldValue('PIN')}, ${b.getFieldValue('STATE')});\n`,
   led_pwm: (b) => `  analogWrite(${b.getFieldValue('PIN')}, ${b.getFieldValue('VAL')});\n`,
   wait: (b) => `  delay(${b.getFieldValue('MS')});\n`,
   dht_read: () => `  dht.read();\n`,
@@ -72,6 +83,7 @@ const THEME = Blockly.Theme.defineTheme('eduino', {
 
 export const TOOLBOX_LED = ['led_state', 'led_pwm', 'wait'];
 export const TOOLBOX_DHT = ['dht_read', 'dht_temp', 'dht_hum', 'wait'];
+export const TOOLBOX_RELAY = ['relay_state', 'wait'];
 
 /**
  * @param {HTMLElement} host
