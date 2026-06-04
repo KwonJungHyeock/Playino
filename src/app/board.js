@@ -79,23 +79,32 @@ export const board = {
 
   async disconnect() { await conn.disconnect(); _version = null; },
 
-  /** digitalWrite */
+  /** digitalWrite (write 가 멈춰도 UI 가 막히지 않도록 타임아웃 보호) */
   async digital(pin, on) {
     const c = encodeDigitalWrite(pin, on);
-    await conn.write(c);
+    await safeWrite(c);
     emitLine('tx', c);
   },
   /** analogWrite(PWM) */
   async pwm(pin, v) {
     const c = encodePwm(pin, v);
-    await conn.write(c);
+    await safeWrite(c);
     emitLine('tx', c);
   },
-  /** 깜빡임 (내장 LED 테스트 등) */
-  async blink(pin, times = 4, period = 250) {
+  /** 깜빡임 (내장 LED 테스트 등) — 항상 OFF 로 끝남 */
+  async blink(pin, times = 4, period = 300) {
     for (let k = 0; k < times; k++) {
       await this.digital(pin, true); await delay(period);
       await this.digital(pin, false); await delay(period);
     }
+    await this.digital(pin, false);
   },
 };
+
+// 시리얼 write 가 백프레셔 등으로 멈추면 1.2초 후 풀어주어 UI 가 얼지 않게 한다.
+function safeWrite(cmd) {
+  return Promise.race([
+    conn.write(cmd),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('write timeout: ' + cmd)), 1200)),
+  ]).catch((e) => { emitLine('sys', '⚠ 전송 지연/실패: ' + (e?.message ?? e)); });
+}

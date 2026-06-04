@@ -3,6 +3,7 @@
 
 import { createWorld } from '../engine/topdown.js';
 import { openRoom } from './room.js';
+import { mountQuest } from '../app/quest.js';
 import { ENTRY_ROOM, TOTAL_ROOMS } from '../content/rooms.js';
 
 const MAP_W = 1000;
@@ -30,6 +31,15 @@ export function showHouse(root, { onBack } = {}) {
   const hintEl = root.querySelector('#hud-hint');
   const toastEl = root.querySelector('#hud-toast');
   const progEl = root.querySelector('#prog');
+
+  const quest = mountQuest(root.querySelector('.game-scene'), {
+    title: '집을 밝혀라',
+    subtitle: '깜깜한 PlayHouse에 불을 켜자',
+    objectives: [
+      { text: '현관 조명 켜기', done: false },
+      { text: '다른 방 열기 (곧)', done: false },
+    ],
+  });
 
   const doors = [
     { id: 'living',  x: 150, y: 24,  w: 140, h: 34, name: '거실',  locked: true },
@@ -78,6 +88,8 @@ export function showHouse(root, { onBack } = {}) {
     entryLit = true;
     cleared = 1;
     progEl.textContent = String(cleared);
+    quest.setObjective(0, true);
+    quest.setSubtitle(`방 점등 ${cleared} / ${TOTAL_ROOMS}`);
     toast('현관에 불이 들어왔어요! 🎉 (1 / ' + TOTAL_ROOMS + ')');
   }
 

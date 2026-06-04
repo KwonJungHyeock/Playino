@@ -176,14 +176,15 @@ export function openRoom(room, { onComplete, onClose }) {
       const code = editor.getDoc();
       const res = judge(code, room.pin, mission().goal);
       if (!res.ok) { feedback('warn', `아직이에요. ${res.reason}<br/><small>💡 ${mission().hint}</small>`); return; }
-      feedback('', '업로드 중… 보드에 반영합니다.');
-      try {
-        await execute(parseLoop(code), room.pin, board, { onStep: (on) => reflectLed(on) });
-        // 정적(켜기/끄기)이면 최종 상태 유지
-        if (mission().goal === 'on') reflectLed(true);
-        if (mission().goal === 'off') reflectLed(false);
-        pass();
-      } catch (e) { feedback('warn', '전송 실패: ' + (e?.message ?? e)); }
+      // 코드 판정 통과 → 미션 진행은 즉시. 보드 반영은 best-effort(멈춰도 진행).
+      board.log('sys', `코드 판정 통과 (${mission().goal}). 보드 반영 시도…`);
+      execute(parseLoop(code), room.pin, board, { onStep: (on) => reflectLed(on) })
+        .then(() => {
+          if (mission().goal === 'on') reflectLed(true);
+          if (mission().goal === 'off') reflectLed(false);
+        })
+        .catch((e) => board.log('sys', '반영 실패(코드는 정답): ' + (e?.message ?? e)));
+      pass();
     };
   }
 
