@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playino · PlayHouse — 거실 레슨</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <strong>Playino</strong> · PlayHouse
+        <span class="crumb">거실 레슨</span>
+      </div>
+      <div class="phase-badge" title="구현 순서 §9">
+        STEP 2 · 시리얼 코어 검증
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- 좌 62% — 게임 캔버스 (현재: 시리얼 코어 검증 화면) -->
+      <section class="game-pane" id="game-pane">
+        <div class="stage" id="stage"></div>
+      </section>
+
+      <!-- 우 38% — 연습 패널 -->
+      <aside class="practice-pane" id="practice-pane">
+        <div id="panel-root"></div>
+      </aside>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

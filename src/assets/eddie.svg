@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EDDIE — Playino · PlayHouse 주인공 아바타
+  조작용 ID (부록 C):
+    #eddie         전체 그룹 (이동 / idle bob)
+    #eddie-screen  얼굴 스크린 (표정 베이스)
+    #eddie-eyes    눈 그룹 (표정 변형: idle/think/success/surprise)
+    #eddie-glow    성공 펄스 글로우 (success 시 opacity 펄스 -> 실물 LED 동기)
+  프로토타입은 이 ID들을 CSS/JS 로 조작해 §5.5 상태를 구현한다.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" width="120" height="160" aria-label="EDDIE">
+  <defs>
+    <radialGradient id="eddie-glow-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe14d" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#ffd11a" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffd11a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="eddie-body-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6fb7ff"/>
+      <stop offset="100%" stop-color="#3d86e0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 성공 글로우: 평소 opacity 0, success 시 펄스 -->
+  <ellipse id="eddie-glow" cx="60" cy="70" rx="58" ry="62" fill="url(#eddie-glow-grad)" opacity="0"/>
+
+  <!-- EDDIE 본체 (이동/bob 대상) -->
+  <g id="eddie">
+    <!-- 그림자 -->
+    <ellipse cx="60" cy="150" rx="30" ry="6" fill="#0a1730" opacity="0.18"/>
+
+    <!-- 안테나 -->
+    <line x1="60" y1="20" x2="60" y2="8" stroke="#2c5aa0" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="60" cy="6" r="4" fill="#ffd11a"/>
+
+    <!-- 머리 -->
+    <rect x="22" y="20" width="76" height="60" rx="16" fill="url(#eddie-body-grad)" stroke="#2c5aa0" stroke-width="2"/>
+
+    <!-- 얼굴 스크린 -->
+    <rect id="eddie-screen" x="32" y="30" width="56" height="40" rx="10" fill="#0e1d33"/>
+
+    <!-- 눈 (표정) -->
+    <g id="eddie-eyes" fill="#7fffd4">
+      <circle cx="48" cy="50" r="6"/>
+      <circle cx="72" cy="50" r="6"/>
+      <!-- 하이라이트 -->
+      <circle cx="50" cy="48" r="1.8" fill="#eafff6"/>
+      <circle cx="74" cy="48" r="1.8" fill="#eafff6"/>
+    </g>
+
+    <!-- 목 -->
+    <rect x="52" y="78" width="16" height="10" fill="#2c5aa0"/>
+
+    <!-- 몸통 -->
+    <rect x="30" y="86" width="60" height="50" rx="12" fill="url(#eddie-body-grad)" stroke="#2c5aa0" stroke-width="2"/>
+    <!-- 가슴 패널 -->
+    <rect x="44" y="98" width="32" height="22" rx="5" fill="#0e1d33"/>
+    <circle cx="54" cy="109" r="3" fill="#ffd11a"/>
+    <circle cx="66" cy="109" r="3" fill="#7fffd4"/>
+
+    <!-- 팔 -->
+    <rect x="16" y="92" width="12" height="34" rx="6" fill="#3d86e0"/>
+    <rect x="92" y="92" width="12" height="34" rx="6" fill="#3d86e0"/>
+
+    <!-- 다리 -->
+    <rect x="42" y="134" width="12" height="16" rx="5" fill="#2c5aa0"/>
+    <rect x="66" y="134" width="12" height="16" rx="5" fill="#2c5aa0"/>
+  </g>
+</svg>

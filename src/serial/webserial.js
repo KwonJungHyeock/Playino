@@ -1,0 +1,167 @@
+// webserial.js — Web Serial API(native) 래퍼 (§7)
+// 포트 연결 · VID/PID 인식 · 라인 단위 read/write.
+// WebSerial 은 Chrome/Edge 데스크톱에서만 동작. 미지원 시 isSupported()=false.
+
+import { BAUD, LINE_TERMINATOR } from './protocol.js';
+
+// 인식 대상 VID (§7). 필터에 걸리면 선택창이 해당 보드만 노출.
+export const KNOWN_VENDORS = [
+  { usbVendorId: 0x2341 }, // Arduino
+  { usbVendorId: 0x2a03 }, // Arduino (구 VID)
+  { usbVendorId: 0x1a86 }, // CH340 (호환 보드)
+];
+
+export function isSupported() {
+  return typeof navigator !== 'undefined' && 'serial' in navigator;
+}
+
+/**
+ * 라인 기반 시리얼 연결.
+ * - connect(): 사용자 제스처에서 호출 (requestPort)
+ * - write(line): '\n' 자동 부착
+ * - onLine(cb): 수신 라인 콜백 등록
+ */
+export class SerialConnection {
+  constructor() {
+    this.port = null;
+    this.reader = null;
+    this.writer = null;
+    this._readLoopPromise = null;
+    this._textBuffer = '';
+    this._lineHandlers = new Set();
+    this._stateHandlers = new Set();
+    this._closing = false;
+  }
+
+  get isOpen() {
+    return !!this.port && !!this.writer;
+  }
+
+  onLine(handler) {
+    this._lineHandlers.add(handler);
+    return () => this._lineHandlers.delete(handler);
+  }
+
+  onStateChange(handler) {
+    this._stateHandlers.add(handler);
+    return () => this._stateHandlers.delete(handler);
+  }
+
+  _emitState(state, detail) {
+    for (const h of this._stateHandlers) {
+      try { h(state, detail); } catch (e) { console.error(e); }
+    }
+  }
+
+  _emitLine(line) {
+    for (const h of this._lineHandlers) {
+      try { h(line); } catch (e) { console.error(e); }
+    }
+  }
+
+  /**
+   * 포트 선택 + 오픈. 반드시 사용자 클릭 등 제스처 핸들러에서 호출.
+   * @param {object} [opts]
+   * @param {boolean} [opts.useFilters=true] 알려진 VID 만 노출할지
+   */
+  async connect({ useFilters = true } = {}) {
+    if (!isSupported()) {
+      throw new Error('WebSerial 미지원 브라우저입니다. Chrome/Edge 데스크톱을 사용하세요.');
+    }
+    if (this.isOpen) return this.port;
+
+    const requestOpts = useFilters ? { filters: KNOWN_VENDORS } : {};
+    this.port = await navigator.serial.requestPort(requestOpts);
+    await this.port.open({ baudRate: BAUD });
+
+    this._closing = false;
+    this._setupWriter();
+    this._readLoopPromise = this._readLoop();
+    this._emitState('open', this.getInfo());
+    return this.port;
+  }
+
+  getInfo() {
+    if (!this.port) return null;
+    const info = this.port.getInfo?.() ?? {};
+    return {
+      usbVendorId: info.usbVendorId,
+      usbProductId: info.usbProductId,
+    };
+  }
+
+  _setupWriter() {
+    const encoder = new TextEncoderStream();
+    encoder.readable.pipeTo(this.port.writable).catch((e) => {
+      if (!this._closing) console.error('writer pipe error', e);
+    });
+    this._encoderStream = encoder;
+    this.writer = encoder.writable.getWriter();
+  }
+
+  /** 한 줄 전송 ('\n' 자동 부착). raw=true 면 그대로 전송. */
+  async write(line, { raw = false } = {}) {
+    if (!this.writer) throw new Error('포트가 열려있지 않습니다.');
+    const payload = raw ? line : line + LINE_TERMINATOR;
+    await this.writer.write(payload);
+    return payload;
+  }
+
+  async _readLoop() {
+    const decoder = new TextDecoderStream();
+    const readableClosed = this.port.readable.pipeTo(decoder.writable).catch((e) => {
+      if (!this._closing) console.error('reader pipe error', e);
+    });
+    this._decoderStream = decoder;
+    this._readableClosed = readableClosed;
+    this.reader = decoder.readable.getReader();
+
+    try {
+      while (true) {
+        const { value, done } = await this.reader.read();
+        if (done) break;
+        if (value) this._ingest(value);
+      }
+    } catch (e) {
+      if (!this._closing) {
+        console.error('read loop error', e);
+        this._emitState('error', e);
+      }
+    }
+  }
+
+  /** 수신 청크를 줄 단위로 분해 */
+  _ingest(chunk) {
+    this._textBuffer += chunk;
+    let idx;
+    while ((idx = this._textBuffer.indexOf('\n')) >= 0) {
+      let line = this._textBuffer.slice(0, idx);
+      this._textBuffer = this._textBuffer.slice(idx + 1);
+      line = line.replace(/\r$/, '');
+      if (line.length === 0) continue;
+      this._emitLine(line);
+    }
+  }
+
+  async disconnect() {
+    this._closing = true;
+    try {
+      if (this.reader) {
+        await this.reader.cancel().catch(() => {});
+        this.reader.releaseLock?.();
+      }
+      if (this.writer) {
+        await this.writer.close().catch(() => {});
+        this.writer.releaseLock?.();
+      }
+      if (this._readableClosed) await this._readableClosed.catch(() => {});
+      if (this.port) await this.port.close().catch(() => {});
+    } finally {
+      this.reader = null;
+      this.writer = null;
+      this.port = null;
+      this._textBuffer = '';
+      this._emitState('closed');
+    }
+  }
+}
