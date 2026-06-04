@@ -9,10 +9,11 @@ import { mountSay, eddieRandom } from '../app/eddieSay.js';
 import { mountQuest } from '../app/quest.js';
 
 const MAP_W = 960, MAP_H = 620;
+// 실물 센서값을 직접 바꿔(따뜻하게/입김 등) 목표 달성 → 배터리 획득
 const ZONES = {
-  bat0: { x: 120, y: 224, w: 150, h: 150, cx: 195, cy: 299, name: '더움', icon: '🔥', color: '255,90,40', start: 33, target: 25, dir: 'down', verb: '냉방', emoji: '❄️' },
-  bat1: { x: 405, y: 120, w: 150, h: 150, cx: 480, cy: 195, name: '추움', icon: '❄️', color: '90,150,255', start: 13, target: 19, dir: 'up', verb: '난방', emoji: '🔥' },
-  bat2: { x: 690, y: 224, w: 150, h: 150, cx: 765, cy: 299, name: '불쾌', icon: '😣', color: '200,60,180', start: 31, target: 24, dir: 'down', verb: '환기', emoji: '💨' },
+  bat0: { x: 120, y: 224, w: 150, h: 150, cx: 195, cy: 299, name: '더움', icon: '🔥', color: '255,120,60', metric: 'temp', op: 'gte', target: 28, action: '센서를 손으로 감싸 따뜻하게 🤲' },
+  bat1: { x: 405, y: 120, w: 150, h: 150, cx: 480, cy: 195, name: '시원', icon: '❄️', color: '90,160,255', metric: 'temp', op: 'lte', target: 23, action: '센서를 부채질해 시원하게 🌬️' },
+  bat2: { x: 690, y: 224, w: 150, h: 150, cx: 765, cy: 299, name: '습함', icon: '💧', color: '120,110,235', metric: 'hum', op: 'gte', target: 68, action: '센서에 입김을 후~ 불기 😮‍💨' },
 };
 const PLAY = { x: 80, y: 446, w: 84, h: 84 };
 const EXIT = { x: 448, y: MAP_H - 56, w: 64, h: 38 };
@@ -77,20 +78,12 @@ export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
     },
     onFrame: (st) => {
       const tr = st.activeTrigger;
-      if (!tr) { hintEl.classList.remove('show'); }
-      else {
-        if (tr.id === 'play') hintEl.innerHTML = '🎮 Space · 게임하기 (쾌적 지키기)';
-        else if (tr.id === 'exit') hintEl.innerHTML = '🚪 Space · 복도로';
-        else if (ZONES[tr.id]) hintEl.innerHTML = got[tr.id] ? `${ZONES[tr.id].name} 배터리 — 획득함 ✅` : `🔋 Space · ${ZONES[tr.id].icon} ${ZONES[tr.id].name} 배터리 줍기`;
-        hintEl.classList.add('show');
-      }
-      // EDDIE 색감: 위치한 구역 색
-      let tint = null;
-      const px = st.player.x + st.player.w / 2, py = st.player.y + st.player.h / 2;
-      for (const z of Object.values(ZONES)) { const dx = px - z.cx, dy = py - z.cy; if (dx * dx + dy * dy < 60 * 60) tint = `rgba(${z.color},0.45)`; }
-      world.setTint(tint);
+      if (!tr) { hintEl.classList.remove('show'); return; }
+      if (tr.id === 'play') hintEl.innerHTML = '🎮 Space · 게임하기 (쾌적 지키기)';
+      else if (tr.id === 'exit') hintEl.innerHTML = '🚪 Space · 복도로';
+      else if (ZONES[tr.id]) hintEl.innerHTML = got[tr.id] ? `${ZONES[tr.id].name} 배터리 — 획득함 ✅` : `🔋 Space · ${ZONES[tr.id].icon} ${ZONES[tr.id].name} 구역 미션`;
+      hintEl.classList.add('show');
     },
-    onDrawOverlay: drawReactive,
   });
 
   setTimeout(() => narrate('동그란 3개 구역에서 배터리를 모아 미션을 클리어하자! 🔋'), 400);
@@ -99,46 +92,53 @@ export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
   const quest = mountQuest(root.querySelector('.game-scene'), {
     title: 'DHT-11 방 미션', subtitle: `배터리 ${Object.values(got).filter(Boolean).length} / 3`,
     objectives: [
-      { text: '🔥 더움 구역 배터리', done: false },
-      { text: '❄️ 추움 구역 배터리', done: false },
-      { text: '😣 불쾌 구역 배터리', done: false },
+      { text: '🔥 더움 구역 (센서 온도↑)', done: false },
+      { text: '❄️ 시원 구역 (센서 온도↓)', done: false },
+      { text: '💧 습함 구역 (센서 습도↑)', done: false },
     ],
   });
   world.pause();
   {
     const m = document.createElement('div'); m.className = 'modal-backdrop';
     m.innerHTML = `<div class="modal"><h3>🔋 방 미션 안내</h3>
-      <p>온도·습도에 따라 방 모습이 변해요(실시간 모니터링).<br/>
-      방 안 <b>동그란 3개 구역</b>(🔥더움·❄️추움·😣불쾌)에서 <b>배터리 3개</b>를 모두 모으면 <b>방 클리어</b>!<br/>
+      <p>상단에서 <b>실시간 온습도</b>를 확인할 수 있어요.<br/>
+      방 안 <b>3개 구역</b>(🔥더움·❄️시원·💧습함)에서 <b>실물 센서를 직접 조작</b>(손으로 따뜻하게·입김 등)해
+      목표를 달성하면 <b>배터리</b>를 얻어요. 3개 모두 모으면 <b>방 클리어</b>!<br/>
       가운데 <b>[게임하기]</b>로 '쾌적 지키기' 게임도 따로 즐길 수 있어요.</p>
       <div class="modal-actions"><button class="btn primary" id="ms-go">미션 시작 ▶</button></div></div>`;
     document.body.appendChild(m);
     m.querySelector('#ms-go').onclick = () => { m.remove(); world.resume(); };
   }
 
-  // 줍기 = 온도 챌린지 성공해야 획득
+  // 줍기 = 실물 센서값을 직접 바꿔 목표 달성해야 획득
   function collect(id) {
     if (got[id]) { toast(`${ZONES[id].name} 배터리는 이미 가졌어요`); return; }
     const z = ZONES[id];
+    const unit = z.metric === 'temp' ? '℃' : '%';
+    const opTxt = z.op === 'gte' ? '이상' : '이하';
     world.pause();
-    let v = z.start;
     const m = document.createElement('div'); m.className = 'modal-backdrop';
     m.innerHTML = `<div class="modal"><h3>${z.icon} ${z.name} 구역 미션</h3>
-      <p>이 구역은 <b>${z.dir === 'down' ? '너무 더워요' : '너무 추워요'}</b>! <b>${z.emoji} ${z.verb}</b> 버튼을 눌러
-      온도를 ${z.dir === 'down' ? `<b>${z.target}℃ 이하로</b> 내려야` : `<b>${z.target}℃ 이상으로</b> 올려야`} 배터리를 주울 수 있어요.</p>
-      <div class="chal-temp">현재 <b id="chal-v">${v}</b>℃ <span class="chal-target">목표 ${z.dir === 'down' ? '≤' : '≥'} ${z.target}℃</span></div>
+      <p>실물 센서를 직접 조작하는 미션! <b>${z.action}</b><br/>
+      ${z.metric === 'temp' ? '온도' : '습도'}를 <b>${z.target}${unit} ${opTxt}</b>로 만들면 배터리를 줍습니다.</p>
+      <div class="chal-temp">현재 <b id="chal-v">--</b>${unit} <span class="chal-target">목표 ${z.op === 'gte' ? '≥' : '≤'} ${z.target}${unit}</span></div>
       <div class="chal-bar"><div id="chal-fill"></div></div>
-      <div class="modal-actions"><button class="btn" id="chal-giveup">포기 (실패)</button><button class="btn primary" id="chal-act">${z.emoji} ${z.verb}</button></div></div>`;
+      <p class="muted" id="chal-note">센서값 읽는 중…</p>
+      <div class="modal-actions"><button class="btn" id="chal-giveup">포기</button></div></div>`;
     document.body.appendChild(m);
-    const vEl = m.querySelector('#chal-v'), fill = m.querySelector('#chal-fill');
-    const upd = () => { vEl.textContent = v; fill.style.width = clamp(v / 45 * 100, 0, 100) + '%'; fill.style.background = v > 26 ? '#ff6b6b' : v < 18 ? '#6fb7ff' : '#3ddc91'; };
-    upd();
-    m.querySelector('#chal-act').onclick = () => {
-      v = clamp(v + (z.dir === 'down' ? -2 : 2), 0, 45); upd();
-      const ok = z.dir === 'down' ? v <= z.target : v >= z.target;
-      if (ok) { setTimeout(() => { m.remove(); world.resume(); doCollect(id); }, 220); }
-    };
-    m.querySelector('#chal-giveup').onclick = () => { m.remove(); world.resume(); toast(`${z.name} 구역 미션 실패 — 다시 도전하세요!`); };
+    const vEl = m.querySelector('#chal-v'), fill = m.querySelector('#chal-fill'), note = m.querySelector('#chal-note');
+    let done = false;
+    const iv = setInterval(() => {
+      const val = z.metric === 'temp' ? cur.temp : cur.hum;
+      const max = z.metric === 'temp' ? 45 : 100;
+      vEl.textContent = Math.round(val);
+      const ok = z.op === 'gte' ? val >= z.target : val <= z.target;
+      fill.style.width = clamp(val / max * 100, 0, 100) + '%';
+      fill.style.background = ok ? '#3ddc91' : `rgba(${z.color},0.95)`;
+      note.textContent = cur.real ? '● 실시간 센서값을 읽고 있어요' : '○ 시뮬레이션(센서 없이도 값이 변해요)';
+      if (ok && !done) { done = true; clearInterval(iv); note.textContent = '성공! 🎉'; setTimeout(() => { m.remove(); world.resume(); doCollect(id); }, 350); }
+    }, 300);
+    m.querySelector('#chal-giveup').onclick = () => { clearInterval(iv); m.remove(); world.resume(); toast(`${z.name} 구역 미션 포기 — 다시 도전!`); };
   }
 
   function doCollect(id) {
@@ -224,17 +224,16 @@ function drawRoom(ctx, got, cleared) {
   ctx.fillStyle = '#0e1726'; rr(ctx, 410, 30, 140, 14, 4); ctx.fill();
 
   ctx.textAlign = 'center';
-  // 배터리 구역 (크게)
+  // 배터리 구역 (부드러운 빛 디스크)
   for (const [k, z] of Object.entries(ZONES)) {
     const has = !got[k];
-    const g = ctx.createRadialGradient(z.cx, z.cy, 0, z.cx, z.cy, 92);
-    g.addColorStop(0, `rgba(${z.color},${has ? 0.5 : 0.18})`); g.addColorStop(1, `rgba(${z.color},0)`);
+    const base = has ? z.color : '61,220,145';
+    const g = ctx.createRadialGradient(z.cx, z.cy, 6, z.cx, z.cy, 92);
+    g.addColorStop(0, `rgba(${base},0.55)`); g.addColorStop(0.55, `rgba(${base},0.18)`); g.addColorStop(1, `rgba(${base},0)`);
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(z.cx, z.cy, 92, 0, 6.283); ctx.fill();
-    ctx.setLineDash(has ? [10, 8] : []); ctx.strokeStyle = has ? `rgba(${z.color},0.95)` : 'rgba(61,220,145,0.9)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(z.cx, z.cy, 66, 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
-    ctx.font = '46px sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText(has ? '🔋' : '✅', z.cx, z.cy + 14);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 15px sans-serif'; ctx.fillText(`${z.icon} ${z.name} 구역`, z.cx, z.cy + 54);
+    ctx.strokeStyle = `rgba(${base},0.45)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(z.cx, z.cy, 58, 0, 6.283); ctx.stroke();
+    ctx.font = '46px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(has ? '🔋' : '✅', z.cx, z.cy + 8);
+    ctx.fillStyle = '#eaf2ff'; ctx.font = '600 14px sans-serif'; ctx.fillText(`${z.icon} ${z.name}`, z.cx, z.cy + 50);
   }
   // 게임하기 받침대 (좌하단 — 미션 영역과 분리)
   const px = PLAY.x + PLAY.w / 2, py = PLAY.y + PLAY.h / 2;
