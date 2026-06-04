@@ -1,27 +1,32 @@
-// house.js — LED 학습방(집 환경). 방 구역(가구)은 충돌로 막아 캐릭터가 길로만 다니고,
-// 가구 앞 바닥의 명패에서 Space 로 입장(불 켜기). 현관 스위치 + 나가기(복도로).
+// house.js — LED 학습방(우리 집). 진짜 4칸 평면도: 벽으로 나뉜 4개의 방(거실·주방·욕실·침실)과
+// 중앙 복도. EDDIE는 각 방의 '입구(문틈)'로만 들어갈 수 있고, 방 안에서 코딩 미션을 풀면 불이 켜진다.
+// 4개 방이 모두 켜지면 그림자 없이 집 전체가 환해지고 "학습을 마쳤습니다" 폭죽 마무리가 뜬다.
 
 import { createWorld } from '../engine/topdown.js';
 import { openRoom } from './room.js';
 import { mountQuest } from '../app/quest.js';
-import { ROOMS, LOCKED_ROOMS, TOTAL_ROOMS, getRoom } from '../content/rooms.js';
+import { ROOMS, TOTAL_ROOMS, getRoom } from '../content/rooms.js';
 import { progress } from '../app/progress.js';
 import { mountSay, eddieRandom } from '../app/eddieSay.js';
+import { celebrateRoom } from './celebrate.js';
 
 const MAP_W = 1000, MAP_H = 660;
 
-// block: 가구 충돌영역 / door: 앞쪽 상호작용 트리거 / light: 점등 위치
-const SPOTS = {
-  living:  { block: { x: 62, y: 56, w: 206, h: 120 }, door: { x: 92, y: 182, w: 150, h: 40 }, light: { x: 165, y: 120 } },
-  kitchen: { block: { x: 696, y: 56, w: 184, h: 100 }, door: { x: 730, y: 162, w: 150, h: 40 }, light: { x: 800, y: 120 } },
-  bath:    { block: { x: 30, y: 268, w: 128, h: 132 }, door: { x: 168, y: 300, w: 60, h: 84 }, light: { x: 95, y: 334 } },
-  bedroom: { block: { x: 848, y: 268, w: 130, h: 132 }, door: { x: 760, y: 300, w: 60, h: 84 }, light: { x: 905, y: 334 }, locked: true },
-  entry:   { door: { x: 466, y: 470, w: 68, h: 70 }, light: { x: 500, y: 506 }, kind: 'switch' },
+// 4칸 평면도: 좌(거실/욕실) · 우(주방/침실), 가운데 세로 복도(x 440~560).
+// 각 방의 바닥 영역 / 천장등 위치 / 입구(문틈) / 미션 트리거.
+const RM = {
+  living:  { floor: { x: 24,  y: 24,  w: 416, h: 298 }, light: { x: 232, y: 168 }, door: { x: 344, y: 124, w: 96, h: 66 }, gap: { y0: 120, y1: 192, side: 'right' } },
+  bath:    { floor: { x: 24,  y: 338, w: 416, h: 298 }, light: { x: 232, y: 488 }, door: { x: 344, y: 452, w: 96, h: 66 }, gap: { y0: 450, y1: 522, side: 'right' } },
+  kitchen: { floor: { x: 560, y: 24,  w: 416, h: 298 }, light: { x: 768, y: 168 }, door: { x: 560, y: 124, w: 96, h: 66 }, gap: { y0: 120, y1: 192, side: 'left' } },
+  bedroom: { floor: { x: 560, y: 338, w: 416, h: 298 }, light: { x: 768, y: 488 }, door: { x: 560, y: 452, w: 96, h: 66 }, gap: { y0: 450, y1: 522, side: 'left' } },
 };
 const EXIT = { x: 468, y: MAP_H - 58, w: 64, h: 38 };
 const houseState = { lit: new Set(), cleared: 0 };
 
 export function showHouse(root, { onExit } = {}) {
+  // 이전에 다 깬 상태로 다시 들어왔다면 초기화(다시 학습)
+  if (houseState.cleared >= TOTAL_ROOMS) { houseState.lit = new Set(); houseState.cleared = 0; }
+
   root.innerHTML = `
     <div class="scene game-scene scene-fade">
       <div class="world-host" id="world-host"></div>
@@ -32,7 +37,7 @@ export function showHouse(root, { onExit } = {}) {
       <div class="hud-hint" id="hud-hint"></div>
       <div class="hud-toast" id="hud-toast"></div>
       <div class="hud-narrate" id="hud-narrate"></div>
-      <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 상호작용</div>
+      <div class="hud-controls">⬆⬇⬅➡ 이동 · 입구로 들어가 Space · EDDIE 클릭</div>
     </div>
   `;
   const hintEl = root.querySelector('#hud-hint');
@@ -43,24 +48,15 @@ export function showHouse(root, { onExit } = {}) {
   const quest = mountQuest(root.querySelector('.game-scene'), {
     title: 'LED로 집 밝히기',
     subtitle: `점등 ${houseState.cleared} / ${TOTAL_ROOMS}`,
-    objectives: [
-      ...ROOMS.map((r) => ({ text: `${r.name} (${r.concept})`, done: houseState.lit.has(r.id) })),
-      ...LOCKED_ROOMS.map((r) => ({ text: `${r.name} — ${r.note}`, done: false })),
-    ],
+    objectives: ROOMS.map((r) => ({ text: `${r.name} (${r.concept})`, done: houseState.lit.has(r.id) })),
   });
 
-  const blocks = Object.values(SPOTS).filter((s) => s.block).map((s) => s.block);
   const map = {
     width: MAP_W, height: MAP_H, bg: '#05080f',
-    spawn: { x: 486, y: 600 },
-    walls: [
-      { x: 0, y: 0, w: MAP_W, h: 24 }, { x: 0, y: MAP_H - 24, w: MAP_W, h: 24 },
-      { x: 0, y: 0, w: 24, h: MAP_H }, { x: MAP_W - 24, y: 0, w: 24, h: MAP_H },
-      ...blocks,
-    ],
+    spawn: { x: 492, y: 556 },
+    walls: buildWalls(),
     triggers: [
-      ...ROOMS.map((r) => ({ id: r.id, ...SPOTS[r.id].door })),
-      ...LOCKED_ROOMS.map((r) => ({ id: r.id, ...SPOTS[r.id].door })),
+      ...ROOMS.map((r) => ({ id: r.id, ...RM[r.id].door })),
       { id: 'exit', ...EXIT },
     ],
     draw: (ctx) => drawHouse(ctx, houseState.lit),
@@ -75,50 +71,90 @@ export function showHouse(root, { onExit } = {}) {
     onEddieClick: (x, y) => say(eddieRandom(), x, y),
   });
 
-  if (houseState.cleared < ROOMS.length) setTimeout(() => narrate('깜깜한 집… 가구 앞으로 가서 Space 로 불을 켜자!'), 400);
+  if (houseState.cleared < ROOMS.length) setTimeout(() => narrate('깜깜한 집… 가운데 복도에서 각 방 입구로 들어가 Space 로 불을 켜자!'), 400);
 
   function handle(id) {
     if (id === 'exit') { world.destroy(); onExit?.(); return; }
     if (houseState.lit.has(id)) { toast(`${nameOf(id)}은 이미 환해요 ✨`); return; }
     const content = getRoom(id);
-    if (content) { world.pause(); openRoom(content, { onComplete: () => done(id), onClose: () => world.resume() }); return; }
-    const locked = LOCKED_ROOMS.find((r) => r.id === id);
-    if (locked) toast(`🔒 ${locked.name} — ${locked.note}`);
+    if (content) { world.pause(); openRoom(content, { onComplete: () => done(id), onClose: () => world.resume() }); }
   }
+
   function done(id) {
     if (houseState.lit.has(id)) return;
     houseState.lit.add(id); houseState.cleared += 1; progEl.textContent = String(houseState.cleared);
     const idx = ROOMS.findIndex((r) => r.id === id); if (idx >= 0) quest.setObjective(idx, true);
     quest.setSubtitle(`점등 ${houseState.cleared} / ${TOTAL_ROOMS}`);
-    if (houseState.cleared >= ROOMS.length) { progress.mark('led'); toast('모든 방에 불이 들어왔어요! 🎉 LED 클리어!'); setTimeout(() => narrate('EDDIE가 LED로 집을 깨웠다! 복도로 나가면 클리어 ✓ 표시가 붙어요.'), 1500); }
-    else toast(`${nameOf(id)}에 불이 들어왔어요! 🎉 (${houseState.cleared}/${TOTAL_ROOMS})`);
+
+    if (houseState.cleared >= ROOMS.length) {
+      progress.mark('led');
+      toast('온 집에 불이 들어왔어요! 🎉');
+      narrate('그림자 하나 없이 집 전체가 환해졌다! 학습을 마쳤어요 ✨');
+      world.pause();
+      setTimeout(() => celebrateRoom({
+        message: '거실·주방·욕실·침실 4개의 LED를 모두 켰어요! 💡<br/>그림자 없이 온 집이 환해졌습니다.',
+        onExit: () => { world.destroy(); onExit?.(); },
+      }), 800);
+    } else {
+      toast(`${nameOf(id)}에 불이 들어왔어요! 🎉 (${houseState.cleared}/${TOTAL_ROOMS})`);
+      const left = ROOMS.filter((r) => !houseState.lit.has(r.id)).map((r) => r.name);
+      narrate(`좋아! 이제 ${left.join(' · ')} 이(가) 남았어. 다음 방으로 가자! 🤖`);
+    }
   }
-  const nameOf = (id) => getRoom(id)?.name || LOCKED_ROOMS.find((r) => r.id === id)?.name || id;
+  const nameOf = (id) => getRoom(id)?.name || id;
 
   function updateHint(state) {
     const tr = state.activeTrigger;
     if (!tr) { hintEl.classList.remove('show'); return; }
     if (tr.id === 'exit') hintEl.innerHTML = '🚪 Space · 복도로 나가기';
     else if (houseState.lit.has(tr.id)) hintEl.innerHTML = `${nameOf(tr.id)} · 점등됨 ✨`;
-    else if (getRoom(tr.id)) hintEl.innerHTML = `💡 Space · <b>${nameOf(tr.id)}</b> 불 켜기`;
-    else hintEl.innerHTML = `🔒 Space · ${nameOf(tr.id)} (곧)`;
+    else hintEl.innerHTML = `💡 Space · <b>${nameOf(tr.id)}</b> 불 켜기`;
     hintEl.classList.add('show');
   }
   let tT = null, nT = null;
   function toast(m) { toastEl.textContent = m; toastEl.classList.add('show'); clearTimeout(tT); tT = setTimeout(() => toastEl.classList.remove('show'), 2400); }
-  function narrate(t) { narrateEl.innerHTML = `<span>🤖 ${t}</span>`; narrateEl.classList.add('show'); clearTimeout(nT); nT = setTimeout(() => narrateEl.classList.remove('show'), 4200); }
+  function narrate(t) { narrateEl.innerHTML = `<span>🤖 ${t}</span>`; narrateEl.classList.add('show'); clearTimeout(nT); nT = setTimeout(() => narrateEl.classList.remove('show'), 4400); }
 
   function drawDarkness(ctx, state, canvas) {
+    // 4방 모두 점등 → 그림자 없이 전체 환하게 (어둠 오버레이 생략)
+    if (houseState.cleared >= ROOMS.length) return;
     if (dark.width !== canvas.width || dark.height !== canvas.height) { dark.width = canvas.width; dark.height = canvas.height; }
     const cam = state.cam, p = state.player;
     dctx.clearRect(0, 0, dark.width, dark.height);
-    dctx.fillStyle = 'rgba(3,7,16,0.88)'; dctx.fillRect(0, 0, dark.width, dark.height);
+    dctx.fillStyle = 'rgba(3,7,16,0.9)'; dctx.fillRect(0, 0, dark.width, dark.height);
     dctx.globalCompositeOperation = 'destination-out';
     hole(dctx, p.x + p.w / 2 - cam.x, p.y + p.h / 2 - cam.y, 150);
-    for (const id of houseState.lit) { const s = SPOTS[id]; hole(dctx, s.light.x - cam.x, s.light.y - cam.y, id === 'entry' ? 320 : 220); }
+    for (const id of houseState.lit) { const s = RM[id]; hole(dctx, s.light.x - cam.x, s.light.y - cam.y, 250); }
     dctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(dark, 0, 0);
   }
+}
+
+// 벽(충돌): 외벽 + 좌/우 내벽(문틈 gap) + 좌/우 방 사이 가로 칸막이
+function buildWalls() {
+  const T = 24, IW = 16;
+  const W = [
+    { x: 0, y: 0, w: MAP_W, h: T }, { x: 0, y: MAP_H - T, w: MAP_W, h: T },
+    { x: 0, y: 0, w: T, h: MAP_H }, { x: MAP_W - T, y: 0, w: T, h: MAP_H },
+  ];
+  // 좌측 내벽 (x=440), 거실/욕실 입구 gap
+  W.push(...vWallWithGaps(440, IW, [RM.living.gap, RM.bath.gap]));
+  // 우측 내벽 (x=544), 주방/침실 입구 gap
+  W.push(...vWallWithGaps(544, IW, [RM.kitchen.gap, RM.bedroom.gap]));
+  // 좌측 가로 칸막이 (거실|욕실 사이)
+  W.push({ x: 24, y: 322, w: 416, h: IW });
+  // 우측 가로 칸막이 (주방|침실 사이)
+  W.push({ x: 560, y: 322, w: 416, h: IW });
+  return W;
+}
+function vWallWithGaps(x, w, gaps) {
+  // 세로벽 y[24,636]에서 gap 들을 비워 문틈을 만든다
+  const segs = [];
+  let cur = 24; const end = MAP_H - 24;
+  const sorted = gaps.map((g) => [g.y0, g.y1]).sort((a, b) => a[0] - b[0]);
+  for (const [g0, g1] of sorted) { if (g0 > cur) segs.push({ x, y: cur, w, h: g0 - cur }); cur = Math.max(cur, g1); }
+  if (cur < end) segs.push({ x, y: cur, w, h: end - cur });
+  return segs;
 }
 
 function hole(c, x, y, r) {
@@ -129,82 +165,110 @@ function hole(c, x, y, r) {
 
 // ===== 인테리어 =====
 function drawHouse(ctx, lit) {
-  // 원목 바닥 + 결
-  ctx.fillStyle = '#6e5132'; ctx.fillRect(0, 0, MAP_W, MAP_H);
-  const fg = ctx.createLinearGradient(0, 0, 0, MAP_H); fg.addColorStop(0, 'rgba(255,222,160,0.12)'); fg.addColorStop(1, 'rgba(0,0,0,0.22)');
-  ctx.fillStyle = fg; ctx.fillRect(0, 0, MAP_W, MAP_H);
-  ctx.strokeStyle = 'rgba(0,0,0,0.16)'; ctx.lineWidth = 2;
-  for (let y = 38; y < MAP_H; y += 38) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(MAP_W, y); ctx.stroke(); }
-  // 중앙 러그
-  ctx.fillStyle = '#2f3e6b'; rr(ctx, 372, 392, 256, 150, 16); ctx.fill();
-  ctx.strokeStyle = '#46599a'; ctx.lineWidth = 4; rr(ctx, 384, 404, 232, 126, 12); ctx.stroke();
-  // 벽 + 걸레받이
-  ctx.fillStyle = '#222a40'; ctx.fillRect(0, 0, MAP_W, 24); ctx.fillRect(0, MAP_H - 24, MAP_W, 24); ctx.fillRect(0, 0, 24, MAP_H); ctx.fillRect(MAP_W - 24, 0, 24, MAP_H);
-  ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(24, 24, MAP_W - 48, 5);
+  const allLit = lit.size >= ROOMS.length;
+  // 복도 바닥(타일)
+  ctx.fillStyle = '#1a2236'; ctx.fillRect(0, 0, MAP_W, MAP_H);
+  // 각 방 바닥(원목) + 점등 시 따뜻한 빛
+  for (const [id, r] of Object.entries(RM)) roomFloor(ctx, r.floor, lit.has(id) || allLit, r.light);
+  // 복도 타일 결
+  ctx.strokeStyle = 'rgba(150,180,255,0.06)'; ctx.lineWidth = 1;
+  for (let y = 60; y < MAP_H; y += 60) { ctx.beginPath(); ctx.moveTo(440, y); ctx.lineTo(560, y); ctx.stroke(); }
+  ctx.fillStyle = 'rgba(120,170,255,0.05)'; ctx.fillRect(440, 24, 120, MAP_H - 48);
+
+  // 벽 그리기 (충돌과 동일 좌표)
+  drawWalls(ctx, allLit);
 
   // 가구
-  shadow(ctx, SPOTS.living.block); livingRoom(ctx, lit.has('living'));
-  shadow(ctx, SPOTS.kitchen.block); kitchen(ctx, lit.has('kitchen'));
-  shadow(ctx, SPOTS.bath.block); bathroom(ctx, lit.has('bath'));
-  shadow(ctx, SPOTS.bedroom.block); bedroom(ctx, lit.has('bedroom'));
-  entryway(ctx, lit.has('entry'));
+  livingRoom(ctx, lit.has('living') || allLit);
+  kitchen(ctx, lit.has('kitchen') || allLit);
+  bathroom(ctx, lit.has('bath') || allLit);
+  bedroom(ctx, lit.has('bedroom') || allLit);
 
-  // 나가기
-  ctx.fillStyle = '#5a3a2a'; rr(ctx, EXIT.x - 6, MAP_H - 28, EXIT.w + 12, 24, 5); ctx.fill();
-  ctx.fillStyle = '#caa15a'; rr(ctx, EXIT.x, MAP_H - 24, EXIT.w, 18, 4); ctx.fill();
-  ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🚪 복도로', EXIT.x + EXIT.w / 2, MAP_H - 36);
-
-  // 바닥 명패 (가구 앞)
-  for (const [id, s] of Object.entries(SPOTS)) {
-    if (s.kind === 'switch') continue;
-    const d = s.door, isLit = lit.has(id), locked = s.locked, name = getRoom(id)?.name || LOCKED_ROOMS.find((r) => r.id === id)?.name || id;
-    ctx.fillStyle = locked ? 'rgba(40,32,52,0.85)' : (isLit ? 'rgba(120,90,30,0.85)' : 'rgba(40,55,100,0.85)');
-    rr(ctx, d.x, d.y + d.h - 22, d.w, 20, 6); ctx.fill();
-    ctx.fillStyle = locked ? '#8d7ba0' : (isLit ? '#ffe9b0' : '#dce8ff'); ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(locked ? `🔒 ${name}` : `${name}${isLit ? ' ✨' : ' ▸'}`, d.x + d.w / 2, d.y + d.h - 8);
+  // 입구 명패(문틈 안쪽)
+  ctx.textAlign = 'center';
+  for (const id of Object.keys(RM)) {
+    const r = RM[id], d = r.door, isLit = lit.has(id) || allLit, name = getRoom(id)?.name || id;
+    ctx.fillStyle = isLit ? 'rgba(120,90,30,0.88)' : 'rgba(40,55,100,0.88)';
+    rr(ctx, d.x + d.w / 2 - 44, d.y + d.h - 24, 88, 20, 6); ctx.fill();
+    ctx.fillStyle = isLit ? '#ffe9b0' : '#dce8ff'; ctx.font = 'bold 12px "Space Grotesk", sans-serif';
+    ctx.fillText(`${name}${isLit ? ' ✨' : ' ▸'}`, d.x + d.w / 2, d.y + d.h - 10);
   }
+
+  // 나가기(복도 하단)
+  ctx.fillStyle = '#5a3a2a'; rr(ctx, EXIT.x - 6, MAP_H - 30, EXIT.w + 12, 26, 6); ctx.fill();
+  ctx.fillStyle = '#caa15a'; rr(ctx, EXIT.x, MAP_H - 26, EXIT.w, 20, 4); ctx.fill();
+  ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('🚪 복도로', EXIT.x + EXIT.w / 2, MAP_H - 38);
   ctx.textAlign = 'start';
 }
 
-function shadow(ctx, b) { if (!b) return; ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(b.x + b.w / 2, b.y + b.h - 2, b.w / 2, 12, 0, 0, 6.283); ctx.fill(); }
+function roomFloor(ctx, f, lit, light) {
+  ctx.fillStyle = lit ? '#7a5a34' : '#3a3326';
+  ctx.fillRect(f.x, f.y, f.w, f.h);
+  // 나뭇결
+  ctx.strokeStyle = lit ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0.28)'; ctx.lineWidth = 2;
+  for (let y = f.y + 30; y < f.y + f.h; y += 32) { ctx.beginPath(); ctx.moveTo(f.x, y); ctx.lineTo(f.x + f.w, y); ctx.stroke(); }
+  if (lit) {
+    const g = ctx.createRadialGradient(light.x, light.y, 8, light.x, light.y, 240);
+    g.addColorStop(0, 'rgba(255,228,150,0.45)'); g.addColorStop(0.6, 'rgba(255,220,140,0.16)'); g.addColorStop(1, 'rgba(255,220,140,0)');
+    ctx.save(); ctx.beginPath(); ctx.rect(f.x, f.y, f.w, f.h); ctx.clip();
+    ctx.fillStyle = g; ctx.fillRect(f.x, f.y, f.w, f.h); ctx.restore();
+    // 천장등
+    ctx.save(); ctx.shadowColor = 'rgba(255,228,150,0.9)'; ctx.shadowBlur = 22;
+    ctx.fillStyle = '#fff6d8'; ctx.beginPath(); ctx.arc(light.x, light.y, 9, 0, 6.283); ctx.fill(); ctx.restore();
+  } else {
+    // 꺼진 천장등
+    ctx.fillStyle = '#2c3550'; ctx.beginPath(); ctx.arc(light.x, light.y, 7, 0, 6.283); ctx.fill();
+  }
+}
+
+function drawWalls(ctx, allLit) {
+  const seg = (x, y, w, h) => {
+    ctx.fillStyle = allLit ? '#3a445f' : '#252e46'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(x, y, w, Math.min(4, h));
+  };
+  for (const wseg of buildWalls()) seg(wseg.x, wseg.y, wseg.w, wseg.h);
+}
+
+function shadow(ctx, x, y, w) { ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(x, y, w / 2, 10, 0, 0, 6.283); ctx.fill(); }
+
 function livingRoom(ctx, l) {
-  ctx.fillStyle = '#4f6aa8'; rr(ctx, 70, 70, 150, 58, 12); ctx.fill();
-  ctx.fillStyle = '#5d7bc0'; rr(ctx, 78, 64, 134, 26, 10); ctx.fill();
-  ctx.fillStyle = '#3a528a'; rr(ctx, 70, 110, 150, 18, 8); ctx.fill();
-  ctx.fillStyle = '#7a5230'; rr(ctx, 110, 140, 78, 28, 6); ctx.fill();
-  ctx.fillStyle = '#0c1018'; rr(ctx, 150, 28, 110, 20, 4); ctx.fill();
-  ctx.fillStyle = l ? '#7fd6ff' : '#26405a'; rr(ctx, 154, 30, 102, 14, 2); ctx.fill();
-  ctx.fillStyle = '#2a6e3f'; ctx.beginPath(); ctx.arc(248, 120, 16, 0, 6.283); ctx.fill(); ctx.fillStyle = '#7a5230'; ctx.fillRect(240, 130, 16, 16);
+  // 소파 + TV + 화분 (거실: 좌상)
+  shadow(ctx, 150, 250, 150);
+  ctx.fillStyle = '#4f6aa8'; rr(ctx, 70, 200, 170, 54, 12); ctx.fill();
+  ctx.fillStyle = '#5d7bc0'; rr(ctx, 78, 194, 154, 24, 10); ctx.fill();
+  ctx.fillStyle = '#7a5230'; rr(ctx, 120, 262, 90, 22, 6); ctx.fill();
+  ctx.fillStyle = '#0c1018'; rr(ctx, 96, 60, 130, 22, 4); ctx.fill();
+  ctx.fillStyle = l ? '#7fd6ff' : '#26405a'; rr(ctx, 100, 62, 122, 16, 2); ctx.fill();
+  ctx.fillStyle = '#2a6e3f'; ctx.beginPath(); ctx.arc(300, 250, 16, 0, 6.283); ctx.fill(); ctx.fillStyle = '#7a5230'; ctx.fillRect(292, 260, 16, 18);
 }
 function kitchen(ctx, l) {
-  ctx.fillStyle = '#6b7390'; ctx.fillRect(700, 28, 176, 22);
-  ctx.fillStyle = '#9aa3bd'; rr(ctx, 700, 70, 176, 40, 6); ctx.fill(); ctx.fillStyle = '#7c849e'; ctx.fillRect(700, 104, 176, 8);
-  ctx.fillStyle = '#2a3146'; rr(ctx, 720, 78, 50, 26, 4); ctx.fill();
-  ctx.fillStyle = l ? '#ff7a4a' : '#444'; ctx.beginPath(); ctx.arc(733, 91, 5, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.arc(757, 91, 5, 0, 6.283); ctx.fill();
-  ctx.fillStyle = '#cdd4e6'; rr(ctx, 832, 66, 40, 86, 6); ctx.fill(); ctx.fillStyle = '#9aa3bd'; ctx.fillRect(836, 96, 32, 4);
+  // 싱크/레인지 (주방: 우상)
+  shadow(ctx, 768, 240, 200);
+  ctx.fillStyle = '#9aa3bd'; rr(ctx, 660, 200, 220, 44, 6); ctx.fill(); ctx.fillStyle = '#7c849e'; ctx.fillRect(660, 238, 220, 8);
+  ctx.fillStyle = '#2a3146'; rr(ctx, 690, 208, 56, 28, 4); ctx.fill();
+  ctx.fillStyle = l ? '#ff7a4a' : '#444'; ctx.beginPath(); ctx.arc(704, 222, 5, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.arc(730, 222, 5, 0, 6.283); ctx.fill();
+  ctx.fillStyle = '#cdd4e6'; rr(ctx, 820, 60, 44, 96, 6); ctx.fill(); ctx.fillStyle = '#9aa3bd'; ctx.fillRect(826, 96, 32, 4);
 }
 function bathroom(ctx, l) {
-  ctx.fillStyle = '#dfe8f2'; rr(ctx, 40, 270, 110, 64, 18); ctx.fill();
-  ctx.fillStyle = l ? '#bfe6ff' : '#8aa6c4'; rr(ctx, 50, 280, 90, 44, 14); ctx.fill();
-  ctx.fillStyle = '#cdd4e6'; rr(ctx, 44, 352, 56, 34, 8); ctx.fill(); ctx.fillStyle = '#9aa3bd'; ctx.beginPath(); ctx.arc(72, 369, 12, 0, 6.283); ctx.fill();
-  ctx.fillStyle = l ? '#cfeefe' : '#3a4a60'; rr(ctx, 50, 320, 40, 26, 4); ctx.fill();
+  // 욕조 + 세면대 (욕실: 좌하)
+  shadow(ctx, 150, 560, 150);
+  ctx.fillStyle = '#dfe8f2'; rr(ctx, 70, 440, 150, 80, 20); ctx.fill();
+  ctx.fillStyle = l ? '#bfe6ff' : '#7e98b6'; rr(ctx, 82, 452, 126, 56, 16); ctx.fill();
+  ctx.fillStyle = '#cdd4e6'; rr(ctx, 90, 540, 64, 36, 8); ctx.fill(); ctx.fillStyle = '#9aa3bd'; ctx.beginPath(); ctx.arc(122, 558, 12, 0, 6.283); ctx.fill();
+  ctx.fillStyle = l ? '#cfeefe' : '#3a4a60'; rr(ctx, 300, 470, 44, 30, 4); ctx.fill();
 }
 function bedroom(ctx, l) {
-  ctx.fillStyle = '#6b4e74'; rr(ctx, 858, 268, 110, 92, 12); ctx.fill();
-  ctx.fillStyle = '#cdd4e6'; rr(ctx, 866, 276, 94, 34, 8); ctx.fill();
-  ctx.fillStyle = '#8a6fb0'; rr(ctx, 866, 312, 94, 42, 8); ctx.fill();
-  ctx.fillStyle = '#7a5230'; rr(ctx, 858, 372, 34, 26, 4); ctx.fill();
-  ctx.fillStyle = l ? '#ffe14d' : '#5a5a40'; ctx.beginPath(); ctx.arc(875, 368, 8, 0, 6.283); ctx.fill();
-}
-function entryway(ctx, l) {
-  const lx = SPOTS.entry.light.x, ly = SPOTS.entry.light.y;
-  if (l) { const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, 130); g.addColorStop(0, 'rgba(255,228,130,0.5)'); g.addColorStop(1, 'rgba(255,228,130,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, ly, 130, 0, 6.283); ctx.fill(); }
-  ctx.fillStyle = '#48506a'; ctx.fillRect(lx - 5, ly - 4, 10, 40);
-  ctx.fillStyle = l ? '#ffe14d' : '#39425e'; rr(ctx, lx - 22, ly - 30, 44, 28, 8); ctx.fill();
-  ctx.strokeStyle = '#26344f'; ctx.lineWidth = 2; rr(ctx, lx - 22, ly - 30, 44, 28, 8); ctx.stroke();
-  ctx.fillStyle = '#cdb98a'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(l ? '현관 ✨' : '현관 스위치 ▸', lx, ly + 52);
-  ctx.fillStyle = '#3a2f1a'; rr(ctx, 448, 560, 104, 28, 6); ctx.fill(); ctx.fillStyle = '#5a4a2a'; rr(ctx, 456, 566, 88, 16, 4); ctx.fill();
-  ctx.textAlign = 'start';
+  // 침대 + 스탠드(무드등) — 다중 LED 느낌으로 등 2개 표현 (침실: 우하)
+  shadow(ctx, 768, 560, 200);
+  ctx.fillStyle = '#6b4e74'; rr(ctx, 660, 430, 180, 110, 12); ctx.fill();
+  ctx.fillStyle = '#cdd4e6'; rr(ctx, 672, 440, 156, 40, 8); ctx.fill();
+  ctx.fillStyle = '#8a6fb0'; rr(ctx, 672, 484, 156, 48, 8); ctx.fill();
+  // 협탁 + 무드등
+  ctx.fillStyle = '#7a5230'; rr(ctx, 858, 470, 40, 40, 4); ctx.fill();
+  ctx.save(); if (l) { ctx.shadowColor = 'rgba(255,200,120,0.9)'; ctx.shadowBlur = 16; }
+  ctx.fillStyle = l ? '#ffd27a' : '#5a5240'; ctx.beginPath(); ctx.arc(878, 466, 9, 0, 6.283); ctx.fill(); ctx.restore();
+  // 천장 무드 스트립(다중 LED) 표현
+  for (let i = 0; i < 3; i++) { ctx.fillStyle = l ? '#ffe14d' : '#4a4a38'; ctx.beginPath(); ctx.arc(700 + i * 24, 420, 5, 0, 6.283); ctx.fill(); }
 }
 
 function rr(ctx, x, y, w, h, r) {

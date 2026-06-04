@@ -35,11 +35,22 @@ const challFast = (pin, maxDelay) => ({
   hint: `delay(숫자) 의 숫자를 ${maxDelay} 이하로 줄여보세요. (예: ${Math.round(maxDelay * 0.7)})`,
   base: setup(pin) + `void loop() {\n  digitalWrite(${pin}, HIGH);\n  delay(800);   // 느려요! 숫자를 줄여보세요\n  digitalWrite(${pin}, LOW);\n  delay(800);\n}\n`,
 });
+// 침실 = 또 다른 LED. '다중 LED 제어' 개념으로 다룬다(대표 핀으로 학습).
+const playMulti = (pin) => ({
+  id: 'play-multi', type: 'play', title: '침실 등 켜기 (다중 LED)', goal: 'on', concept: '다중 LED 제어',
+  story: '침실엔 천장등·무드등 등 LED가 여러 개! 먼저 대표 등을 켜보자. (다중 LED 제어 개념)',
+  hint: '여러 LED도 각 핀에 digitalWrite(핀, HIGH). 여기선 대표로 D6 천장등을 켜요.',
+  base: setup(pin) + `void loop() {\n  digitalWrite(${pin}, HIGH);\n}\n`,
+});
+const challMulti = (pin, maxDelay) => ({
+  id: 'ch-multi', type: 'challenge', title: '여러 등 번갈아 점멸 (다중 제어)', goal: 'blink', want: { maxDelay },
+  concept: '다중 LED 제어', challenge: `여러 LED를 다루듯 delay 를 ${maxDelay} 이하로 줄여 빠르게 번갈아 점멸!`,
+  story: '다중 LED 제어 개념: 핀을 바꿔가며 제어해요. 여기선 대표 등을 빠르게 점멸시켜보자.',
+  hint: `delay(숫자) 의 숫자를 ${maxDelay} 이하로 줄여보세요. (예: ${Math.round(maxDelay * 0.7)})`,
+  base: setup(pin) + `void loop() {\n  digitalWrite(${pin}, HIGH);\n  delay(800);   // 느려요! 숫자를 줄여보세요\n  digitalWrite(${pin}, LOW);\n  delay(800);\n}\n`,
+});
 
 export const ROOMS = [
-  { id: 'entry', name: '현관', pin: 5, concept: '디지털 출력',
-    intro: '현관이 깜깜해! 벽 스위치로 첫 불을 켜자.',
-    missions: [playOn(5), challFast(5, 300)] },
   { id: 'living', name: '거실', pin: 9, concept: '밝기(PWM)',
     intro: '거실은 분위기가 중요해. 밝기를 다뤄보자.',
     missions: [playPwm(9), challDim(9, 80)] },
@@ -49,11 +60,12 @@ export const ROOMS = [
   { id: 'bath', name: '욕실', pin: 11, concept: '은은한 빛(PWM)',
     intro: '욕실엔 눈부시지 않은 아주 은은한 빛이 좋아.',
     missions: [playPwm(11), challDim(11, 40)] },
+  { id: 'bedroom', name: '침실', pin: 6, concept: '다중 LED 제어',
+    intro: '침실엔 LED가 여러 개! 다중 LED 제어를 배워보자.',
+    missions: [playMulti(6), challMulti(6, 250)] },
 ];
 
-export const LOCKED_ROOMS = [
-  { id: 'bedroom', name: '침실', note: '온도 센서(DHT11) · 곧 열림' },
-];
+export const LOCKED_ROOMS = [];
 
-export const TOTAL_ROOMS = ROOMS.length + LOCKED_ROOMS.length; // 5
+export const TOTAL_ROOMS = ROOMS.length; // 4
 export const getRoom = (id) => ROOMS.find((r) => r.id === id);
