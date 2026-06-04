@@ -352,3 +352,168 @@ html, body {
 /* EDDIE idle bob (미리보기에서 살짝 보여줌) */
 @keyframes eddie-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 #eddie { animation: eddie-bob 2.4s ease-in-out infinite; transform-origin: center; }
+
+/* =========================================================
+   프리미엄 인트로
+   ========================================================= */
+.intro { overflow: hidden; }
+.intro-aurora {
+  position: absolute; inset: -20%;
+  background:
+    radial-gradient(40% 40% at 20% 25%, rgba(111,183,255,.45), transparent 60%),
+    radial-gradient(38% 38% at 82% 30%, rgba(167,139,250,.40), transparent 60%),
+    radial-gradient(45% 45% at 50% 95%, rgba(255,209,26,.22), transparent 60%);
+  filter: blur(30px);
+  animation: aurora 16s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  0%   { transform: translate3d(-3%, -2%, 0) scale(1.05); }
+  50%  { transform: translate3d(4%, 3%, 0) scale(1.15); }
+  100% { transform: translate3d(-2%, 4%, 0) scale(1.08); }
+}
+.intro-grid {
+  position: absolute; inset: 0; opacity: .25;
+  background-image:
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at 50% 45%, #000 35%, transparent 75%);
+}
+.intro-particles { position: absolute; inset: 0; pointer-events: none; }
+.intro-particles span {
+  position: absolute; bottom: -10px; border-radius: 50%;
+  background: #cfe4ff; box-shadow: 0 0 8px rgba(207,228,255,.8);
+  animation-name: rise; animation-timing-function: linear; animation-iteration-count: infinite;
+}
+@keyframes rise { to { transform: translateY(-110vh); } }
+
+.glass {
+  background: rgba(20, 30, 52, .55);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.intro-card { position: relative; z-index: 2; border-radius: 22px; padding: 34px 30px; }
+.intro-card.in { animation: slide-in .4s cubic-bezier(.2,.8,.2,1); }
+
+.logo-mark {
+  width: 72px; height: 72px; margin: 0 auto 14px; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center; position: relative;
+  background: linear-gradient(135deg, #6fb7ff, #a78bfa);
+  box-shadow: 0 10px 30px rgba(111,183,255,.45), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.logo-mark span { font-size: 38px; font-weight: 800; color: #0b1322; }
+.logo-spark {
+  position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; border-radius: 50%;
+  background: #ffd11a; box-shadow: 0 0 14px #ffd11a; animation: spark 2.2s ease-in-out infinite;
+}
+@keyframes spark { 0%,100% { transform: scale(.8); opacity: .8; } 50% { transform: scale(1.2); opacity: 1; } }
+
+.intro-title.gradient {
+  background: linear-gradient(100deg, #ffffff, #bcd9ff 40%, #a78bfa);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-weight: 800; font-size: 40px;
+}
+.intro-title.gradient span { color: var(--accent-2); -webkit-text-fill-color: var(--accent-2); }
+.intro-eddie.float { animation: floaty 3.4s ease-in-out infinite; }
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.btn.lg { font-size: 16px; padding: 13px 30px; border-radius: 12px; }
+
+/* =========================================================
+   게임 씬 (탑다운) + HUD
+   ========================================================= */
+.game-scene { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #05080f; }
+.world-host { position: absolute; inset: 0; }
+.world-canvas { display: block; width: 100%; height: 100%; }
+
+.hud-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(5,8,15,.75), transparent);
+}
+.hud-top .brand, .hud-top .phase-badge { pointer-events: auto; }
+.hud-hint {
+  position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%) translateY(10px);
+  background: rgba(13,29,49,.92); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 18px; font-size: 14px; color: var(--text);
+  opacity: 0; transition: opacity .18s, transform .18s; pointer-events: none; white-space: nowrap;
+}
+.hud-hint.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.hud-controls {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: var(--muted); background: rgba(5,8,15,.6);
+  padding: 5px 12px; border-radius: 999px; pointer-events: none;
+}
+.hud-toast {
+  position: absolute; top: 64px; left: 50%; transform: translateX(-50%) translateY(-8px);
+  background: var(--accent-2); color: #2a1c00; font-weight: 700; font-size: 14px;
+  padding: 8px 16px; border-radius: 10px; opacity: 0; transition: opacity .2s, transform .2s;
+  pointer-events: none;
+}
+.hud-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* =========================================================
+   미션 룸 패널
+   ========================================================= */
+.room-backdrop {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(3,7,16,.7); backdrop-filter: blur(6px);
+}
+.room-panel {
+  width: min(900px, 94%); max-height: 92vh; overflow: hidden;
+  background: var(--bg-elev); border: 1px solid var(--line); border-radius: 18px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 70px rgba(0,0,0,.5);
+  animation: slide-in .3s ease;
+}
+.room-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--line);
+}
+.room-head-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.room-chip { background: var(--accent); color: #08172e; font-weight: 700; padding: 3px 10px; border-radius: 999px; font-size: 13px; }
+.room-head-right { display: flex; align-items: center; gap: 12px; }
+.room-progress { color: var(--muted); font-size: 13px; }
+.room-x { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; }
+.room-x:hover { color: #fff; }
+
+.room-body { display: grid; grid-template-columns: 280px 1fr; gap: 0; min-height: 0; }
+.room-left {
+  padding: 20px; border-right: 1px solid var(--line); text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  background: radial-gradient(600px 300px at 50% -10%, #18233c, transparent 60%);
+}
+.room-eddie { width: 130px; height: 170px; display: flex; align-items: center; justify-content: center; }
+.room-eddie svg { width: 110px; height: 150px; overflow: visible; }
+.room-lamp-big {
+  width: 60px; height: 60px; border-radius: 50%; background: #1a2440; border: 2px solid var(--line);
+  display: flex; align-items: center; justify-content: center; transition: background .15s, box-shadow .15s;
+}
+.room-lamp-big.on { background: radial-gradient(circle, #fff2b0, #ffd11a 70%); border-color: #ffe680; box-shadow: 0 0 34px 8px rgba(255,209,26,.55); }
+.room-lamp-big small { font-size: 11px; color: #2a1c00; font-weight: 700; }
+.room-story { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.room-story b { color: var(--accent); }
+
+.room-right { padding: 18px; display: flex; flex-direction: column; min-width: 0; }
+.room-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.room-tab {
+  flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg-elev-2); color: var(--muted); cursor: pointer; font-size: 14px;
+}
+.room-tab.active { background: var(--accent); border-color: var(--accent); color: #08172e; font-weight: 700; }
+.room-tabpane { min-height: 120px; }
+.pane-help { font-size: 14px; color: var(--text); margin: 0 0 12px; }
+.editor-host { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.editor-host .cm-editor { height: 240px; font-size: 13px; }
+.editor-host .cm-scroller { font-family: var(--mono); }
+.code-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.code-hint { color: var(--muted); font-size: 12px; }
+
+.room-feedback { margin-top: 14px; font-size: 14px; min-height: 22px; }
+.room-feedback.ok { color: var(--ok); }
+.room-feedback.warn { color: var(--warn); }
+.room-feedback .fb-title { margin-bottom: 10px; font-weight: 600; }
+@media (max-width: 720px) { .room-body { grid-template-columns: 1fr; } .room-left { border-right: none; border-bottom: 1px solid var(--line); } }

@@ -7,12 +7,13 @@
 
 ## 현재 진행 상태
 
-- [x] **Scaffold** + **시리얼 코어** (webserial / protocol / provisioning)
-- [x] **WebSerial 펌웨어 굽기** (Uno STK500, IDE 불필요)
-- [x] **씬 구조 + 인트로** (Eduino AI → PlayHouse → EDDIE 스토리)
+- [x] **시리얼 코어** + **WebSerial 펌웨어 굽기**(Uno STK500, IDE 불필요)
+- [x] **프리미엄 인트로** (Eduino AI 플랫폼 → PlayHouse → EDDIE 스토리)
 - [x] **사용환경 준비**: 보드 연결 · 체크리스트(자동 완료표시) · **내장 LED(D13) 테스트**
-- [x] **거실 레슨**: 거실 불 켜기(D5) — 스위치 ON → 실물 LED + EDDIE success
-- [ ] 다음: 테마 로더(JSON) · EDDIE 방향키 이동 · 코드 에디터 · 추가 방 · Wokwi 폴백
+- [x] **2D 탑다운 게임**: 앞마당(이동→현관문) → 집 내부(깜깜, 손전등)
+- [x] **현관 미션룸**: 버튼 모드 + **코드 에디터(CodeMirror)** · 미션 1~2(불 켜기/깜빡이기)
+      · 코드 판정(interpreter) → 실물 LED 실시간 연동 → 현관 점등(1/5)
+- [ ] 다음: 나머지 방(거실 NeoPixel · 주방/욕실/침실) 잠금 해제 · LCD/DHT11 · Wokwi 폴백
 
 > 실물 배선은 [`docs/HARDWARE.md`](docs/HARDWARE.md) 기준 (D2=DHT11 이므로 거실 조명=D5).
 
@@ -76,10 +77,19 @@ playino-playhouse/
     ├── app/
     │   ├── board.js        # 공유 보드 컨트롤러(연결·핸드셰이크·웹굽기·핀제어)
     │   └── monitor.js      # 공유 시리얼 모니터 컴포넌트
+    ├── engine/
+    │   └── topdown.js      # 2D 탑다운 엔진(이동·충돌·트리거·EDDIE 스프라이트)
     ├── scenes/
     │   ├── intro.js        # Eduino AI → PlayHouse → EDDIE 스토리
     │   ├── setup.js        # 사용환경 준비(체크리스트 + 내장 LED 테스트)
-    │   └── lesson.js       # 거실 불 켜기(D5)
+    │   ├── yard.js         # 앞마당(현관문까지 이동)
+    │   ├── house.js        # 집 내부(깜깜) + 현관 스위치
+    │   └── room.js         # 미션룸(버튼 + 코드 에디터)
+    ├── editor/
+    │   ├── codeEditor.js   # CodeMirror 6 (Arduino C++)
+    │   └── interpreter.js  # 코드→명령 변환 + 목표 판정(§6)
+    ├── content/
+    │   └── rooms.js        # 방·미션 정의(현관 등)
     └── serial/
         ├── webserial.js    # 포트 연결·VID/PID·라인 read/write·attach(재사용)
         ├── protocol.js     # 명령 인코딩/디코딩 (L5:1 등)
