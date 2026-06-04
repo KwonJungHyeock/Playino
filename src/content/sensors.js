@@ -5,7 +5,7 @@ export const SENSORS = [
   { id: 'led', name: 'LED', icon: '💡', unlocked: true },
   { id: 'sound', name: '소리 감지', icon: '🎤' },
   { id: 'relay', name: '릴레이', icon: '🔌' },
-  { id: 'dht11', name: 'DHT-11 온습도', icon: '🌡️' },
+  { id: 'dht11', name: 'DHT-11 온습도', icon: '🌡️', unlocked: true },
   { id: 'matrix', name: '8×8 매트릭스', icon: '🟥' },
   { id: 'step', name: '스텝 모터', icon: '⚙️' },
   { id: 'keypad', name: '키패드', icon: '🔢' },

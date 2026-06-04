@@ -4,14 +4,14 @@
 import { createWorld } from '../engine/topdown.js';
 import { mountQuest } from '../app/quest.js';
 import { openWiring } from './wiring.js';
-import { LED_WIRING } from '../content/wiring.js';
+import { WIRING } from '../content/wiring.js';
 import { SENSORS } from '../content/sensors.js';
 
 const MAP_H = 560;
 const DOOR_W = 120, GAP = 210, START = 80;
 const TOP_Y = 200, BOT_Y = 316;   // 복도 안 트리거 y (벽 앞)
 
-export function showLab(root, { onEnterLed } = {}) {
+export function showLab(root, { onEnter } = {}) {
   // 문 배치: 앞쪽 절반은 위, 나머지는 아래
   const topN = Math.ceil(SENSORS.length / 2);
   const doors = SENSORS.map((s, i) => {
@@ -61,14 +61,14 @@ export function showLab(root, { onEnterLed } = {}) {
   });
 
   function handle(id) {
-    if (id === 'led') {
+    const s = SENSORS.find((x) => x.id === id);
+    if (s && s.unlocked) {
       world.pause();
-      openWiring(LED_WIRING, {
-        onDone: () => { world.destroy(); onEnterLed?.(); },
-        onClose: () => world.resume(),
-      });
+      const w = WIRING[id];
+      const go = () => { world.destroy(); onEnter?.(id); };
+      if (w) openWiring(w, { onDone: go, onClose: () => world.resume() });
+      else go();
     } else {
-      const s = SENSORS.find((x) => x.id === id);
       toast(`🔒 ${s ? s.icon + ' ' + s.name : ''} 학습방 — 곧 열려요!`);
     }
   }

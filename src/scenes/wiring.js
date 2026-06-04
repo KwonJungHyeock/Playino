@@ -14,7 +14,7 @@ export function openWiring(data = LED_WIRING, { onDone, onClose } = {}) {
       </header>
       <p class="wire-sub">${data.subtitle} · 아래 회로도와 표대로 연결한 뒤 <b>[결선 완료]</b>를 누르세요.</p>
       <div class="wire-body">
-        <div class="wire-diagram">${buildSvg(data)}</div>
+        <div class="wire-diagram" id="wire-diagram">${diagramHtml(data)}</div>
         <div class="wire-info">
           <table class="wire-table">
             <thead><tr><th>부품</th><th>핀</th><th>저항</th><th>연결</th></tr></thead>
@@ -41,11 +41,28 @@ export function openWiring(data = LED_WIRING, { onDone, onClose } = {}) {
   `;
   document.body.appendChild(backdrop);
 
+  // 사진 로드 실패 시 대체(표는 항상 표시되므로 안내만)
+  const photo = backdrop.querySelector('.wire-photo');
+  if (photo) photo.addEventListener('error', () => {
+    const box = backdrop.querySelector('#wire-diagram');
+    box.innerHTML = data.id === 'led' ? buildSvg(data) : missingHtml(data);
+  });
+
   const chk = backdrop.querySelector('#wire-ok');
   const done = backdrop.querySelector('#wire-done');
   chk.addEventListener('change', () => { done.disabled = !chk.checked; });
   done.addEventListener('click', () => { backdrop.remove(); onDone?.(); });
   backdrop.querySelector('#wire-x').addEventListener('click', () => { backdrop.remove(); onClose?.(); });
+}
+
+function diagramHtml(data) {
+  if (data.image) return `<img class="wire-photo" src="${data.image}" alt="${data.title} 회로도"/>`;
+  return data.id === 'led' ? buildSvg(data) : missingHtml(data);
+}
+function missingHtml(data) {
+  return `<div class="wire-photo-missing">회로도 이미지가 아직 없어요.<br/>
+    아래 <b>결선표</b>를 보고 연결하세요.<br/><br/>
+    (이미지를 넣으려면 <code>public/wiring/${data.id}.png</code> 에 저장)</div>`;
 }
 
 function buildSvg(data) {

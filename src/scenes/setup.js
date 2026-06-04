@@ -40,6 +40,7 @@ export function showSetup(root, { onDone }) {
           <ul class="checklist" id="checklist"></ul>
           <div class="setup-action" id="setup-action"></div>
           <button class="btn primary setup-go" id="setup-go" disabled>학습 시작하기 ▶</button>
+          <div class="setup-skip-wrap"><button class="btn setup-skip" id="setup-skip">건너뛰기 ▶ (장비 준비 생략하고 학습방으로)</button></div>
         </div>
 
         <aside class="setup-monitor">
@@ -57,6 +58,7 @@ export function showSetup(root, { onDone }) {
 
   mountMonitor(root.querySelector('#setup-mon'));
   goBtn.addEventListener('click', onDone);
+  root.querySelector('#setup-skip').addEventListener('click', onDone);
 
   const speak = (t) => { speechEl.textContent = t; };
 

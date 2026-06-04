@@ -7,13 +7,21 @@ import { showIntro } from './scenes/intro.js';
 import { showSetup } from './scenes/setup.js';
 import { showLab } from './scenes/lab.js';
 import { showHouse } from './scenes/house.js';
+import { showDht11 } from './scenes/dht11.js';
 
 const app = () => document.getElementById('app');
 
 function sceneSplash() { showSplash(app(), { onDone: sceneIntro }); }
 function sceneIntro() { showIntro(app(), { onDone: sceneSetup }); }
 function sceneSetup() { showSetup(app(), { onDone: sceneLab }); }
-function sceneLab() { showLab(app(), { onEnterLed: sceneHouse }); }   // 연구소 복도 = 맵 허브(L0)
+function sceneLab() { showLab(app(), { onEnter: enterRoom }); }   // 연구소 복도 = 맵 허브(L0)
+
+function enterRoom(id) {
+  if (id === 'led') sceneHouse();
+  else if (id === 'dht11') sceneDht11();
+  else sceneLab();
+}
 function sceneHouse() { showHouse(app(), { onExit: sceneLab }); }
+function sceneDht11() { showDht11(app(), { onExit: sceneLab }); }
 
 window.addEventListener('DOMContentLoaded', sceneSplash);

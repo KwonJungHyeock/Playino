@@ -1,10 +1,10 @@
 // splash.js — 앱 시작 스플래시(인트로)
 // public/intro.png 를 화면 전체(cover, 중앙)로 그대로 표시.
-// 2.5초(또는 이미지 로드 완료) 후 0.6s fade-out → onDone.
-// 클릭/아무 키 입력 시 즉시 스킵.
+// 페이드인(부드럽게 등장) → 충분히 머무름 → 페이드아웃 → onDone. 클릭/키 즉시 스킵.
 
-const MIN_SHOW_MS = 2500;
-const SAFETY_MS = 6000;
+const FADE_MS = 900;      // 페이드 인/아웃 시간
+const HOLD_MS = 4200;     // 화면 유지(페이드인 포함 체감)
+const SAFETY_MS = 8000;
 
 export function showSplash(root, { onDone } = {}) {
   root.innerHTML = `
@@ -15,16 +15,19 @@ export function showSplash(root, { onDone } = {}) {
   const el = root.querySelector('#splash');
   const img = el.querySelector('.splash-img');
 
+  // 페이드인
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+
   let finished = false;
   const finish = () => {
     if (finished) return;
     finished = true;
     cleanup();
+    el.classList.remove('in');
     el.classList.add('fade-out');
-    setTimeout(() => { el.remove(); onDone?.(); }, 600);
+    setTimeout(() => { el.remove(); onDone?.(); }, FADE_MS);
   };
 
-  // 스킵: 클릭 / 키 입력
   const onKey = () => finish();
   const onClick = () => finish();
   window.addEventListener('keydown', onKey);
@@ -34,13 +37,12 @@ export function showSplash(root, { onDone } = {}) {
     window.removeEventListener('pointerdown', onClick);
   }
 
-  // 2.5초 후, 단 이미지 로드가 끝난 뒤에 fade-out
   let loaded = img.complete && img.naturalWidth > 0;
   img.addEventListener('load', () => { loaded = true; });
-  img.addEventListener('error', () => { loaded = true; }); // 누락 시에도 진행
+  img.addEventListener('error', () => { loaded = true; });
   setTimeout(() => {
     if (loaded) finish();
     else { img.addEventListener('load', finish); img.addEventListener('error', finish); }
-  }, MIN_SHOW_MS);
-  setTimeout(finish, SAFETY_MS); // 안전장치
+  }, HOLD_MS);
+  setTimeout(finish, SAFETY_MS);
 }
