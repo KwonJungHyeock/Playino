@@ -67,7 +67,9 @@ export function createWorld(container, map, handlers = {}) {
     const mx = e.clientX - rect.left + state.cam.x;
     const my = e.clientY - rect.top + state.cam.y;
     const p = state.player;
-    if (mx >= p.x - 14 && mx <= p.x + p.w + 14 && my >= p.y - 46 && my <= p.y + p.h + 4) handlers.onEddieClick?.();
+    if (mx >= p.x - 14 && mx <= p.x + p.w + 14 && my >= p.y - 46 && my <= p.y + p.h + 4) {
+      handlers.onEddieClick?.(p.x + p.w / 2 - state.cam.x, p.y + p.h - 58 - state.cam.y);
+    }
   };
   canvas.addEventListener('pointerdown', onPointer);
 

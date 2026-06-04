@@ -72,7 +72,7 @@ export function showHouse(root, { onExit } = {}) {
   const say = mountSay(root.querySelector('.game-scene'));
   const world = createWorld(root.querySelector('#world-host'), map, {
     onInteract: handle, onFrame: updateHint, onDrawOverlay: drawDarkness,
-    onEddieClick: () => say(eddieRandom()),
+    onEddieClick: (x, y) => say(eddieRandom(), x, y),
   });
 
   if (houseState.cleared < ROOMS.length) setTimeout(() => narrate('깜깜한 집… 가구 앞으로 가서 Space 로 불을 켜자!'), 400);

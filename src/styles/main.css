@@ -433,7 +433,7 @@ html, body {
   padding: 12px 16px; pointer-events: none;
   background: linear-gradient(180deg, rgba(5,8,15,.75), transparent);
 }
-.hud-top .brand, .hud-top .phase-badge { pointer-events: auto; }
+.hud-top .brand, .hud-top .phase-badge, .hud-top .btn, .hud-top button { pointer-events: auto; }
 .hud-hint {
   position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%) translateY(10px);
   background: rgba(13,29,49,.92); border: 1px solid var(--line); border-radius: 999px;

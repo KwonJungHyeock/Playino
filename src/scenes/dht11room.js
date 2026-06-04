@@ -70,7 +70,7 @@ export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
   };
 
   const world = createWorld(root.querySelector('#world-host'), map, {
-    onEddieClick: () => say(eddieRandom()),
+    onEddieClick: (x, y) => say(eddieRandom(), x, y),
     onInteract: (id) => {
       if (id === 'play') { cleanup(); onPlay?.(); }
       else if (id === 'exit') { cleanup(); onExit?.(); }

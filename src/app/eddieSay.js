@@ -19,8 +19,12 @@ export function mountSay(container) {
   el.className = 'eddie-say';
   container.appendChild(el);
   let t = null;
-  return (text) => {
+  return (text, x, y) => {
     el.textContent = text;
+    if (x != null && y != null) {
+      el.style.left = x + 'px'; el.style.top = y + 'px';
+      el.style.transform = 'translate(-50%, -115%)';
+    }
     el.classList.add('show');
     clearTimeout(t);
     t = setTimeout(() => el.classList.remove('show'), 2600);

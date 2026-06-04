@@ -68,7 +68,7 @@ export function showLab(root, { onEnter } = {}) {
   const world = createWorld(root.querySelector('#world-host'), map, {
     onInteract: handle,
     onFrame: updateHint,
-    onEddieClick: () => say(eddieRandom()),
+    onEddieClick: (x, y) => say(eddieRandom(), x, y),
     onDrawOverlay: (ctx, _s, canvas) => vignette(ctx, canvas, 0.46),
   });
 

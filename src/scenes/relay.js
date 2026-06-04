@@ -61,7 +61,7 @@ export function showRelay(root, { onExit } = {}) {
   };
 
   const world = createWorld(root.querySelector('#world-host'), map, {
-    onEddieClick: () => say(eddieRandom()),
+    onEddieClick: (x, y) => say(eddieRandom(), x, y),
     onInteract: (id) => {
       if (id === 'exit') { world.destroy(); onExit?.(); return; }
       if (id === 'device') {
