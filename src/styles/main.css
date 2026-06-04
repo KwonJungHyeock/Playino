@@ -216,6 +216,76 @@ html, body {
 }
 .flash-stat { font-size: 12px; color: var(--muted); margin-top: 7px; font-family: var(--mono); }
 
+/* ---- 인트로 씬 ----------------------------------------------------- */
+.intro {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 1; transition: opacity .38s ease;
+}
+.intro.closing { opacity: 0; }
+.intro-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(900px 600px at 50% -5%, #1d3a6b 0%, transparent 60%),
+    radial-gradient(700px 500px at 80% 110%, #2a1d52 0%, transparent 55%),
+    var(--bg);
+}
+.intro-card {
+  position: relative;
+  width: min(560px, 92%);
+  text-align: center;
+  padding: 8px 20px 24px;
+}
+.intro-brand {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 14px; margin-bottom: 6px;
+}
+.intro-title {
+  margin: 4px 0 10px; font-size: 34px; line-height: 1.2; color: #fff;
+  letter-spacing: -0.01em;
+}
+.intro-eddie {
+  width: 180px; height: 240px; margin: 4px auto 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+.intro-eddie svg { width: 150px; height: 200px; overflow: visible; }
+/* 인트로에서는 EDDIE 글로우를 은은하게 상시 펄스 */
+.intro-eddie #eddie-glow { animation: intro-glow 2.8s ease-in-out infinite; }
+@keyframes intro-glow { 0%,100% { opacity: .12; } 50% { opacity: .5; } }
+
+.intro-speech {
+  min-height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 2px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin: 6px auto 18px;
+  max-width: 460px;
+  font-size: 16px; color: var(--text); line-height: 1.5;
+}
+.intro-caret { color: var(--accent-2); animation: blink 1s steps(1) infinite; }
+
+.intro-actions { min-height: 48px; }
+.intro-start {
+  font-size: 16px; padding: 12px 26px;
+  opacity: 0; transform: translateY(8px) scale(.96);
+  transition: opacity .35s, transform .35s;
+}
+.intro-start.show { opacity: 1; transform: none; animation: cta-pulse 2s ease-in-out infinite; }
+@keyframes cta-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(111,183,255,.5); }
+  50%     { box-shadow: 0 0 0 10px rgba(111,183,255,0); }
+}
+.intro-skip {
+  position: absolute; top: 0; right: 8px;
+  background: none; border: none; color: var(--muted);
+  font-size: 13px; cursor: pointer;
+}
+.intro-skip:hover { color: var(--text); }
+.intro-foot { margin-top: 18px; color: #4b5e80; font-size: 12px; }
+
 /* EDDIE success 글로우 펄스 (§5.5 signature) */
 @keyframes eddie-glow-pulse {
   0%, 100% { opacity: 0; }

@@ -1,22 +1,27 @@
 // main.js — Playino · PlayHouse 거실 레슨
-// 구현 순서 §9: STEP 1(Scaffold) + STEP 2(시리얼 코어) 까지.
-// 이 화면은 STEP 2 검증용 하네스다:
-//   연결 -> PING 핸드셰이크 -> L2:1 / L2:0 로 실물 D2 LED 토글 -> 시리얼 모니터.
-//   (여기서 멈추고 사람이 실물 LED 를 확인한다 — §9.2)
+// 실행 흐름: 인트로(스토리) -> 거실 레슨 화면.
+// 현재 레슨 화면은 시리얼 코어 검증 하네스(연결·핸드셰이크·LED 토글·모니터).
+//   ※ 실물 배선상 D2 는 DHT11 센서이므로, 거실 조명 검증은 단색 LED(D5)로 한다.
+//      (docs/HARDWARE.md 참고)
 
 import { SerialConnection, isSupported } from './serial/webserial.js';
 import { handshake, flashFirmware } from './serial/provisioning.js';
 import { encodeDigitalWrite, parseLine, RESPONSE } from './serial/protocol.js';
+import { showIntro } from './scenes/intro.js';
 import eddieSvg from './assets/eddie.svg?raw';
 
-// 거실 = D2 (§0). 본 검증은 거실 핀에 고정.
-const LIVING_PIN = 2;
+// 거실 조명 = 단색 LED D5 (실물 배선 기준 — docs/HARDWARE.md).
+const LIVING_PIN = 5;
 
 const conn = new SerialConnection();
 let ledOn = false;
 
-// ---- 부팅 ------------------------------------------------------------
+// ---- 부팅: 인트로 먼저, "시작하기" 후 레슨 ---------------------------
 window.addEventListener('DOMContentLoaded', () => {
+  showIntro(startApp);
+});
+
+function startApp() {
   renderStage();
   renderPanel();
   bindSerialEvents();
@@ -26,17 +31,17 @@ window.addEventListener('DOMContentLoaded', () => {
   } else {
     log('sys', 'WebSerial 지원됨. [보드 연결]을 눌러 포트를 선택하세요.');
   }
-});
+}
 
 // ---- 좌측 스테이지 (게임 캔버스 자리) -------------------------------
 function renderStage() {
   const stage = document.getElementById('stage');
   stage.innerHTML = `
     <div class="eddie-stage" id="eddie-mount">${eddieSvg}</div>
-    <div class="room-lamp" id="room-lamp"><small>D2</small></div>
+    <div class="room-lamp" id="room-lamp"><small>D${LIVING_PIN}</small></div>
     <div class="room-card">
       <h2>거실 · 시리얼 코어 검증</h2>
-      <p>오른쪽 패널에서 보드를 연결하고 <b>불 켜기 / 끄기</b>로 실물 D2 LED 를 토글하세요.
+      <p>오른쪽 패널에서 보드를 연결하고 <b>불 켜기 / 끄기</b>로 실물 D${LIVING_PIN} LED 를 토글하세요.
          <br/>LED 와 EDDIE의 success 글로우가 <b>같은 이벤트</b>에서 켜집니다.</p>
     </div>
   `;
