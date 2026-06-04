@@ -300,24 +300,35 @@ html, body {
 #i-start.show { opacity: 1; transform: none; animation: cta-pulse 2s ease-in-out infinite; }
 
 /* ---- 사용환경 준비 씬 ---------------------------------------------- */
+.scene.setup { display: flex; flex-direction: column; min-height: 100vh; }
 .setup-body {
   display: grid;
-  grid-template-columns: 280px 1fr 340px;
-  gap: 20px; padding: 22px; align-items: start;
+  grid-template-columns: 240px minmax(380px, 480px) 320px;
+  gap: 28px; padding: 28px; align-items: center;   /* 세 열을 세로 가운데로 */
+  width: 100%; max-width: 1140px; margin: auto;     /* flex 컬럼 안에서 화면 가운데로 */
 }
-@media (max-width: 980px) { .setup-body { grid-template-columns: 1fr; } }
+@media (max-width: 980px) {
+  .setup-body { grid-template-columns: 1fr; max-width: 560px; align-items: stretch; }
+  .setup-left { order: -1; }
+}
 
-.setup-left { text-align: center; }
-.setup-eddie { width: 200px; height: 220px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+.setup-left { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.setup-eddie { width: 190px; height: 200px; display: flex; align-items: center; justify-content: center; }
 .setup-eddie svg { width: 150px; height: 200px; overflow: visible; }
 .setup-eddie #eddie-glow { animation: intro-glow 2.8s ease-in-out infinite; }
 .setup-speech {
   background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px;
-  padding: 14px 16px; color: var(--text); font-size: 15px; line-height: 1.5; margin-top: 8px;
+  padding: 14px 16px; color: var(--text); font-size: 14px; line-height: 1.5; text-align: center;
 }
 
-.setup-title { font-size: 20px; margin: 4px 0 14px; }
-.checklist { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+/* 가운데 메인 = 카드로 묶어 정돈 */
+.setup-main {
+  display: flex; flex-direction: column; align-items: stretch; text-align: center;
+  background: rgba(19,29,49,.55); border: 1px solid var(--line); border-radius: 18px;
+  padding: 26px 28px; box-shadow: 0 18px 50px rgba(0,0,0,.34);
+}
+.setup-title { font-size: 21px; margin: 0 0 16px; }
+.checklist { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 10px; text-align: left; }
 .check-item {
   display: flex; align-items: center; gap: 12px;
   background: var(--bg-elev); border: 1px solid var(--line); border-radius: 12px;
@@ -331,11 +342,16 @@ html, body {
 .check-text b { font-size: 15px; }
 .check-text small { color: var(--muted); font-size: 12px; }
 
-.setup-action { min-height: 60px; margin-bottom: 14px; }
-.confirm-q { font-size: 15px; margin: 0 0 10px; }
-.setup-go { font-size: 16px; padding: 12px 24px; opacity: .5; }
+.setup-action { min-height: 56px; margin-bottom: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; justify-content: center; }
+.setup-action .flash-progress, .setup-action .btn-row { width: 100%; }
+.confirm-q { font-size: 15px; margin: 0 0 4px; }
+.setup-go { font-size: 16px; padding: 12px 24px; opacity: .5; align-self: center; }
 .setup-go.show:not(:disabled) { opacity: 1; animation: cta-pulse 2s ease-in-out infinite; }
-.setup-monitor h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.setup-skip-wrap { display: flex; justify-content: center; }
+
+/* 시리얼 모니터 카드 */
+.setup-monitor { background: rgba(13,22,40,.5); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.setup-monitor h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 
 .muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
