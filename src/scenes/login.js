@@ -6,9 +6,10 @@ export function showLogin(root, { onDone } = {}) {
     <div class="login scene-fade">
       <div class="login-card">
         <div class="login-brand">
+          <div class="logo-mark"><span>E</span><i class="logo-spark"></i></div>
           <div class="lb-tag"><span class="brand-dot"></span>AIoT 교육 플랫폼</div>
           <h1 class="intro-title gradient">Eduino <span>AI</span></h1>
-          <p class="intro-sub">AIoT 교육 플랫폼</p>
+          <p class="intro-sub">브라우저로 직접 배우는 AI 실험실</p>
           <p class="lb-desc">코딩·교구·AI 학습을 한곳에,<br/>모든 수업환경에 적용 가능한 학습 플랫폼.</p>
           <div class="lb-eddie">${eddieSvg}</div>
         </div>

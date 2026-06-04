@@ -17,7 +17,7 @@ const MAP_H = 560;
 const DOOR_W = 120, GAP = 210, START = 80;
 const TOP_Y = 200, BOT_Y = 316;   // 복도 안 트리거 y (벽 앞)
 
-export function showLab(root, { onEnter } = {}) {
+export function showLab(root, { onEnter, spawnAt } = {}) {
   // 문 배치: 앞쪽 절반은 위, 나머지는 아래
   const topN = Math.ceil(SENSORS.length / 2);
   const doors = SENSORS.map((s, i) => {
@@ -26,6 +26,9 @@ export function showLab(root, { onEnter } = {}) {
     return { ...s, top, x: START + k * GAP, y: top ? TOP_Y : BOT_Y };
   });
   const MAP_W = START + Math.max(topN, SENSORS.length - topN) * GAP + 80;
+  // 방에서 나오면 들어갔던 문 앞(복도)에서 등장 (연속성)
+  let spawnPt = { x: 120, y: 268 };
+  if (spawnAt) { const d = doors.find((x) => x.id === spawnAt); if (d) spawnPt = { x: d.x + DOOR_W / 2 - 14, y: 268 }; }
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade">
@@ -54,7 +57,7 @@ export function showLab(root, { onEnter } = {}) {
 
   const map = {
     width: MAP_W, height: MAP_H, bg: '#0a1020',
-    spawn: { x: 120, y: 268 },
+    spawn: spawnPt,
     walls: [
       { x: 0, y: 0, w: MAP_W, h: 188 },
       { x: 0, y: 372, w: MAP_W, h: MAP_H - 372 },

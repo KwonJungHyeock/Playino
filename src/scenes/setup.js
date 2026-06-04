@@ -12,7 +12,7 @@ const BUILTIN_LED = 13; // 보드 내장 LED ('L' 표시) — 외부 배선 불�
 const ITEMS = [
   { id: 'browser',  label: '브라우저 확인',   desc: 'Chrome / Edge 데스크톱 (WebSerial)' },
   { id: 'connect',  label: '보드 연결',       desc: 'USB 포트 선택' },
-  { id: 'firmware', label: '펌웨어 & 통신',   desc: 'PLAYHOUSE 핸드셰이크 (필요 시 자동 굽기)' },
+  { id: 'firmware', label: '펌웨어 & 통신',   desc: '보드 통신 확인 (필요 시 자동 굽기)' },
   { id: 'led13',    label: '내장 LED 테스트', desc: '보드 13번 LED 깜빡임 확인' },
 ];
 
@@ -25,7 +25,7 @@ export function showSetup(root, { onDone }) {
   root.innerHTML = `
     <div class="scene setup scene-fade">
       <header class="app-header">
-        <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong> · PlayHouse</div>
+        <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong> · 스타터 키트</div>
         <div class="phase-badge">사용환경 준비</div>
       </header>
 

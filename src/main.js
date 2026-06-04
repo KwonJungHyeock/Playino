@@ -19,11 +19,13 @@ function sceneSplash() { showSplash(app(), { onDone: sceneIntro }); }
 function sceneIntro() { showIntro(app(), { onDone: sceneLogin }); }
 function sceneLogin() { showLogin(app(), { onDone: sceneSetup }); }
 function sceneSetup() { showSetup(app(), { onDone: sceneLab }); }
-function sceneLab() { showLab(app(), { onEnter: enterRoom }); }   // 연구소 복도 = 맵 허브(L0)
+let lastSensor = null;
+function sceneLab() { showLab(app(), { onEnter: enterRoom, spawnAt: lastSensor }); }   // 연구소 복도 = 맵 허브(L0)
 
 function enterRoom(id) {
+  lastSensor = id;                            // 나올 때 이 문 앞에서 등장
   if (id === 'led') sceneHouse();
-  else if (id === 'dht11') dhtCoding();      // 코딩 → 모니터링(미션) → 게임
+  else if (id === 'dht11') dhtCoding();       // 코딩 → 모니터링(미션) → 게임
   else if (id === 'relay') showRelay(app(), { onExit: sceneLab });
   else sceneLab();
 }

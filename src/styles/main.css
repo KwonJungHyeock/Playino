@@ -520,29 +520,29 @@ html, body {
 
 /* ---- 퀘스트 가이드 패널 (게임 HUD) ---- */
 .quest-panel {
-  position: absolute; top: 58px; right: 16px; z-index: 5;
-  width: 230px; border-radius: 14px; overflow: hidden;
-  background: rgba(13,22,40,.86); border: 1px solid rgba(255,255,255,.10);
-  box-shadow: 0 12px 34px rgba(0,0,0,.4); backdrop-filter: blur(8px);
-  font-size: 13px; pointer-events: auto;
+  position: absolute; top: 66px; right: 18px; z-index: 5;
+  width: 320px; border-radius: 16px; overflow: hidden;
+  background: rgba(13,22,40,.9); border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 16px 44px rgba(0,0,0,.45); backdrop-filter: blur(10px);
+  font-size: 15px; pointer-events: auto;
 }
 .quest-head {
-  width: 100%; display: flex; align-items: center; gap: 8px;
-  padding: 10px 12px; background: rgba(255,209,26,.12); border: none; cursor: pointer;
-  color: var(--text); font-weight: 700; font-size: 12px; letter-spacing: .02em;
+  width: 100%; display: flex; align-items: center; gap: 9px;
+  padding: 14px 16px; background: rgba(255,209,26,.14); border: none; cursor: pointer;
+  color: var(--text); font-weight: 700; font-size: 14px; letter-spacing: .02em;
 }
-.quest-scroll { font-size: 14px; }
-.quest-title { flex: 1; text-align: left; color: var(--accent-2); }
-.quest-toggle { color: var(--muted); font-size: 16px; line-height: 1; }
-.quest-body { padding: 10px 12px 12px; }
+.quest-scroll { font-size: 18px; }
+.quest-title { flex: 1; text-align: left; color: var(--accent-2); font-family: 'Space Grotesk', var(--sans); }
+.quest-toggle { color: var(--muted); font-size: 20px; line-height: 1; }
+.quest-body { padding: 14px 16px 16px; }
 .quest-panel.collapsed .quest-body { display: none; }
-.quest-sub { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
-.quest-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
-.quest-list li { display: flex; align-items: flex-start; gap: 7px; color: var(--text); line-height: 1.4; }
+.quest-sub { color: var(--muted); font-size: 13.5px; margin-bottom: 12px; }
+.quest-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.quest-list li { display: flex; align-items: flex-start; gap: 10px; color: var(--text); line-height: 1.5; font-size: 14.5px; }
 .quest-list li.done { color: var(--muted); text-decoration: line-through; }
-.q-check { color: var(--accent-2); font-weight: 700; flex: none; }
+.q-check { color: var(--accent-2); font-weight: 700; flex: none; font-size: 16px; }
 .quest-list li.done .q-check { color: var(--ok); }
-.quest-foot { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+.quest-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 
 /* ---- 미션룸 추가 요소 ---- */
 .room-skip { background: transparent; color: var(--muted); border-color: var(--line); }
@@ -712,19 +712,19 @@ html, body {
   -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 3px 22px rgba(120,160,255,.35));
 }
-.intro-title.gradient span { color: var(--accent); -webkit-text-fill-color: var(--accent); }
+.intro-title.gradient span { color: #ff6a5a; -webkit-text-fill-color: #ff6a5a; }
 .intro-brand {
   font-family: 'Space Grotesk', var(--sans); letter-spacing: .26em; text-transform: uppercase;
   font-size: 11px; color: #8aa0c8; font-weight: 600;
 }
 .intro-sub { font-family: 'Space Grotesk', var(--sans); letter-spacing: .01em; color: #aebfdc; }
 .logo-mark {
-  background: linear-gradient(145deg, #243456, #0e1830);
-  border: 1px solid rgba(140,170,255,.28);
-  box-shadow: 0 12px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+  background: linear-gradient(145deg, #ff6a5a, #e23a2e);
+  border: 1px solid rgba(255,140,120,.4);
+  box-shadow: 0 12px 34px rgba(226,58,46,.45), inset 0 1px 0 rgba(255,255,255,.22);
 }
-.logo-mark span { font-family: 'Orbitron', sans-serif; font-weight: 800; color: #cfe0ff; font-size: 32px; }
-.logo-spark { background: #6fb7ff; box-shadow: 0 0 16px #6fb7ff; }
+.logo-mark span { font-family: 'Orbitron', sans-serif; font-weight: 800; color: #fff; font-size: 34px; }
+.logo-spark { background: #ffd11a; box-shadow: 0 0 16px #ffd11a; }
 .brand strong { font-family: 'Space Grotesk', var(--sans); letter-spacing: .01em; }
 .brand-sub, .phase-badge, .room-chip, .intro-dots + .intro-actions .btn { font-family: 'Space Grotesk', var(--sans); }
 

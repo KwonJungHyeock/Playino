@@ -8,7 +8,7 @@ import eddieSvg from '../assets/eddie.svg?raw';
 
 const STORY = [
   '안녕! 나는 EDDIE야. 🤖 갓 배송된 꼬마 홈 AI 로봇이지.',
-  '여기는 내 새 보금자리 PlayHouse… 그런데 전원이 다 꺼져서 깜깜해.',
+  '여기는 Eduino AI 스타터 키트 연구소… 그런데 장비 전원이 다 꺼져서 깜깜해.',
   '네가 코드로 나를 도와줄래? 방마다 불을 켜고 집을 깨우는 거야!',
   '그 전에, 우리 장비가 잘 작동하는지 같이 점검하자!',
 ];
@@ -38,8 +38,8 @@ export function showIntro(root, { onDone }) {
       <div class="logo-mark"><span>E</span><i class="logo-spark"></i></div>
       <div class="intro-brand">AI CODING PLATFORM</div>
       <h1 class="intro-title gradient">Eduino <span>AI</span></h1>
-      <p class="intro-sub">AI와 함께 배우는 피지컬 컴퓨팅</p>
-      <p class="intro-desc">코드가 진짜 세상을 움직이는 걸 경험하는<br/>차세대 AI 코딩 학습 플랫폼.</p>
+      <p class="intro-sub">브라우저로 직접 배우는 AI 실험실</p>
+      <p class="intro-desc">코드가 진짜 세상을 움직이는 걸 경험하는<br/>AIoT 코딩·교구 학습 플랫폼.</p>
       ${dots(0)}
       <div class="intro-actions"><button class="btn primary lg" id="i-next">시작하기 ▶</button></div>`;
   }
@@ -55,7 +55,7 @@ export function showIntro(root, { onDone }) {
   }
   function renderStory() {
     return `
-      <div class="intro-brand"><span class="brand-dot"></span>PlayHouse · 모험의 시작</div>
+      <div class="intro-brand"><span class="brand-dot"></span>스타터 키트 · 모험의 시작</div>
       <div class="intro-eddie float">${eddieSvg}</div>
       <div class="intro-speech glass"><span id="intro-sp"></span><span class="intro-caret">▋</span></div>
       ${dots(2)}
