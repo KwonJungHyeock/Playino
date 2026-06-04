@@ -868,6 +868,74 @@ html, body {
 .cover-sub b { color: #fff; }
 .cover-sub .cv-dot { color: #ff9e3c; }
 .cover-eddie { margin: 16px auto 4px; filter: drop-shadow(0 8px 26px rgba(0,0,0,.55)); }
+
+/* ===== 탈출 미니게임 셸 ===== */
+.escape-room { display: flex; flex-direction: column; background: radial-gradient(120% 100% at 50% 0%, #0c1018, #05070d); }
+.er-vignette { position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(120% 90% at 50% 42%, transparent 50%, rgba(0,0,0,.82)); }
+.mr-top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 22px; border-bottom: 1px solid rgba(255,176,32,.16); background: rgba(8,10,16,.6); }
+.mr-id { display: flex; flex-direction: column; gap: 2px; }
+.mr-id b { font-size: 17px; }
+.mr-esc { font-size: 12px; color: #ffb86a; letter-spacing: .5px; }
+.mr-stage { position: relative; z-index: 1; flex: 1; display: grid; place-items: center; padding: 24px; min-height: 0; overflow: auto; }
+.mr-soon { color: var(--muted); }
+
+.game { width: min(560px, 94%); background: rgba(14,18,28,.72); border: 1px solid rgba(120,140,180,.2);
+  border-radius: 18px; padding: 22px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.5); text-align: center; }
+.game-lead { font-size: 14px; color: #dbe6ff; line-height: 1.55; margin: 0 0 16px; }
+.game-lead b { color: #fff; }
+.rgb-status { margin-top: 14px; font-size: 14px; color: var(--muted); min-height: 20px; }
+.rgb-status.near { color: #ffd27a; }
+.rgb-status.ok { color: #3ddc91; font-weight: 700; }
+
+/* RGB */
+.rgb-panels { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 18px; }
+.rgb-col { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.rgb-sw { width: 96px; height: 64px; border-radius: 12px; border: 1px solid rgba(255,255,255,.18); box-shadow: inset 0 0 18px rgba(0,0,0,.45); transition: background .1s; }
+.rgb-arrow { color: var(--muted); font-size: 22px; }
+.rgb-sliders { display: flex; flex-direction: column; gap: 12px; }
+.rgb-slider { display: flex; align-items: center; gap: 12px; }
+.rgb-slider > span { width: 18px; font-weight: 800; }
+.rgb-slider input { flex: 1; accent-color: var(--accent); }
+
+/* 부저 */
+.bz-pads { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; max-width: 300px; margin: 0 auto 16px; }
+.bz-pad { height: 88px; border-radius: 14px; border: 2px solid rgba(255,255,255,.14); background: var(--pc);
+  filter: brightness(.4) saturate(.85); cursor: pointer; transition: transform .08s, filter .08s, box-shadow .08s; }
+.bz-pad.lit { filter: brightness(1.25) saturate(1.2); box-shadow: 0 0 26px var(--pc); transform: scale(1.03); }
+.bz-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.bz-progress { font-size: 13px; color: var(--muted); }
+
+/* 키패드 */
+.keypadgame .kp-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.kp-history { width: 100%; max-height: 128px; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.kp-hrow { display: flex; justify-content: center; gap: 16px; }
+.kp-g { letter-spacing: 5px; color: #cfe0ff; font-family: var(--mono); }
+.kp-fb { letter-spacing: 3px; color: #ffd27a; font-family: var(--mono); }
+.kp-current { display: flex; gap: 10px; }
+.kp-cell { width: 42px; height: 52px; border-radius: 10px; border: 1px solid rgba(120,140,180,.3); background: rgba(8,12,20,.7);
+  display: grid; place-items: center; font-size: 24px; font-family: var(--mono); color: #cfe0ff; }
+.kp-cell.f { border-color: var(--accent); color: #fff; }
+.kp-pad { display: grid; grid-template-columns: repeat(3, 64px); gap: 8px; justify-content: center; }
+.kp-key { height: 46px; border-radius: 10px; border: 1px solid rgba(120,140,180,.3); background: rgba(20,28,44,.85); color: var(--text); font-size: 18px; cursor: pointer; transition: .12s; }
+.kp-key:hover { border-color: var(--accent); }
+.kp-ok { background: rgba(111,183,255,.22); font-size: 14px; }
+.kp-del { background: rgba(255,120,80,.16); }
+.kp-leg { font-size: 11px; color: var(--muted); }
+
+/* 7세그 카운트다운 */
+.seg-display { font-family: "Orbitron", var(--mono); font-size: 64px; font-weight: 800; color: #ff5a3c;
+  text-shadow: 0 0 22px rgba(255,90,60,.5); margin: 6px 0 16px; }
+.seg-display.ok { color: #3ddc91; text-shadow: 0 0 22px rgba(61,220,145,.6); }
+.seg-display.bad { animation: seg-shake .3s; }
+.seg-track { position: relative; height: 30px; border-radius: 999px; background: rgba(8,12,20,.85);
+  border: 1px solid rgba(120,140,180,.3); margin-bottom: 18px; overflow: hidden; }
+.seg-zone { position: absolute; top: 0; bottom: 0; background: linear-gradient(180deg, rgba(61,220,145,.55), rgba(61,220,145,.22));
+  border-left: 1px solid #3ddc91; border-right: 1px solid #3ddc91; }
+.seg-marker { position: absolute; top: -3px; width: 5px; height: 36px; background: #ffd24a; border-radius: 3px;
+  box-shadow: 0 0 12px #ffd24a; transform: translateX(-50%); }
+@keyframes seg-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
 @keyframes cover-flicker {
   0%, 92%, 100% { opacity: 1; }
   93% { opacity: .72; } 94% { opacity: 1; } 96% { opacity: .55; } 97% { opacity: 1; }
