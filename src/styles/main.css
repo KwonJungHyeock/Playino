@@ -727,3 +727,7 @@ html, body {
 .logo-spark { background: #6fb7ff; box-shadow: 0 0 16px #6fb7ff; }
 .brand strong { font-family: 'Space Grotesk', var(--sans); letter-spacing: .01em; }
 .brand-sub, .phase-badge, .room-chip, .intro-dots + .intro-actions .btn { font-family: 'Space Grotesk', var(--sans); }
+
+/* 미니게임: 헤더(그만두기)가 게임 영역 위에 오도록 (클릭 가로채임 수정) */
+.dht .app-header { position: relative; z-index: 5; }
+.dht-wrap { z-index: 1; }
