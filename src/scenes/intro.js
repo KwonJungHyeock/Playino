@@ -7,10 +7,10 @@
 import eddieSvg from '../assets/eddie.svg?raw';
 
 const STORY = [
-  '안녕! 나는 EDDIE야. 🤖 갓 배송된 꼬마 홈 AI 로봇이지.',
-  '여기는 Eduino AI 스타터 키트 연구소… 그런데 장비 전원이 다 꺼져서 깜깜해.',
-  '네가 코드로 나를 도와줄래? 방마다 불을 켜고 집을 깨우는 거야!',
-  '그 전에, 우리 장비가 잘 작동하는지 같이 점검하자!',
+  '…부팅 완료. 나는 EDDIE. 🤖 그런데 여긴… 칠흑 같은 폐연구소야.',
+  '문은 잠겼고 전원은 꺼졌어. "여기서… 나가야 해."',
+  '방마다의 미션을 풀어 시스템을 복구하면 길이 열릴 거야. 도와줄래?',
+  '그 전에, 내 장비가 깨어났는지 같이 점검하자!',
 ];
 
 export function showIntro(root, { onDone }) {
@@ -45,11 +45,14 @@ export function showIntro(root, { onDone }) {
   }
   function renderPlayhouse() {
     return `
-      <div class="intro-brand"><span class="brand-dot"></span>Eduino AI 시리즈 · 01</div>
-      <h1 class="intro-title gradient">스타터 키트<br/><span style="font-size:.6em">종합편</span></h1>
-      <div class="intro-eddie float">${eddieSvg}</div>
-      <p class="intro-desc">EDDIE와 함께 <b>브레드보드에 직접 결선하며</b> 배우는 키트.<br/>
-        연구소 복도의 학습방에서 LED·센서를 하나씩 깨워봐!</p>
+      <div class="cover">
+        <div class="cover-kicker"><span class="brand-dot"></span>EDUINO AI 시리즈 · 01</div>
+        <div class="cover-title">Playino<span class="cv-colon"> : </span><span class="cv-er">Escape Room</span></div>
+        <div class="cover-sub">스타터 키트 <span class="cv-dot">·</span> <b>종합편</b></div>
+        <div class="intro-eddie float cover-eddie">${eddieSvg}</div>
+        <p class="intro-desc">어둠 속 폐연구소에 깨어난 EDDIE.<br/>
+          방마다의 미션을 풀어 시스템을 복구하고 <b>탈출</b>하라.</p>
+      </div>
       ${dots(1)}
       <div class="intro-actions"><button class="btn primary lg" id="i-next">다음 ▶</button></div>`;
   }

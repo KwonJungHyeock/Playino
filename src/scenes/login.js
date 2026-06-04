@@ -14,10 +14,6 @@ export function showLogin(root, { onDone } = {}) {
           <div class="lb-eddie">${eddieSvg}</div>
         </div>
         <div class="login-form">
-          <div class="lf-tabs">
-            <button class="lf-tab active" data-tab="teacher">교사용</button>
-            <button class="lf-tab" data-tab="student">학생용</button>
-          </div>
           <h2 class="lf-title">로그인</h2>
           <p class="lf-sub">에듀이노 계정으로 로그인해주세요. <span class="lf-open">(데모: 그냥 로그인 가능)</span></p>
           <label class="lf-label">이메일</label>
@@ -33,8 +29,6 @@ export function showLogin(root, { onDone } = {}) {
       </div>
     </div>`;
 
-  root.querySelectorAll('.lf-tab').forEach((b) =>
-    (b.onclick = () => root.querySelectorAll('.lf-tab').forEach((x) => x.classList.toggle('active', x === b))));
   const go = () => onDone?.();
   root.querySelector('#lf-login').onclick = go;
   root.querySelector('#lf-find').onclick = () => alert('데모 버전이라 비밀번호 없이 바로 로그인할 수 있어요!');

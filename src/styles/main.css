@@ -850,3 +850,19 @@ html, body {
   .ch-brand, .ch-overall { min-width: 0; }
   .ch-crumb { display: none; }
 }
+
+/* ===== 인트로 제품 표지 (Playino : Escape Room) ===== */
+.cover { text-align: center; }
+.cover-kicker { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; letter-spacing: 3px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+.cover-title { font-family: "Orbitron", "Space Grotesk", sans-serif; font-weight: 800;
+  font-size: clamp(30px, 5vw, 52px); line-height: 1.04; letter-spacing: 1px; color: #eaf1ff;
+  text-shadow: 0 0 24px rgba(255,140,60,.25); }
+.cover-title .cv-colon { color: #ffb020; }
+.cover-title .cv-er { background: linear-gradient(92deg, #ffb020, #ff6a3c 60%, #ff5470);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 18px rgba(255,90,60,.35)); }
+.cover-sub { margin-top: 8px; font-size: clamp(15px, 2.4vw, 20px); letter-spacing: 4px; color: #cdd9f0; }
+.cover-sub b { color: #fff; }
+.cover-sub .cv-dot { color: var(--accent); }
+.cover-eddie { margin: 14px auto 4px; }

@@ -24,7 +24,11 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   });
   const EXIT = { x: MAP_W / 2 - 34, y: MAP_H - 58, w: 68, h: 40 };
 
-  let spawnPt = { x: MAP_W / 2 - 14, y: MAP_H - 100 };
+  // 기본 스폰: 첫 번째 '플레이 가능' 방 바로 앞(바로 입장할 수 있게)
+  const firstReady = cells.find((c) => c.status === 'ready') || cells[0];
+  let spawnPt = firstReady
+    ? { x: firstReady.cx + CARD_W / 2 - 14, y: firstReady.cy + CARD_H + 58 }
+    : { x: MAP_W / 2 - 14, y: MAP_H - 100 };
   if (spawnAt) { const c = cells.find((x) => x.id === spawnAt); if (c) spawnPt = { x: c.cx + CARD_W / 2 - 14, y: c.cy + CARD_H + 56 }; }
 
   root.innerHTML = `
@@ -152,11 +156,14 @@ function drawChapter(ctx, st, cells, MAP_W, MAP_H, EXIT, ch) {
     ctx.fillStyle = gg; rr(ctx, fx + 10, fy + 10, fw - 20, fh - 38, 8); ctx.fill();
     ctx.font = '30px sans-serif'; ctx.fillStyle = ready ? '#fff' : '#6a4a4a';
     ctx.fillText(clr ? '✓' : ready ? c.icon : '🔒', fx + fw / 2, fy + 42);
-    // 이름 + 탈출 상황
+    // 이름 + 상태/탈출 상황
     ctx.font = '700 12px "Space Grotesk", sans-serif'; ctx.fillStyle = clr ? '#bfffd9' : ready ? '#dce8ff' : '#9a8088';
     ctx.fillText(c.name, fx + fw / 2, fy + fh - 22);
-    ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(180,190,210,0.55)';
-    ctx.fillText(c.escape, fx + fw / 2, fy + fh - 8);
+    if (clr) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(120,230,170,0.7)'; ctx.fillText('복구 완료 ✓', fx + fw / 2, fy + fh - 8); }
+    else if (ready) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(180,200,255,0.6)'; ctx.fillText(`▶ ${c.escape}`, fx + fw / 2, fy + fh - 8); }
+    else { ctx.font = '700 10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(255,176,32,0.6)'; ctx.fillText('준비중 · 곧 공개', fx + fw / 2, fy + fh - 8); }
+    // 플레이 가능 방엔 'PLAY' 핀(눈에 띄게)
+    if (ready && !clr) { ctx.fillStyle = 'rgba(111,183,255,0.9)'; rr(ctx, fx + fw - 44, fy + 8, 36, 16, 8); ctx.fill(); ctx.fillStyle = '#06121f'; ctx.font = '700 9px "Space Grotesk", sans-serif'; ctx.fillText('PLAY', fx + fw - 26, fy + 19); }
   }
 
   // 나가기(복도로)
