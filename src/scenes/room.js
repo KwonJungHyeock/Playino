@@ -4,14 +4,26 @@
 
 import { board } from '../app/board.js';
 import { createEditor } from '../editor/codeEditor.js';
+import { createBlockEditor } from '../editor/blockEditor.js';
 import { judge, parseLoop, execute } from '../editor/interpreter.js';
 import eddieSvg from '../assets/eddie.svg?raw';
+
+// 미션 goal → 블록 시작 배치
+function presetFor(m, pin) {
+  if (m.goal === 'pwm') return [{ type: 'led_pwm', fields: { PIN: pin, VAL: m.want ? 220 : 128 } }];
+  if (m.goal === 'blink') return [
+    { type: 'led_state', fields: { PIN: pin, STATE: 'HIGH' } }, { type: 'wait', fields: { MS: 800 } },
+    { type: 'led_state', fields: { PIN: pin, STATE: 'LOW' } }, { type: 'wait', fields: { MS: 800 } },
+  ];
+  return [{ type: 'led_state', fields: { PIN: pin, STATE: m.goal === 'off' ? 'LOW' : 'HIGH' } }];
+}
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function openRoom(room, { onComplete, onClose }) {
   let mi = 0;
   let editor = null;
+  let blockEd = null;
   let solved = false;
   let tab = 'button';
 
@@ -39,8 +51,9 @@ export function openRoom(room, { onComplete, onClose }) {
         </div>
         <div class="room-right">
           <div class="room-tabs">
-            <button class="room-tab" data-tab="button">🔘 버튼 모드</button>
-            <button class="room-tab" data-tab="code">⌨️ 코드 모드</button>
+            <button class="room-tab" data-tab="button">🔘 버튼</button>
+            <button class="room-tab" data-tab="block">🧩 블록</button>
+            <button class="room-tab" data-tab="code">⌨️ 코드</button>
           </div>
           <div class="room-tabpane" id="room-pane"></div>
           <div class="room-feedback" id="room-fb"></div>
@@ -101,9 +114,33 @@ export function openRoom(room, { onComplete, onClose }) {
   }
   function renderPane() {
     if (editor) { try { editor.destroy?.(); } catch (_) {} editor = null; }
+    if (blockEd) { try { blockEd.destroy?.(); } catch (_) {} blockEd = null; }
     elPane.innerHTML = '';
     if (tab === 'button') renderButtonPane();
+    else if (tab === 'block') renderBlockPane();
     else renderCodePane();
+  }
+
+  // ---- 블록(Blockly) 모드 ----
+  function renderBlockPane() {
+    const m = mission();
+    elPane.innerHTML = `
+      ${m.type === 'challenge' ? `<div class="challenge-banner">🎯 도전 · ${m.challenge}</div>` : ''}
+      <div class="block-host" id="block-host"></div>
+      <div class="code-actions">
+        <button class="btn primary" id="b-run">⚡ 업로드</button>
+        <span class="code-status" id="code-status"></span>
+      </div>
+      <div class="hint-box">💡 <b>힌트</b> · ${m.hint}</div>`;
+    const statusEl = $('#code-status');
+    const live = (code) => {
+      const res = judge(code, room.pin, m.goal, m.want);
+      statusEl.textContent = res.ok ? '✅ 정답! [업로드]로 동작을 확인하세요' : '';
+      statusEl.classList.toggle('ok', res.ok);
+    };
+    blockEd = createBlockEditor($('#block-host'), { pin: room.pin, preset: presetFor(m, room.pin), onChange: live });
+    setTimeout(() => live(blockEd.getCode()), 60);
+    $('#b-run').onclick = () => runCode(blockEd.getCode(), m);
   }
 
   // ---- 버튼(체험) 모드 ----
@@ -166,24 +203,25 @@ export function openRoom(room, { onComplete, onClose }) {
     };
     editor = createEditor($('#editor-host'), m.base, live);
     live(m.base);
+    $('#b-upload').onclick = () => runCode(editor.getDoc(), m);
+  }
 
-    $('#b-upload').onclick = () => {
-      try {
-        const code = editor.getDoc();
-        const res = judge(code, room.pin, m.goal, m.want);
-        if (!res.ok) { feedback('warn', `아직이에요. ${res.reason}<br/><small>💡 ${m.hint}</small>`); return; }
-        board.log('sys', `코드 판정 통과 (${m.goal})`);
-        if (m.goal === 'on') reflectLed(true);
-        else if (m.goal === 'off') reflectLed(false);
-        else if (m.goal === 'pwm') reflectPwm(res.summary.pwmVal ?? 128);
-        if (board.connected) {
-          feedback('', '업로드 중… 동작을 확인하세요!');
-          execute(parseLoop(code), room.pin, board, { onStep: (on, v) => (v != null ? reflectPwm(v) : reflectLed(on)) })
-            .then(() => { if (m.goal === 'on') reflectLed(true); if (m.goal === 'pwm') reflectPwm(res.summary.pwmVal ?? 128); pass(); })
-            .catch((e) => { board.log('sys', '반영 실패(코드는 정답): ' + (e?.message ?? e)); pass(); });
-        } else { board.log('sys', '보드 미연결 — 화면으로만 반영'); pass(); }
-      } catch (e) { feedback('warn', '오류가 났어요: ' + (e?.message ?? e)); }
-    };
+  // 버튼/블록/코드 공통: 판정 → 화면 반영 → (연결 시)실물 반영 → 완료
+  function runCode(code, m) {
+    try {
+      const res = judge(code, room.pin, m.goal, m.want);
+      if (!res.ok) { feedback('warn', `아직이에요. ${res.reason}<br/><small>💡 ${m.hint}</small>`); return; }
+      board.log('sys', `판정 통과 (${m.goal})`);
+      if (m.goal === 'on') reflectLed(true);
+      else if (m.goal === 'off') reflectLed(false);
+      else if (m.goal === 'pwm') reflectPwm(res.summary.pwmVal ?? 128);
+      if (board.connected) {
+        feedback('', '업로드 중… 동작을 확인하세요!');
+        execute(parseLoop(code), room.pin, board, { onStep: (on, v) => (v != null ? reflectPwm(v) : reflectLed(on)) })
+          .then(() => { if (m.goal === 'on') reflectLed(true); if (m.goal === 'pwm') reflectPwm(res.summary.pwmVal ?? 128); pass(); })
+          .catch((e) => { board.log('sys', '반영 실패(코드는 정답): ' + (e?.message ?? e)); pass(); });
+      } else { board.log('sys', '보드 미연결 — 화면으로만 반영'); pass(); }
+    } catch (e) { feedback('warn', '오류가 났어요: ' + (e?.message ?? e)); }
   }
 
   function render() {
@@ -194,11 +232,15 @@ export function openRoom(room, { onComplete, onClose }) {
     elStory.innerHTML = `<b>${m.concept}</b> · ${m.story}`;
     feedback('', '');
     reflectLed(false);
-    // play 미션은 버튼이 기본, challenge 미션은 코드가 기본
-    switchTab(m.type === 'challenge' ? 'code' : 'button');
+    // play 미션은 버튼이 기본, challenge 미션은 블록이 기본(코드 탭도 제공)
+    switchTab(m.type === 'challenge' ? 'block' : 'button');
   }
 
-  function close() { try { editor?.destroy?.(); } catch (_) {} backdrop.remove(); onClose?.(); }
+  function close() {
+    try { editor?.destroy?.(); } catch (_) {}
+    try { blockEd?.destroy?.(); } catch (_) {}
+    backdrop.remove(); onClose?.();
+  }
 
   render();
 }

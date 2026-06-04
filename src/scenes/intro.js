@@ -46,10 +46,10 @@ export function showIntro(root, { onDone }) {
   function renderPlayhouse() {
     return `
       <div class="intro-brand"><span class="brand-dot"></span>Eduino AI 시리즈 · 01</div>
-      <h1 class="intro-title gradient">PlayHouse</h1>
+      <h1 class="intro-title gradient">스타터 키트<br/><span style="font-size:.6em">종합편</span></h1>
       <div class="intro-eddie float">${eddieSvg}</div>
-      <p class="intro-desc">EDDIE와 함께 <b>스마트홈</b>을 코딩으로 깨우는 모험.<br/>
-        거실부터 현관까지, 너의 코드로 불을 켜고 센서를 다뤄봐!</p>
+      <p class="intro-desc">EDDIE와 함께 <b>브레드보드에 직접 결선하며</b> 배우는 키트.<br/>
+        연구소 복도의 학습방에서 LED·센서를 하나씩 깨워봐!</p>
       ${dots(1)}
       <div class="intro-actions"><button class="btn primary lg" id="i-next">다음 ▶</button></div>`;
   }
