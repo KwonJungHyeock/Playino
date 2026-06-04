@@ -41,4 +41,23 @@ export const WIRING = {
   },
 };
 
+WIRING.relay = {
+  id: 'relay',
+  title: '릴레이 모듈 결선',
+  subtitle: '릴레이로 큰 장치(환풍기)를 켜고 꺼요. 점퍼선 3개.',
+  image: '/wiring/relay.png',
+  rows: [
+    { color: '#ff5a5a', name: 'VCC (+)', pin: '5V', note: '릴레이 VCC → Arduino 5V' },
+    { color: '#444b5e', name: 'GND (-)', pin: 'GND', note: '릴레이 GND → Arduino GND' },
+    { color: '#ffd11a', name: 'IN (신호)', pin: 'D7', note: '릴레이 IN → Arduino D7' },
+  ],
+  ground: '릴레이 IN 에 HIGH/LOW 를 주면 장치가 ON/OFF 돼요(모듈에 따라 반대일 수 있음).',
+  safety: [
+    '⚠️ VCC와 GND를 바꾸지 마세요 — 모듈 손상 위험!',
+    '⚠️ 가정용 220V 같은 고전압은 절대 연결하지 마세요(저전압 학습만).',
+    '✅ IN 핀은 D7 에 — 코드가 D7 을 제어합니다.',
+    '✅ 결선은 USB를 빼고 한 뒤 다시 연결하세요.',
+  ],
+};
+
 export const LED_WIRING = WIRING.led; // 호환

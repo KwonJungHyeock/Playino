@@ -11,6 +11,7 @@ import { showHouse } from './scenes/house.js';
 import { showDhtCoding } from './scenes/dhtCoding.js';
 import { showDht11Room } from './scenes/dht11room.js';
 import { showDht11 } from './scenes/dht11.js';
+import { showRelay } from './scenes/relay.js';
 
 const app = () => document.getElementById('app');
 
@@ -22,7 +23,8 @@ function sceneLab() { showLab(app(), { onEnter: enterRoom }); }   // 연구소 �
 
 function enterRoom(id) {
   if (id === 'led') sceneHouse();
-  else if (id === 'dht11') dhtCoding();      // 코딩 → 모니터링 → 게임
+  else if (id === 'dht11') dhtCoding();      // 코딩 → 모니터링(미션) → 게임
+  else if (id === 'relay') showRelay(app(), { onExit: sceneLab });
   else sceneLab();
 }
 function sceneHouse() { showHouse(app(), { onExit: sceneLab }); }

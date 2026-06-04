@@ -775,3 +775,4 @@ html, body {
   opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,.35); max-width: 70%; }
 .eddie-say::after { content: ''; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #fff; }
 .eddie-say.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.dh-mission { font-size: 13px; color: var(--accent-2); font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(255,209,26,.12); }

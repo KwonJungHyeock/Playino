@@ -1,7 +1,7 @@
 // progress.js — 학습 진척도 저장(localStorage). 방 클리어 여부 / 전체 진척 / 완료.
 const KEY = 'eduino.progress.v1';
 // 현재 학습 가능한(잠금 해제) 방 목록 — 클리어 집계 기준
-export const LEARNABLE = ['led', 'dht11'];
+export const LEARNABLE = ['led', 'dht11', 'relay'];
 
 function load() { try { return new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch { return new Set(); } }
 let cleared = load();
