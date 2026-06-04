@@ -119,8 +119,8 @@ async function onConnect() {
 
   const info = conn.getInfo();
   log('sys', `포트 열림 (VID ${hex(info?.usbVendorId)} / PID ${hex(info?.usbProductId)}). PING 전송…`);
-  log('tx', 'PING');
-  setStatus('connecting', '핸드셰이크…', 'PLAYHOUSE 응답 대기 (1.5초)');
+  log('sys', 'PING 전송 (최대 4회 재시도)…');
+  setStatus('connecting', '핸드셰이크…', 'PLAYHOUSE 응답 대기 (최대 3초)');
 
   const result = await handshake(conn);
   if (result.ok) {
@@ -182,7 +182,7 @@ function reflectLed(on) {
   if (offBtn) offBtn.classList.toggle('on', !on);
 }
 
-// ---- "보드 준비" 모달 (핸드셰이크 실패 시) ---------------------------
+// ---- "보드 준비" 모달 (핸드셰이크 실패 시) — WebSerial 로 .hex 굽기 -----
 function openBoardPrepModal() {
   setStatus('error', '보드 응답 없음', '펌웨어가 없거나 다른 포트일 수 있어요.');
   const backdrop = document.createElement('div');
@@ -191,32 +191,77 @@ function openBoardPrepModal() {
     <div class="modal">
       <h3>보드 준비 (최초 1회)</h3>
       <p>보드에서 <code>PLAYHOUSE v*</code> 응답이 오지 않았어요.
-         펌웨어를 굽고 다시 핸드셰이크를 시도합니다.
-         <br/><small>* 실제 굽기는 별도 작업자 담당 — 현재는 스텁으로 흐름만 유지합니다.</small></p>
+         IDE 없이 <b>브라우저에서 바로 펌웨어를 굽습니다</b> (Arduino Uno · STK500).
+         <br/><small>굽기는 최초 1회만. 이후엔 명령만 주고받아요.</small></p>
+      <div class="flash-progress" id="flash-progress" hidden>
+        <div class="bar"><div class="bar-fill" id="flash-bar"></div></div>
+        <div class="flash-stat" id="flash-stat">대기 중…</div>
+      </div>
       <div class="modal-actions">
         <button class="btn" id="modal-cancel">닫기</button>
-        <button class="btn primary" id="modal-flash">펌웨어 준비 후 재시도</button>
+        <button class="btn primary" id="modal-flash">웹으로 펌웨어 굽기</button>
       </div>
     </div>
   `;
   document.body.appendChild(backdrop);
 
-  backdrop.querySelector('#modal-cancel').addEventListener('click', () => backdrop.remove());
-  backdrop.querySelector('#modal-flash').addEventListener('click', async () => {
-    log('sys', 'flashFirmware() 스텁 호출…');
-    await flashFirmware('uno', conn.port);
-    log('sys', 'flashFirmware() resolve(). 핸드셰이크 재시도…');
-    backdrop.remove();
-    log('tx', 'PING');
-    setStatus('connecting', '핸드셰이크 재시도…', 'PLAYHOUSE 응답 대기');
-    const retry = await handshake(conn);
-    if (retry.ok) {
-      setStatus('connected', `연결됨 · PLAYHOUSE v${retry.version ?? '?'}`, `거실 핀 D${LIVING_PIN} 준비 완료`);
-      log('sys', `핸드셰이크 통과: ${retry.raw}`);
-      enableControls(true);
-    } else {
-      log('sys', `재시도 실패 (${retry.reason}). 펌웨어/포트를 확인하세요.`);
-      setStatus('error', '핸드셰이크 실패', '실물 펌웨어가 부록 A 프로토콜을 따르는지 확인하세요.');
+  const flashBtn = backdrop.querySelector('#modal-flash');
+  const cancelBtn = backdrop.querySelector('#modal-cancel');
+  const progress = backdrop.querySelector('#flash-progress');
+  const bar = backdrop.querySelector('#flash-bar');
+  const stat = backdrop.querySelector('#flash-stat');
+
+  cancelBtn.addEventListener('click', () => backdrop.remove());
+
+  flashBtn.addEventListener('click', async () => {
+    flashBtn.disabled = true;
+    cancelBtn.disabled = true;
+    progress.hidden = false;
+    stat.textContent = '플래싱 준비…';
+    log('sys', '웹 펌웨어 플래싱 시작 (STK500)…');
+
+    // 런타임 연결이 잡고 있는 포트를 재사용 (추가 선택창 없음)
+    const grantedPort = conn.port;
+    try {
+      await conn.disconnect();             // 포트 점유 해제
+      const result = await flashFirmware('uno', grantedPort, {
+        onLog: (m) => { stat.textContent = m; log('sys', m); },
+        onProgress: (done, total) => {
+          const pct = Math.round((done / total) * 100);
+          bar.style.width = pct + '%';
+          stat.textContent = `굽는 중… ${pct}% (${done}/${total} bytes)`;
+        },
+      });
+
+      bar.style.width = '100%';
+      stat.textContent = '완료. 보드 재시작 대기…';
+      log('sys', '플래싱 완료. 보드 부팅 대기(약 1.6초).');
+
+      await conn.attach(result.port || grantedPort); // 같은 포트 런타임 재연결
+      await delay(1600);                              // 부트로더 -> 앱 부팅
+
+      setStatus('connecting', '핸드셰이크…', '플래싱 후 PLAYHOUSE 응답 대기');
+      log('sys', 'PING 전송 (최대 4회)…');
+      const retry = await handshake(conn);
+      if (retry.ok) {
+        setStatus('connected', `연결됨 · PLAYHOUSE v${retry.version ?? '?'}`, `거실 핀 D${LIVING_PIN} 준비 완료`);
+        log('sys', `핸드셰이크 통과: ${retry.raw}`);
+        enableControls(true);
+        backdrop.remove();
+      } else {
+        stat.textContent = '굽기는 됐지만 응답이 없어요. 다시 시도하거나 케이블/포트를 확인하세요.';
+        log('sys', `플래싱 후 핸드셰이크 실패 (${retry.reason}).`);
+        setStatus('error', '핸드셰이크 실패', '케이블/포트를 확인하고 다시 시도하세요.');
+        flashBtn.disabled = false; cancelBtn.disabled = false;
+        flashBtn.textContent = '다시 굽기';
+      }
+    } catch (e) {
+      const msg = e?.message ?? String(e);
+      stat.textContent = '플래싱 실패: ' + msg;
+      log('sys', '플래싱 실패: ' + msg);
+      setStatus('error', '플래싱 실패', msg);
+      flashBtn.disabled = false; cancelBtn.disabled = false;
+      flashBtn.textContent = '다시 시도';
     }
   });
 }
@@ -263,6 +308,8 @@ function clearMonitor() {
 }
 
 // ---- 유틸 -----------------------------------------------------------
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
 function now() {
   const d = new Date();
   return d.toTimeString().slice(0, 8);

@@ -203,6 +203,19 @@ html, body {
 .modal p { color: var(--muted); font-size: 13px; line-height: 1.6; }
 .modal .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 
+/* 플래싱 진행 바 */
+.flash-progress { margin-top: 14px; }
+.flash-progress .bar {
+  height: 10px; background: #0a1120; border: 1px solid var(--line);
+  border-radius: 999px; overflow: hidden;
+}
+.flash-progress .bar-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width .15s ease;
+}
+.flash-stat { font-size: 12px; color: var(--muted); margin-top: 7px; font-family: var(--mono); }
+
 /* EDDIE success 글로우 펄스 (§5.5 signature) */
 @keyframes eddie-glow-pulse {
   0%, 100% { opacity: 0; }

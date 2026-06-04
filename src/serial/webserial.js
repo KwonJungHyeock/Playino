@@ -5,6 +5,7 @@
 import { BAUD, LINE_TERMINATOR } from './protocol.js';
 
 // 인식 대상 VID (§7). 필터에 걸리면 선택창이 해당 보드만 노출.
+// (provisioning.js 의 웹 플래셔도 이 목록을 사용)
 export const KNOWN_VENDORS = [
   { usbVendorId: 0x2341 }, // Arduino
   { usbVendorId: 0x2a03 }, // Arduino (구 VID)
@@ -71,9 +72,19 @@ export class SerialConnection {
     if (this.isOpen) return this.port;
 
     const requestOpts = useFilters ? { filters: KNOWN_VENDORS } : {};
-    this.port = await navigator.serial.requestPort(requestOpts);
-    await this.port.open({ baudRate: BAUD });
+    const port = await navigator.serial.requestPort(requestOpts);
+    return this.attach(port);
+  }
 
+  /**
+   * 이미 권한이 부여된(또는 선택된) 포트로 런타임 연결한다.
+   * 닫힌 포트면 열고, 텍스트 read/write 스트림을 세팅한다.
+   * 플래싱 후 같은 포트를 추가 선택창 없이 재연결할 때 사용.
+   */
+  async attach(port) {
+    if (this.isOpen) return this.port;
+    this.port = port;
+    if (!port.readable) await port.open({ baudRate: BAUD });
     this._closing = false;
     this._setupWriter();
     this._readLoopPromise = this._readLoop();

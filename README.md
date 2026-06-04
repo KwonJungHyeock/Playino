@@ -22,13 +22,28 @@ npm run dev      # http://localhost:5173 (Chrome/Edge 데스크톱)
 ```
 
 1. 우측 패널 **[보드 연결]** → 팝업에서 Arduino/CH340 보드 선택.
-2. 자동으로 `PING` 전송 → 1.5초 내 `PLAYHOUSE v*` 수신 시 **연결됨**.
-   - 응답 없으면 **"보드 준비"** 모달 → `flashFirmware()`(스텁) → 재시도.
+2. 자동으로 `PING` 재전송 → `PLAYHOUSE v*` 수신 시 **연결됨**.
+   - 응답 없으면(펌웨어 없음) **"보드 준비"** 모달 → **[웹으로 펌웨어 굽기]**.
 3. **[불 켜기 · L2:1]** / **[불 끄기 · L2:0]** → **실물 D2 LED** 토글 확인.
    - 화면 거실 램프 + EDDIE `success` 글로우가 같은 이벤트에서 점등(§5.5 시그니처).
 4. 모든 TX/RX 가 **시리얼 모니터**에 기록된다.
 
 > WebSerial 은 Chrome/Edge 데스크톱 전용. 미지원/HW 없음 → STEP 9 에서 Wokwi 폴백 예정.
+
+### 펌웨어: IDE 없이 브라우저에서 굽기 (WebSerial · STK500)
+
+보드에 펌웨어가 없으면 "보드 준비" 모달의 **[웹으로 펌웨어 굽기]** 버튼이
+`public/firmware/playhouse-uno.hex` 를 STK500v1 부트로더 프로토콜로 직접
+굽는다 (Arduino IDE 불필요). **최초 1회만** 굽고, 이후엔 명령만 주고받는다.
+
+- 굽기 대상 `.hex` 빌드 소스: `public/firmware/playhouse-uno.c` (베어메탈, 부록 A 와 동작 동일).
+  재빌드:
+  ```bash
+  avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os -o fw.elf public/firmware/playhouse-uno.c
+  avr-objcopy -O ihex -R .eeprom fw.elf public/firmware/playhouse-uno.hex
+  ```
+- 구현: `src/serial/flasher.js` (STK500v1) + `src/serial/intelhex.js` (HEX 파서).
+- ESP 계열은 추후 `esptool-js` 트랙(부록 B).
 
 ## 시리얼 프로토콜 (§3)
 
@@ -56,9 +71,11 @@ playino-playhouse/
     ├── styles/main.css     # 2단 레이아웃
     ├── assets/eddie.svg    # ★ EDDIE 주인공 에셋 (#eddie/#eddie-eyes/#eddie-glow/#eddie-screen)
     └── serial/
-        ├── webserial.js    # 포트 연결·VID/PID·라인 read/write
+        ├── webserial.js    # 포트 연결·VID/PID·라인 read/write·attach(재사용)
         ├── protocol.js     # 명령 인코딩/디코딩 (L2:1 등)
-        └── provisioning.js # PING 핸드셰이크 + flashFirmware() 스텁
+        ├── provisioning.js # PING 핸드셰이크(재시도) + flashFirmware(웹 굽기)
+        ├── flasher.js      # Uno STK500v1 WebSerial 플래셔
+        └── intelhex.js     # Intel HEX(.hex) 파서
 ```
 
 > STEP 3 이후에 `engine/`, `editor/`, `panel/`, `fallback/`, `themes/` 가 추가된다.

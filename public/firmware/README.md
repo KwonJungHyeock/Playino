@@ -1,10 +1,17 @@
 # public/firmware/
 
-이 폴더에는 보드용 펌웨어 산출물이 들어갑니다 (별도 작업자 제공, §0 / 부록 B).
+보드용 펌웨어 산출물 (§0 / 부록 A·B).
 
-- `playhouse-uno.hex` — Arduino Uno 용 (STK500 굽기)
-- (ESP 계열은 추후 `.bin`, esptool-js)
+- `playhouse-uno.hex` — Arduino Uno 용. **앱이 WebSerial(STK500)로 직접 굽는다** (IDE 불필요).
+- `playhouse-uno.c` — 위 .hex 의 빌드 소스(ATmega328P 베어메탈). 부록 A 와 와이어 동작 동일.
+- `playhouse-firmware.ino` — 부록 A 참조 스케치(사람용 프로토콜 계약서).
 
-프로토타입(`flashFirmware()`)은 스텁이라 이 파일 없이도 흐름이 깨지지 않습니다.
-펌웨어는 **부록 A 프로토콜 계약**(`playhouse-firmware.ino`)을 반드시 준수해야 합니다.
-참조 소스: `playhouse-firmware.ino`.
+## .hex 재빌드
+
+```bash
+avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os -o /tmp/fw.elf playhouse-uno.c
+avr-objcopy -O ihex -R .eeprom /tmp/fw.elf playhouse-uno.hex
+```
+
+> 굽기는 `src/serial/flasher.js`(STK500v1) + `src/serial/intelhex.js` 가 처리.
+> ESP 계열은 추후 esptool-js 트랙(부록 B).
