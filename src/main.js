@@ -7,6 +7,8 @@ import { showIntro } from './scenes/intro.js';
 import { showSetup } from './scenes/setup.js';
 import { showLab } from './scenes/lab.js';
 import { showHouse } from './scenes/house.js';
+import { showDhtCoding } from './scenes/dhtCoding.js';
+import { showDht11Room } from './scenes/dht11room.js';
 import { showDht11 } from './scenes/dht11.js';
 
 const app = () => document.getElementById('app');
@@ -18,10 +20,14 @@ function sceneLab() { showLab(app(), { onEnter: enterRoom }); }   // 연구소 �
 
 function enterRoom(id) {
   if (id === 'led') sceneHouse();
-  else if (id === 'dht11') sceneDht11();
+  else if (id === 'dht11') dhtCoding();      // 코딩 → 모니터링 → 게임
   else sceneLab();
 }
 function sceneHouse() { showHouse(app(), { onExit: sceneLab }); }
-function sceneDht11() { showDht11(app(), { onExit: sceneLab }); }
+
+// DHT-11: 코딩 → 모니터링 방 → 미니게임
+function dhtCoding() { showDhtCoding(app(), { onDone: dhtRoom, onExit: sceneLab }); }
+function dhtRoom() { showDht11Room(app(), { onPlay: dhtGame, onExit: sceneLab }); }
+function dhtGame() { showDht11(app(), { onQuit: dhtRoom }); }
 
 window.addEventListener('DOMContentLoaded', sceneSplash);

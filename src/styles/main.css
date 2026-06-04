@@ -677,3 +677,26 @@ html, body {
 .dht-comfort.ok { background: rgba(61,220,145,.16); color: var(--ok); }
 .dht-comfort.bad { background: rgba(255,107,107,.16); color: var(--err); }
 .dht-sim { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #4b5e80; }
+
+/* ---- 코딩 단계 씬 ---- */
+.coding-body { display: grid; grid-template-columns: 290px 1fr; gap: 20px; padding: 22px; align-items: start; }
+@media (max-width: 860px) { .coding-body { grid-template-columns: 1fr; } }
+.coding-left { text-align: center; }
+.coding-left .room-eddie { margin: 0 auto; }
+.coding-left .room-intro { margin-top: 8px; }
+
+/* ---- DHT 실시간 HUD ---- */
+.dht-hud {
+  position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 5;
+  display: flex; gap: 16px; align-items: center;
+  background: rgba(13,22,40,.92); border: 1px solid var(--line); border-radius: 999px; padding: 8px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+.dht-hud .dh-item { font-size: 20px; font-weight: 800; }
+.dht-hud .dh-item b { font-variant-numeric: tabular-nums; color: #fff; }
+.dh-ic { margin-right: 4px; }
+.dh-di { font-size: 13px; color: var(--muted); padding: 3px 10px; border-radius: 999px; background: var(--bg-elev-2); }
+.dh-di.warn { color: var(--warn); }
+.dh-di.bad { color: var(--err); background: rgba(255,107,107,.15); }
+.dh-src { font-size: 11px; color: #4b5e80; }
+.dh-src.live { color: var(--ok); }

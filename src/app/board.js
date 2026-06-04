@@ -91,6 +91,23 @@ export const board = {
     await safeWrite(c);
     emitLine('tx', c);
   },
+  /** DHT-11 온습도 1회 읽기 → {temp,hum} 또는 null (펌웨어 v2 필요) */
+  readDht({ timeout = 1300 } = {}) {
+    if (!conn.isOpen) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (v) => { if (done) return; done = true; clearTimeout(timer); unsub(); resolve(v); };
+      const unsub = this.onLine((kind, text) => {
+        const m = /^DHT:(\d+),(\d+)/.exec(text);
+        if (m) finish({ temp: Number(m[1]), hum: Number(m[2]) });
+        else if (/^ERR:dht/.test(text)) finish(null);
+      });
+      const timer = setTimeout(() => finish(null), timeout);
+      emitLine('tx', 'DHT');
+      conn.write('DHT').catch(() => finish(null));
+    });
+  },
+
   /** 깜빡임 (내장 LED 테스트 등) — 항상 OFF 로 끝남 */
   async blink(pin, times = 4, period = 300) {
     for (let k = 0; k < times; k++) {

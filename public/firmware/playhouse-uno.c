@@ -15,10 +15,12 @@
  */
 
 #include <avr/io.h>
+#include <util/delay.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define FW_ID "PLAYHOUSE v1"
+#define FW_ID "PLAYHOUSE v2"
+#define DHT_BIT 2   /* DHT-11 DATA = D2 (PD2) */
 
 /* ---- UART (115200 @ 16MHz, U2X) ---- */
 static void uart_init(void) {
@@ -94,8 +96,55 @@ static void pin_analog(uint8_t pin, uint8_t val) {
     }
 }
 
+/* ---- DHT-11 (1-wire, D2) ---- */
+static void uart_print_u8(uint8_t v) { char b[5]; itoa(v, b, 10); uart_print(b); }
+
+/* pin 이 level(0 또는 (1<<DHT_BIT)) 인 동안의 루프 카운트. 0=타임아웃 */
+static uint16_t dht_pulse(uint8_t level) {
+    uint16_t c = 0;
+    while ((PIND & (1 << DHT_BIT)) == level) { if (++c >= 12000) return 0; }
+    return c;
+}
+/* 성공 시 1, temp/hum 채움 */
+static uint8_t dht_read(uint8_t *temp, uint8_t *hum) {
+    uint8_t data[5] = { 0, 0, 0, 0, 0 };
+    /* 시작 신호: 최소 18ms LOW */
+    DDRD |= (1 << DHT_BIT);
+    PORTD &= ~(1 << DHT_BIT);
+    _delay_ms(20);
+    PORTD |= (1 << DHT_BIT);
+    _delay_us(40);
+    DDRD &= ~(1 << DHT_BIT);          /* 입력 */
+    PORTD |= (1 << DHT_BIT);          /* 풀업 */
+    _delay_us(10);
+    /* 응답: ~80us LOW, ~80us HIGH */
+    if (dht_pulse(0) == 0) return 0;
+    if (dht_pulse(1 << DHT_BIT) == 0) return 0;
+    /* 40비트: 각 비트 = LOW(50us) + HIGH(26us=0 / 70us=1) */
+    for (uint8_t i = 0; i < 40; i++) {
+        uint16_t low = dht_pulse(0);
+        uint16_t high = dht_pulse(1 << DHT_BIT);
+        if (low == 0 || high == 0) return 0;
+        data[i / 8] <<= 1;
+        if (high > low) data[i / 8] |= 1;
+    }
+    if ((uint8_t)(data[0] + data[1] + data[2] + data[3]) != data[4]) return 0;
+    *hum = data[0];
+    *temp = data[2];
+    return 1;
+}
+
 static void handle(char *line) {
     if (strcmp(line, "PING") == 0) { uart_println(FW_ID); return; }
+    if (strcmp(line, "DHT") == 0) {
+        uint8_t t, h;
+        if (dht_read(&t, &h)) {
+            uart_print("DHT:"); uart_print_u8(t); uart_tx(','); uart_print_u8(h); uart_tx('\n');
+        } else {
+            uart_println("ERR:dht");
+        }
+        return;
+    }
 
     char type = line[0];
     char *colon = strchr(line, ':');

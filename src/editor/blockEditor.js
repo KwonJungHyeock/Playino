@@ -32,11 +32,25 @@ Blockly.Blocks['wait'] = {
   },
 };
 
+// DHT 블록
+Blockly.Blocks['dht_read'] = {
+  init() { this.appendDummyInput().appendField('🌡️ 온습도 읽기'); this.setPreviousStatement(true); this.setNextStatement(true); this.setColour(20); },
+};
+Blockly.Blocks['dht_temp'] = {
+  init() { this.appendDummyInput().appendField('온도 출력 🌡️'); this.setPreviousStatement(true); this.setNextStatement(true); this.setColour(0); },
+};
+Blockly.Blocks['dht_hum'] = {
+  init() { this.appendDummyInput().appendField('습도 출력 💧'); this.setPreviousStatement(true); this.setNextStatement(true); this.setColour(200); },
+};
+
 const gen = new Blockly.Generator('ARD');
 gen.forBlock = {
   led_state: (b) => `  digitalWrite(${b.getFieldValue('PIN')}, ${b.getFieldValue('STATE')});\n`,
   led_pwm: (b) => `  analogWrite(${b.getFieldValue('PIN')}, ${b.getFieldValue('VAL')});\n`,
   wait: (b) => `  delay(${b.getFieldValue('MS')});\n`,
+  dht_read: () => `  dht.read();\n`,
+  dht_temp: () => `  Serial.println(dht.temperature);\n`,
+  dht_hum: () => `  Serial.println(dht.humidity);\n`,
 };
 gen.scrub_ = function (block, code, thisOnly) {
   const next = block.nextConnection && block.nextConnection.targetBlock();
@@ -56,23 +70,19 @@ const THEME = Blockly.Theme.defineTheme('eduino', {
   },
 });
 
-const TOOLBOX = {
-  kind: 'flyoutToolbox',
-  contents: [
-    { kind: 'block', type: 'led_state' },
-    { kind: 'block', type: 'led_pwm' },
-    { kind: 'block', type: 'wait' },
-  ],
-};
+export const TOOLBOX_LED = ['led_state', 'led_pwm', 'wait'];
+export const TOOLBOX_DHT = ['dht_read', 'dht_temp', 'dht_hum', 'wait'];
 
 /**
  * @param {HTMLElement} host
- * @param {{ pin:number, preset?:Array, onChange?:Function }} opts
+ * @param {{ pin:number, preset?:Array, onChange?:Function, toolbox?:string[], setup?:string }} opts
  */
-export function createBlockEditor(host, { pin, preset = [], onChange } = {}) {
+export function createBlockEditor(host, { pin, preset = [], onChange, toolbox = TOOLBOX_LED, setup } = {}) {
   CUR_PINS = [[String(pin), String(pin)]];
+  const toolboxDef = { kind: 'flyoutToolbox', contents: toolbox.map((t) => ({ kind: 'block', type: t })) };
+  const setupBody = setup != null ? setup : `  pinMode(${pin}, OUTPUT);`;
   const ws = Blockly.inject(host, {
-    toolbox: TOOLBOX, theme: THEME, renderer: 'zelos',
+    toolbox: toolboxDef, theme: THEME, renderer: 'zelos',
     trashcan: true, scrollbars: true, sounds: false,
     zoom: { controls: false, wheel: false, startScale: 0.95 },
     move: { scrollbars: true, drag: true, wheel: false },
@@ -94,7 +104,7 @@ export function createBlockEditor(host, { pin, preset = [], onChange } = {}) {
 
   function getCode() {
     const body = gen.workspaceToCode(ws);
-    return `void setup() {\n  pinMode(${pin}, OUTPUT);\n}\n\nvoid loop() {\n${body}}\n`;
+    return `void setup() {\n${setupBody}\n}\n\nvoid loop() {\n${body}}\n`;
   }
 
   return { getCode, ws, destroy() { try { ws.dispose(); } catch (_) {} } };

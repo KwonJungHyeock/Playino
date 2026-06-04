@@ -15,7 +15,7 @@ const EVENTS = [
   { msg: '🏜️ 건조 주의보, 습도가 떨어져요', t: 0.8, h: -2.6 },
 ];
 
-export function showDht11(root, { onExit } = {}) {
+export function showDht11(root, { onQuit } = {}) {
   const st = { temp: 24, hum: 50, score: 0, time: GAME_SEC, ev: null, evLeft: 0, running: false };
   let timer = null;
 
@@ -23,13 +23,13 @@ export function showDht11(root, { onExit } = {}) {
     <div class="dht scene-fade">
       <header class="app-header">
         <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong><span class="brand-sep">:</span><b class="brand-sub">DHT-11 온습도</b><span class="crumb">미니게임</span></div>
-        <button class="btn btn-sm" id="dht-exit">🚪 복도로</button>
+        <button class="btn btn-sm" id="dht-exit">⏹ 그만두기</button>
       </header>
       <div class="dht-wrap" id="wrap"></div>
-      <div class="dht-sim">※ 현재 온습도 값은 시뮬레이션입니다 (실물 DHT11 연동은 곧 추가)</div>
+      <div class="dht-sim">※ 미니게임 값은 조작용 시뮬레이션 (모니터링 방은 실물 연동)</div>
     </div>`;
 
-  root.querySelector('#dht-exit').onclick = () => { clearInterval(timer); onExit?.(); };
+  root.querySelector('#dht-exit').onclick = () => { clearInterval(timer); onQuit?.(); };
   const wrap = root.querySelector('#wrap');
 
   intro();
@@ -130,10 +130,10 @@ export function showDht11(root, { onExit } = {}) {
            온습도 변화에 맞춰 환경을 조절했어요! 이게 바로 센서 값에 따라 반응하는 <b>스마트홈</b>의 원리예요.</p>
         <div class="btn-row" style="justify-content:center">
           <button class="btn primary" id="dht-again">다시 도전 ▶</button>
-          <button class="btn" id="dht-out">복도로 나가기</button>
+          <button class="btn" id="dht-out">모니터링 방으로 ▶</button>
         </div>
       </div>`;
     root.querySelector('#dht-again').onclick = () => { st.temp = 24; st.hum = 50; st.score = 0; st.time = GAME_SEC; st.ev = null; st.evLeft = 0; start(); };
-    root.querySelector('#dht-out').onclick = () => onExit?.();
+    root.querySelector('#dht-out').onclick = () => onQuit?.();
   }
 }
