@@ -27,9 +27,9 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   // 기본 스폰: 첫 번째 '플레이 가능' 방 바로 앞(바로 입장할 수 있게)
   const firstReady = cells.find((c) => c.status === 'ready') || cells[0];
   let spawnPt = firstReady
-    ? { x: firstReady.cx + CARD_W / 2 - 14, y: firstReady.cy + CARD_H + 58 }
+    ? { x: firstReady.cx + CARD_W / 2 - 14, y: firstReady.cy + CARD_H + 12 }
     : { x: MAP_W / 2 - 14, y: MAP_H - 100 };
-  if (spawnAt) { const c = cells.find((x) => x.id === spawnAt); if (c) spawnPt = { x: c.cx + CARD_W / 2 - 14, y: c.cy + CARD_H + 56 }; }
+  if (spawnAt) { const c = cells.find((x) => x.id === spawnAt); if (c) spawnPt = { x: c.cx + CARD_W / 2 - 14, y: c.cy + CARD_H + 12 }; }
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade escape-scene">
@@ -59,6 +59,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     walls: [
       { x: 0, y: 0, w: MAP_W, h: 24 }, { x: 0, y: MAP_H - 24, w: MAP_W, h: 24 },
       { x: 0, y: 0, w: 24, h: MAP_H }, { x: MAP_W - 24, y: 0, w: 24, h: MAP_H },
+      ...cells.map((c) => ({ x: c.cx, y: c.cy, w: CARD_W, h: CARD_H })),   // 방(문)은 못 뚫고 지나감
     ],
     triggers: [
       ...cells.map((c) => ({ id: c.id, x: c.cx, y: c.cy + CARD_H, w: CARD_W, h: 48 })),
@@ -82,7 +83,18 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     if (id === '__exit') { destroyAll(); onExit?.(); return; }
     const r = cells.find((c) => c.id === id); if (!r) return;
     if (r.status !== 'ready') { soonModal(r); return; }
+    if (isRoomCleared(r.id)) { world.pause(); confirmReenter(r, () => { destroyAll(); onRoom?.(id); }, () => world.resume()); return; }
     destroyAll(); onRoom?.(id);
+  }
+
+  function confirmReenter(r, yes, no) {
+    const m = document.createElement('div'); m.className = 'modal-backdrop';
+    m.innerHTML = `<div class="modal"><h3>✅ ${r.icon} ${r.name} — 복구 완료된 방</h3>
+      <p>이미 미션을 클리어한 방이에요. <b>다시 학습할까요?</b></p>
+      <div class="modal-actions"><button class="btn" id="re-no">아니오</button><button class="btn primary" id="re-yes">예, 다시 ▶</button></div></div>`;
+    document.body.appendChild(m);
+    m.querySelector('#re-no').onclick = () => { m.remove(); no(); };
+    m.querySelector('#re-yes').onclick = () => { m.remove(); yes(); };
   }
 
   function soonModal(r) {

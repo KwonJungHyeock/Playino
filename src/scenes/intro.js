@@ -67,10 +67,12 @@ export function showIntro(root, { onDone }) {
       </div>`;
   }
 
+  const introEl = root.querySelector('.intro');
   function go(i) {
     card.classList.remove('in');
     card.innerHTML = slides[i]();
     requestAnimationFrame(() => card.classList.add('in'));
+    introEl.classList.toggle('cover-mode', i >= 1);   // 표지/스토리 = 어두운 공포 분위기
     if (i < 2) {
       card.querySelector('#i-next').addEventListener('click', () => go(i + 1));
     } else {
