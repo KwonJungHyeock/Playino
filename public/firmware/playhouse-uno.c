@@ -6,8 +6,9 @@
  * (playhouse-firmware.ino)와 완전히 동일하다. Arduino 코어 없이도
  * 오프라인 컴파일이 가능하도록 레지스터를 직접 다룬다.
  *
- *   H->B : PING / L<pin>:<0|1> / P<pin>:<0-255>
- *   B->H : READY (부팅) / PLAYHOUSE v1 (PING 응답) / OK / ERR:<msg>
+ *   H->B : PING / L<pin>:<0|1> / P<pin>:<0-255> / T<pin>:<freq>[,<ms>] / A<ch> / R<pin> / DHT
+ *   B->H : READY (부팅) / PLAYHOUSE v3 (PING 응답) / OK / ERR:<msg>
+ *          A<ch>:<0-1023> (아날로그) / R<pin>:<0|1> (디지털) / DHT:<t>,<h>
  *
  * 빌드:
  *   avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os -o fw.elf playhouse-uno.c
@@ -19,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FW_ID "PLAYHOUSE v2"
+#define FW_ID "PLAYHOUSE v3"
 #define DHT_BIT 2   /* DHT-11 DATA = D2 (PD2) */
 
 /* ---- UART (115200 @ 16MHz, U2X) ---- */
@@ -96,8 +97,44 @@ static void pin_analog(uint8_t pin, uint8_t val) {
     }
 }
 
+/* ---- 가변 마이크로초 지연 (tone 용; _delay_us 는 상수만 허용) ---- */
+static void delay_us_var(uint16_t us) { while (us--) _delay_us(1); }
+
+/* ---- tone: pin 을 freq(Hz) 로 ms 동안 구형파 출력 (블로킹, 부저) ---- */
+static void tone_pin(uint8_t pin, uint16_t freq, uint16_t ms) {
+    if (freq == 0 || ms == 0) return;
+    set_output(pin); pwm_disconnect(pin);
+    uint16_t half = (uint16_t)(500000UL / freq);          /* 반주기(us) */
+    uint32_t cycles = ((uint32_t)freq * ms) / 1000UL;
+    for (uint32_t i = 0; i < cycles; i++) {
+        if (pin <= 7) PORTD |= (1 << pin); else PORTB |= (1 << (pin - 8));
+        delay_us_var(half);
+        if (pin <= 7) PORTD &= ~(1 << pin); else PORTB &= ~(1 << (pin - 8));
+        delay_us_var(half);
+    }
+}
+
+/* ---- ADC (아날로그 입력: A0~A5) ---- */
+static void adc_init(void) {
+    ADMUX = (1 << REFS0);                                  /* AVcc 기준 */
+    ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); /* presc 128 */
+}
+static uint16_t adc_read(uint8_t ch) {
+    ADMUX = (1 << REFS0) | (ch & 0x07);
+    ADCSRA |= (1 << ADSC);
+    while (ADCSRA & (1 << ADSC)) {}
+    return ADC;
+}
+
+/* ---- 디지털 입력 읽기 (소리/불꽃/버튼 등) ---- */
+static uint8_t pin_read(uint8_t pin) {
+    if (pin <= 7) { DDRD &= ~(1 << pin); return (PIND >> pin) & 1; }
+    uint8_t b = pin - 8; DDRB &= ~(1 << b); return (PINB >> b) & 1;
+}
+
 /* ---- DHT-11 (1-wire, D2) ---- */
 static void uart_print_u8(uint8_t v) { char b[5]; itoa(v, b, 10); uart_print(b); }
+static void uart_print_u16(uint16_t v) { char b[7]; itoa(v, b, 10); uart_print(b); }
 
 /* pin 이 level(0 또는 (1<<DHT_BIT)) 인 동안의 루프 카운트. 0=타임아웃 */
 static uint16_t dht_pulse(uint8_t level) {
@@ -147,6 +184,19 @@ static void handle(char *line) {
     }
 
     char type = line[0];
+
+    /* 콜론 없는 읽기 명령: A<ch>=아날로그, R<pin>=디지털 */
+    if (type == 'A' && !strchr(line, ':')) {
+        int ch = atoi(line + 1); if (ch < 0 || ch > 7) { uart_println("ERR:ch"); return; }
+        uint16_t v = adc_read((uint8_t)ch);
+        uart_tx('A'); uart_print_u8((uint8_t)ch); uart_tx(':'); uart_print_u16(v); uart_tx('\n'); return;
+    }
+    if (type == 'R' && !strchr(line, ':')) {
+        int pin = atoi(line + 1); if (pin < 0 || pin > 13) { uart_println("ERR:pin"); return; }
+        uint8_t v = pin_read((uint8_t)pin);
+        uart_tx('R'); uart_print_u8((uint8_t)pin); uart_tx(':'); uart_print_u8(v); uart_tx('\n'); return;
+    }
+
     char *colon = strchr(line, ':');
     if (!colon) { uart_println("ERR:format"); return; }
 
@@ -161,6 +211,12 @@ static void handle(char *line) {
         if (val > 255) val = 255;
         pin_analog(pin, (uint8_t)val); uart_println("OK");
     }
+    else if (type == 'T') {            /* tone: T<pin>:<freq>[,<ms>] */
+        char *comma = strchr(colon + 1, ',');
+        int ms = comma ? atoi(comma + 1) : 200;
+        if (val < 0) val = 0; if (ms < 0) ms = 0; if (ms > 2000) ms = 2000;
+        tone_pin((uint8_t)pin, (uint16_t)val, (uint16_t)ms); uart_println("OK");
+    }
     else                  { uart_println("ERR:cmd"); }
 }
 
@@ -170,6 +226,7 @@ int main(void) {
 
     uart_init();
     pwm_init();
+    adc_init();
     uart_println("READY");
 
     char buf[40];

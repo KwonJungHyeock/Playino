@@ -869,7 +869,21 @@ html, body {
 .cover-sub .cv-dot { color: #ff9e3c; }
 .cover-eddie { margin: 16px auto 4px; filter: drop-shadow(0 8px 26px rgba(0,0,0,.55)); }
 
-/* ===== 탈출 미니게임 셸 ===== */
+/* ===== 탈출 미니게임 모달(탑다운 방의 장치 작동 시) ===== */
+.gm-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+  background: rgba(2,4,10,.74); backdrop-filter: blur(3px); animation: scene-in .2s ease; }
+.gm-panel { width: min(820px, 94vw); max-height: 90vh; display: flex; flex-direction: column;
+  background: rgba(12,16,26,.97); border: 1px solid rgba(120,140,180,.25); border-radius: 18px;
+  box-shadow: 0 30px 90px rgba(0,0,0,.6); overflow: hidden; }
+.gm-head { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid rgba(255,176,32,.16); }
+.gm-head b { font-size: 16px; }
+.gm-head span { font-size: 12px; color: #ffb86a; flex: 1; }
+.gm-x { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; line-height: 1; }
+.gm-x:hover { color: #fff; }
+.gm-stage { padding: 22px; overflow: auto; display: grid; place-items: center; }
+.gm-stage .game { box-shadow: none; border: none; background: none; padding: 0; width: min(680px, 100%); }
+
+/* ===== 탈출 미니게임 셸(레거시 풀스크린) ===== */
 .escape-room { display: flex; flex-direction: column; background: radial-gradient(120% 100% at 50% 0%, #0c1018, #05070d); }
 .er-vignette { position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background: radial-gradient(120% 90% at 50% 42%, transparent 50%, rgba(0,0,0,.82)); }

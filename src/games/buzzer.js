@@ -5,7 +5,8 @@ const PADS = [
   { f: 392, c: '#ff6b6b' }, { f: 494, c: '#ffd24a' },
   { f: 587, c: '#5ad17a' }, { f: 740, c: '#5a9bff' },
 ];
-const GOAL = 5;   // 이 길이까지 재현하면 해제
+const GOAL = 5;       // 이 길이까지 재현하면 해제
+const BUZZER_PIN = 8; // 실물 부저(연결 시)
 
 export function mountBuzzer(root, ctx) {
   let seq = [], input = [], lock = true, ac = null;
@@ -48,7 +49,11 @@ export function mountBuzzer(root, ctx) {
       o.start(); o.stop(a.currentTime + ms / 1000 + 0.02);
     } catch (_) {}
   }
-  function flash(i, ms = 280) { pads[i].classList.add('lit'); beep(PADS[i].f, ms); setTimeout(() => pads[i].classList.remove('lit'), ms); }
+  function flash(i, ms = 280) {
+    pads[i].classList.add('lit'); beep(PADS[i].f, ms);
+    if (ctx.board?.connected) { try { ctx.board.tone(BUZZER_PIN, PADS[i].f, ms); } catch (_) {} }   // 실물 부저
+    setTimeout(() => pads[i].classList.remove('lit'), ms);
+  }
 
   function nextRound() { seq.push((Math.random() * 4) | 0); input = []; prog.textContent = `길이 ${seq.length - 1} / ${GOAL}`; stat.textContent = '잘 들어요…'; playSeq(); }
   function playSeq() {

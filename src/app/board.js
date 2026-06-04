@@ -5,7 +5,7 @@
 
 import { SerialConnection, isSupported as _isSupported } from '../serial/webserial.js';
 import { handshake, flashFirmware } from '../serial/provisioning.js';
-import { encodeDigitalWrite, encodePwm, parseLine, RESPONSE } from '../serial/protocol.js';
+import { encodeDigitalWrite, encodePwm, encodeTone, encodeAnalogRead, encodeDigitalRead, parseLine, RESPONSE } from '../serial/protocol.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const hex = (n) => (n == null ? '—' : '0x' + n.toString(16).toUpperCase().padStart(4, '0'));
@@ -91,7 +91,40 @@ export const board = {
     await safeWrite(c);
     emitLine('tx', c);
   },
-  /** DHT-11 온습도 1회 읽기 → {temp,hum} 또는 null (펌웨어 v2 필요) */
+  /** tone(부저): pin 을 freq(Hz) 로 ms 동안 울림 (펌웨어 v3) */
+  async tone(pin, freq, ms = 220) {
+    const c = encodeTone(pin, freq, ms);
+    await safeWrite(c);
+    emitLine('tx', c);
+  },
+  /** analogRead → 0~1023 또는 null (펌웨어 v3) */
+  analogRead(ch, { timeout = 700 } = {}) {
+    if (!conn.isOpen) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (v) => { if (done) return; done = true; clearTimeout(timer); unsub(); resolve(v); };
+      const re = new RegExp('^A' + ch + ':(\\d+)');
+      const unsub = this.onLine((kind, text) => { const m = re.exec(text); if (m) finish(Number(m[1])); });
+      const timer = setTimeout(() => finish(null), timeout);
+      emitLine('tx', encodeAnalogRead(ch));
+      conn.write(encodeAnalogRead(ch)).catch(() => finish(null));
+    });
+  },
+  /** digitalRead → 0/1 또는 null (펌웨어 v3) */
+  digitalRead(pin, { timeout = 700 } = {}) {
+    if (!conn.isOpen) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (v) => { if (done) return; done = true; clearTimeout(timer); unsub(); resolve(v); };
+      const re = new RegExp('^R' + pin + ':(\\d+)');
+      const unsub = this.onLine((kind, text) => { const m = re.exec(text); if (m) finish(Number(m[1])); });
+      const timer = setTimeout(() => finish(null), timeout);
+      emitLine('tx', encodeDigitalRead(pin));
+      conn.write(encodeDigitalRead(pin)).catch(() => finish(null));
+    });
+  },
+
+  /** DHT-11 온습도 1회 읽기 → {temp,hum} 또는 null (펌웨어 v2+) */
   readDht({ timeout = 1300 } = {}) {
     if (!conn.isOpen) return Promise.resolve(null);
     return new Promise((resolve) => {

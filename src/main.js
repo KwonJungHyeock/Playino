@@ -13,7 +13,7 @@ import { showDhtCoding } from './scenes/dhtCoding.js';
 import { showDht11Room } from './scenes/dht11room.js';
 import { showDht11 } from './scenes/dht11.js';
 import { showRelay } from './scenes/relay.js';
-import { showMissionRoom } from './scenes/missionRoom.js';
+import { showEscapeRoom } from './scenes/escapeRoom.js';
 import { progress } from './app/progress.js';
 import { getRoom } from './content/curriculum.js';
 
@@ -51,8 +51,8 @@ function enterRoom(roomId) {
     case 'relay': showRelay(app(), { onExit: back }); break;
     case 'setup': showSetup(app(), { onDone: () => { progress.mark('setup'); back(); } }); break;
     default:
-      // 탈출 미니게임 방(rgb·buzzer·keypad·seg …)은 공용 미션 셸로
-      if (getRoom(roomId)?.scene === 'game') showMissionRoom(app(), { roomId, onExit: back });
+      // 탈출 미니게임 방(rgb·buzzer·keypad·seg …)은 탑다운 환경 → 장치 작동 → 미션
+      if (getRoom(roomId)?.scene === 'game') showEscapeRoom(app(), { roomId, onExit: back });
       else back();   // 준비중 방은 챕터에서 막으므로 안전망
   }
 }

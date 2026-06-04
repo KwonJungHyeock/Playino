@@ -34,6 +34,21 @@ export function encodePwm(pin, value) {
   return `P${pin}:${v}`;
 }
 
+/** tone(부저): T<pin>:<freq>[,<ms>] */
+export function encodeTone(pin, freq, ms = 220) {
+  return `T${pin}:${Math.max(0, Math.round(freq))},${Math.max(0, Math.round(ms))}`;
+}
+
+/** analogRead: A<ch> (ch 0-7) → 응답 A<ch>:<0-1023> */
+export function encodeAnalogRead(ch) {
+  return `A${ch}`;
+}
+
+/** digitalRead: R<pin> → 응답 R<pin>:<0|1> */
+export function encodeDigitalRead(pin) {
+  return `R${pin}`;
+}
+
 // ---- 디코딩 (B -> H) -------------------------------------------------------
 
 export const RESPONSE = Object.freeze({
