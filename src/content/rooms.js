@@ -1,50 +1,54 @@
 // rooms.js — PlayHouse 방 & 미션 정의 (콘텐츠)
-// 실물 배선(docs/HARDWARE.md): 단색 LED = D5/D9/D10/D11.
-//   현관=D5, 거실=D9, 주방=D10, 욕실=D11. 침실=DHT11(센서) → 추후 잠금 해제.
-// goal: 'on'(켜기) | 'off'(끄기) | 'blink'(깜빡) | 'pwm'(밝기)
+// 학습 순서: [체험(버튼)] → [코드 도전(숫자 수정 + 힌트)] → 업로드로 동작 확인 → 완료
+// 실물 배선: 단색 LED = D5(현관)/D9(거실)/D10(주방)/D11(욕실). 침실=DHT11(곧).
+//
+// mission.type : 'play'(버튼 체험) | 'challenge'(코드 도전)
+// mission.goal : 'on' | 'off' | 'blink' | 'pwm'
+// mission.want : 도전 판정 조건 { maxPwm } | { maxDelay }
 
 const setup = (pin) => `void setup() {\n  pinMode(${pin}, OUTPUT);\n}\n\n`;
 
-const mOn = (pin) => ({
-  id: 'on', title: '불 켜기', goal: 'on', concept: 'digitalWrite',
-  story: '핀에 전기를 보내면(HIGH) 불이 켜져!',
-  hint: `digitalWrite(${pin}, HIGH) 는 ${pin}번 핀에 전기를 보내 불을 켭니다.`,
-  base: setup(pin) + `void loop() {\n  digitalWrite(${pin}, HIGH);   // 불 켜기\n}\n`,
+const playOn = (pin) => ({
+  id: 'play-on', type: 'play', title: '불 켜보기', goal: 'on', concept: 'digitalWrite',
+  story: '먼저 버튼으로 직접 불을 켜고 꺼보자. 익숙해지면 코드에 도전!',
+  hint: 'digitalWrite(핀, HIGH) = 켜기, LOW = 끄기.',
+  base: setup(pin) + `void loop() {\n  digitalWrite(${pin}, HIGH);\n}\n`,
 });
-const mBlink = (pin) => ({
-  id: 'blink', title: '깜빡여 신호 보내기', goal: 'blink', concept: 'delay',
-  story: '불을 깜빡여서 "나 여기 있어!" 신호를 보내자. delay 숫자를 바꿔봐!',
-  hint: 'HIGH → delay → LOW → delay 를 반복하면 깜빡여요.',
-  base: setup(pin) + `void loop() {\n  digitalWrite(${pin}, HIGH);\n  delay(500);\n  digitalWrite(${pin}, LOW);\n  delay(500);\n}\n`,
+const playPwm = (pin) => ({
+  id: 'play-pwm', type: 'play', title: '밝기 맞춰보기', goal: 'pwm', concept: 'analogWrite',
+  story: '슬라이더로 밝기를 바꿔보자. 0~255 사이로 은은하게! 익숙해지면 코드 도전!',
+  hint: 'analogWrite(핀, 0~255) — 숫자가 클수록 밝아요.',
+  base: setup(pin) + `void loop() {\n  analogWrite(${pin}, 128);\n}\n`,
 });
-const mPwm = (pin) => ({
-  id: 'pwm', title: '밝기 조절하기', goal: 'pwm', concept: 'analogWrite',
-  story: '0~255 사이 값으로 밝기를 정할 수 있어. 은은한 무드등을 만들어봐!',
-  hint: `analogWrite(${pin}, 0~255) — 숫자가 클수록 밝아요. 128쯤 넣어볼까요?`,
-  base: setup(pin) + `void loop() {\n  analogWrite(${pin}, 128);   // 밝기(0~255)\n}\n`,
+
+const challDim = (pin, maxPwm) => ({
+  id: 'ch-dim', type: 'challenge', title: '더 은은하게 (밝기 줄이기)', goal: 'pwm', want: { maxPwm },
+  concept: 'analogWrite', challenge: `코드로 밝기를 ${maxPwm} 이하로 줄여 더 은은하게 만들어줘!`,
+  story: '아래 코드의 숫자를 직접 바꿔 밝기를 낮춰보자.',
+  hint: `analogWrite(${pin}, 숫자) 의 숫자를 ${maxPwm} 이하로 줄여보세요. (예: ${Math.round(maxPwm * 0.6)})`,
+  base: setup(pin) + `void loop() {\n  analogWrite(${pin}, 220);   // 너무 밝아요! 숫자를 줄여보세요\n}\n`,
+});
+const challFast = (pin, maxDelay) => ({
+  id: 'ch-fast', type: 'challenge', title: '더 빠르게 깜빡이기', goal: 'blink', want: { maxDelay },
+  concept: 'delay', challenge: `delay 를 ${maxDelay} 이하로 줄여 더 빠르게 깜빡여줘!`,
+  story: 'delay 숫자가 작을수록 빨리 깜빡여요. 직접 바꿔보자.',
+  hint: `delay(숫자) 의 숫자를 ${maxDelay} 이하로 줄여보세요. (예: ${Math.round(maxDelay * 0.7)})`,
+  base: setup(pin) + `void loop() {\n  digitalWrite(${pin}, HIGH);\n  delay(800);   // 느려요! 숫자를 줄여보세요\n  digitalWrite(${pin}, LOW);\n  delay(800);\n}\n`,
 });
 
 export const ROOMS = [
-  {
-    id: 'entry', name: '현관', pin: 5, concept: '디지털 출력',
-    intro: '현관이 깜깜해! 벽 스위치를 찾아 첫 불을 켜자.',
-    missions: [mOn(5), mBlink(5)],
-  },
-  {
-    id: 'living', name: '거실', pin: 9, concept: '밝기(PWM)',
-    intro: '거실은 분위기가 중요해. 켜고, 밝기까지 조절해보자.',
-    missions: [mOn(9), mPwm(9)],
-  },
-  {
-    id: 'kitchen', name: '주방', pin: 10, concept: '깜빡임',
-    intro: '요리 중 알림등! 켜고, 깜빡이는 신호도 만들어보자.',
-    missions: [mOn(10), mBlink(10)],
-  },
-  {
-    id: 'bath', name: '욕실', pin: 11, concept: '은은한 빛(PWM)',
-    intro: '욕실엔 눈부시지 않은 은은한 빛이 좋아.',
-    missions: [mPwm(11)],
-  },
+  { id: 'entry', name: '현관', pin: 5, concept: '디지털 출력',
+    intro: '현관이 깜깜해! 벽 스위치로 첫 불을 켜자.',
+    missions: [playOn(5), challFast(5, 300)] },
+  { id: 'living', name: '거실', pin: 9, concept: '밝기(PWM)',
+    intro: '거실은 분위기가 중요해. 밝기를 다뤄보자.',
+    missions: [playPwm(9), challDim(9, 80)] },
+  { id: 'kitchen', name: '주방', pin: 10, concept: '깜빡임/신호',
+    intro: '요리 중 알림등! 켜고, 빠르게 깜빡이는 신호를 만들자.',
+    missions: [playOn(10), challFast(10, 200)] },
+  { id: 'bath', name: '욕실', pin: 11, concept: '은은한 빛(PWM)',
+    intro: '욕실엔 눈부시지 않은 아주 은은한 빛이 좋아.',
+    missions: [playPwm(11), challDim(11, 40)] },
 ];
 
 export const LOCKED_ROOMS = [

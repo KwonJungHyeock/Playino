@@ -13,12 +13,12 @@ const FX = 276, FY = 150, FW = 300, FH = 180;
 const APEX = FX + FW / 2;                 // 426
 const DX = APEX - 38, DY = FY + 58, DW = 76, DH = FH - 58;  // 문 388..464 / 208..330
 
-export function showYard(root, { onDone }) {
+export function showYard(root, { onDone, spawn } = {}) {
   root.innerHTML = `
     <div class="scene game-scene scene-fade">
       <div class="world-host" id="world-host"></div>
       <div class="hud-top">
-        <div class="brand"><span class="brand-dot"></span><strong>PlayHouse</strong><span class="crumb">앞마당</span></div>
+        <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong><span class="brand-sep">:</span><b class="brand-sub">PlayHouse</b><span class="crumb">앞마당</span></div>
       </div>
       <div class="hud-hint show" id="hud-hint">방향키 / WASD 로 <b>현관문</b>까지 이동하세요 🚪</div>
       <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 상호작용</div>
@@ -35,7 +35,7 @@ export function showYard(root, { onDone }) {
 
   const map = {
     width: MAP_W, height: MAP_H, bg: '#15522c',
-    spawn: { x: 436, y: 600 },
+    spawn: spawn || { x: 436, y: 600 },
     walls: [
       { x: FX, y: 300, w: DX - FX, h: 46 },            // 문 좌측 벽
       { x: DX + DW, y: 300, w: FX + FW - (DX + DW), h: 46 }, // 문 우측 벽

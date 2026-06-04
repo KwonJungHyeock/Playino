@@ -37,14 +37,16 @@ export function analyze(tokens, pin) {
   return { writes, awrites, delays, finalVal, hasHigh, hasLow, blink, dim, pwmVal };
 }
 
-export function judge(code, pin, goal) {
+export function judge(code, pin, goal, want = {}) {
   const tokens = parseLoop(code);
   const s = analyze(tokens, pin);
 
   if (goal === 'pwm') {
-    return s.dim
-      ? { ok: true, reason: `analogWrite 로 밝기를 조절했어요! (값 ${s.pwmVal}) ✨`, summary: s, tokens }
-      : { ok: false, reason: `${pin}번 핀에 analogWrite(${pin}, 1~254) 로 밝기를 정해보세요.`, summary: s, tokens };
+    if (!s.dim) return { ok: false, reason: `${pin}번 핀에 analogWrite(${pin}, 1~254) 로 밝기를 정해보세요.`, summary: s, tokens };
+    if (want.maxPwm != null && !(s.pwmVal > 0 && s.pwmVal <= want.maxPwm)) {
+      return { ok: false, reason: `아직 밝아요 (값 ${s.pwmVal}). ${want.maxPwm} 이하로 줄여보세요.`, summary: s, tokens };
+    }
+    return { ok: true, reason: `밝기 ${s.pwmVal} 로 은은하게! ✨`, summary: s, tokens };
   }
 
   if (s.writes.length === 0) {
@@ -61,9 +63,12 @@ export function judge(code, pin, goal) {
       : { ok: false, reason: '마지막에 불이 켜져 있어요. LOW 로 끝나야 해요.', summary: s, tokens };
   }
   if (goal === 'blink') {
-    return s.blink
-      ? { ok: true, reason: 'HIGH·LOW 와 delay 로 깜빡여요! ✨', summary: s, tokens }
-      : { ok: false, reason: 'HIGH·LOW 를 번갈아 쓰고 delay 를 2번 이상 넣어야 깜빡여요.', summary: s, tokens };
+    if (!s.blink) return { ok: false, reason: 'HIGH·LOW 를 번갈아 쓰고 delay 를 2번 이상 넣어야 깜빡여요.', summary: s, tokens };
+    if (want.maxDelay != null && !s.delays.every((d) => d.ms <= want.maxDelay)) {
+      const slow = Math.max(...s.delays.map((d) => d.ms));
+      return { ok: false, reason: `아직 느려요 (delay ${slow}). ${want.maxDelay} 이하로 줄여보세요.`, summary: s, tokens };
+    }
+    return { ok: true, reason: 'HIGH·LOW 와 delay 로 깜빡여요! ✨', summary: s, tokens };
   }
   return { ok: false, reason: '알 수 없는 목표', summary: s, tokens };
 }
