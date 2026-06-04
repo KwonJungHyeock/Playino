@@ -10,13 +10,28 @@ export function showSplash(root, { onDone } = {}) {
   root.innerHTML = `
     <div class="splash" id="splash">
       <img class="splash-img" src="/intro.png" alt="Eduino AI" />
+      <div class="splash-loader"><div class="splash-loader-fill" id="splash-fill"></div></div>
     </div>
   `;
   const el = root.querySelector('#splash');
   const img = el.querySelector('.splash-img');
+  const fill = el.querySelector('#splash-fill');
 
   // 페이드인
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+
+  // 실제 로딩되는 것처럼 게이지 0→100% 애니메이션 (HOLD_MS 동안)
+  const startT = performance.now();
+  let rafId = 0;
+  const animate = (now) => {
+    const p = Math.min(1, (now - startT) / HOLD_MS);
+    // 살짝 가속/감속 + 미세 떨림으로 진짜 로딩 느낌
+    const eased = p < 0.92 ? p : 0.92 + (p - 0.92) * 0.9;
+    fill.style.width = (eased * 100).toFixed(1) + '%';
+    if (p < 1 && !finished) rafId = requestAnimationFrame(animate);
+    else fill.style.width = '100%';
+  };
+  rafId = requestAnimationFrame(animate);
 
   let finished = false;
   const finish = () => {
@@ -33,6 +48,7 @@ export function showSplash(root, { onDone } = {}) {
   window.addEventListener('keydown', onKey);
   window.addEventListener('pointerdown', onClick);
   function cleanup() {
+    cancelAnimationFrame(rafId);
     window.removeEventListener('keydown', onKey);
     window.removeEventListener('pointerdown', onClick);
   }

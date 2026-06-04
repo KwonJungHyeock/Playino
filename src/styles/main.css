@@ -781,3 +781,26 @@ html, body {
 .chal-target { color: var(--muted); font-size: 13px; margin-left: 8px; }
 .chal-bar { height: 12px; background: #0a1120; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
 .chal-bar > div { height: 100%; width: 50%; transition: width .2s, background .2s; }
+
+/* ---- 로그인 로고 크게 + 움직이는 디지털 배경 ---- */
+.login-brand { position: relative; overflow: hidden; }
+.login-brand > *:not(.digital-bg) { position: relative; z-index: 1; }
+.lb-logo { font-size: 54px !important; margin: 6px 0 4px; }
+
+.digital-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  background:
+    radial-gradient(600px 420px at 18% 18%, rgba(111,183,255,.20), transparent 60%),
+    radial-gradient(520px 420px at 82% 82%, rgba(167,139,250,.18), transparent 60%); }
+.digital-bg::before { content: ''; position: absolute; inset: -60%;
+  background-image: linear-gradient(rgba(120,170,255,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(120,170,255,.09) 1px, transparent 1px);
+  background-size: 40px 40px; animation: grid-pan 20s linear infinite; }
+@keyframes grid-pan { from { transform: translate(0,0); } to { transform: translate(40px,40px); } }
+.digital-bg::after { content: ''; position: absolute; left: 0; right: 0; height: 160px; top: -160px;
+  background: linear-gradient(180deg, transparent, rgba(111,183,255,.12), transparent); animation: scan 7s linear infinite; }
+@keyframes scan { to { top: 120%; } }
+
+/* ---- 스플래시 로딩바 ---- */
+.splash-loader { position: absolute; left: 50%; bottom: 10.5%; transform: translateX(-50%);
+  width: min(360px, 42%); height: 6px; background: rgba(255,255,255,.14); border-radius: 999px; overflow: hidden; z-index: 3; }
+.splash-loader-fill { height: 100%; width: 0%; border-radius: 999px;
+  background: linear-gradient(90deg, #ffd11a, #ff6a5a); box-shadow: 0 0 12px rgba(255,209,26,.7); }

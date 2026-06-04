@@ -7,6 +7,7 @@ import { board } from '../app/board.js';
 import { progress } from '../app/progress.js';
 import { mountSay, eddieRandom } from '../app/eddieSay.js';
 import { mountQuest } from '../app/quest.js';
+import { celebrateRoom } from './celebrate.js';
 
 const MAP_W = 960, MAP_H = 620;
 // 실물 센서값을 직접 바꿔(따뜻하게/입김 등) 목표 달성 → 배터리 획득
@@ -154,10 +155,20 @@ export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
     quest.setObjective(['bat0', 'bat1', 'bat2'].indexOf(id), true);
     quest.setSubtitle(`배터리 ${n} / 3`);
     toast(`${ZONES[id].icon} ${ZONES[id].name} 해소 & 배터리 획득! (${n}/3)`);
+    // EDDIE 가이드 멘트 — 남은 미션을 짚어준다
+    if (n < 3) {
+      const left = ['bat0', 'bat1', 'bat2'].filter((k) => !got[k]).map((k) => `${ZONES[k].icon} ${ZONES[k].name}`);
+      narrate(`좋아! 이제 ${left.join(' · ')} 구역이 남았어. 다음은 거기로 가보자! 🤖`);
+    }
     if (n >= 3) {
       cleared = true; progress.mark('dht11');
-      narrate('배터리 3개 모두 획득! DHT-11 방 미션 클리어 🎉 복도에 ✓ 표시가 붙어요.');
+      narrate('배터리 3개 모두 획득! DHT-11 방 미션 클리어 🎉');
       toast('🎉 방 미션 클리어! (배터리 3/3)');
+      world.pause();
+      setTimeout(() => celebrateRoom({
+        message: '온도·습도 센서를 모두 다뤘어요! 🔋🔋🔋<br/>EDDIE와 함께 DHT-11 방을 깨웠습니다.',
+        onExit: () => { cleanup(); onExit?.(); },
+      }), 600);
     }
   }
 
@@ -263,14 +274,18 @@ function drawRoom(ctx, got, cleared) {
     ctx.fillStyle = 'rgba(10,16,28,0.72)'; rr(ctx, z.cx - lw / 2, z.cy + 64, lw, 22, 11); ctx.fill();
     ctx.fillStyle = '#eaf2ff'; ctx.fillText(label, z.cx, z.cy + 79);
   }
-  // 게임하기 받침대 (좌하단 — 미션 영역과 분리)
+  // 게임하기 받침대 (좌하단 — 아이콘 + 라벨을 한 카드 안에 담아 안정적으로)
   const px = PLAY.x + PLAY.w / 2, py = PLAY.y + PLAY.h / 2;
-  const pg = ctx.createRadialGradient(px, py, 0, px, py, 72); pg.addColorStop(0, 'rgba(111,183,255,0.4)'); pg.addColorStop(1, 'rgba(111,183,255,0)');
-  ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(px, py, 72, 0, 6.283); ctx.fill();
-  ctx.fillStyle = '#2a3a66'; rr(ctx, PLAY.x, PLAY.y + 20, PLAY.w, PLAY.h - 20, 10); ctx.fill();
-  ctx.strokeStyle = '#6fb7ff'; ctx.lineWidth = 2; rr(ctx, PLAY.x, PLAY.y + 20, PLAY.w, PLAY.h - 20, 10); ctx.stroke();
-  ctx.fillStyle = '#6fb7ff'; ctx.font = '28px sans-serif'; ctx.fillText('🎮', px, py + 10);
-  ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('게임하기 ▸', px, py + 50);
+  const pg = ctx.createRadialGradient(px, py, 4, px, py, 86); pg.addColorStop(0, 'rgba(111,183,255,0.34)'); pg.addColorStop(1, 'rgba(111,183,255,0)');
+  ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(px, py, 86, 0, 6.283); ctx.fill();
+  const card = ctx.createLinearGradient(PLAY.x, PLAY.y, PLAY.x, PLAY.y + PLAY.h);
+  card.addColorStop(0, '#243660'); card.addColorStop(1, '#18233f');
+  ctx.fillStyle = card; rr(ctx, PLAY.x, PLAY.y, PLAY.w, PLAY.h, 14); ctx.fill();
+  ctx.strokeStyle = 'rgba(111,183,255,0.9)'; ctx.lineWidth = 2; rr(ctx, PLAY.x, PLAY.y, PLAY.w, PLAY.h, 14); ctx.stroke();
+  ctx.save(); ctx.shadowColor = 'rgba(111,183,255,0.8)'; ctx.shadowBlur = 12;
+  ctx.fillStyle = '#fff'; ctx.font = '34px sans-serif'; ctx.fillText('🎮', px, py + 4); ctx.restore();
+  ctx.fillStyle = 'rgba(111,183,255,0.18)'; rr(ctx, PLAY.x + 10, PLAY.y + PLAY.h - 28, PLAY.w - 20, 20, 10); ctx.fill();
+  ctx.fillStyle = '#dbe9ff'; ctx.font = '700 12px "Space Grotesk", sans-serif'; ctx.fillText('게임하기 ▸', px, py + 30);
   // 나가기
   ctx.fillStyle = '#5a3a2a'; rr(ctx, EXIT.x - 6, MAP_H - 28, EXIT.w + 12, 24, 5); ctx.fill();
   ctx.fillStyle = '#caa15a'; rr(ctx, EXIT.x, MAP_H - 24, EXIT.w, 18, 4); ctx.fill();

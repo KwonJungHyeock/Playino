@@ -18,6 +18,7 @@ export function showIntro(root, { onDone }) {
     <div class="intro scene-fade">
       <div class="intro-aurora"></div>
       <div class="intro-grid"></div>
+      <div class="digital-bg"></div>
       <div class="intro-particles">${particles(16)}</div>
       <div class="intro-card glass" id="intro-card"></div>
       <button class="intro-skip" id="intro-skip">건너뛰기 →</button>
