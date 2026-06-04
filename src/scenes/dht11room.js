@@ -9,16 +9,19 @@ const MAP_W = 960, MAP_H = 620;
 const PLAY = { x: 446, y: 286, w: 70, h: 70 };       // 게임하기 지점
 const EXIT = { x: 448, y: MAP_H - 58, w: 64, h: 38 };
 
-export function showDht11Room(root, { onPlay, onExit } = {}) {
+export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
   const cur = { temp: 24, hum: 50, real: false };
-  let pollTimer = null, nullCount = 0, updating = false;
+  let pollTimer = null, nullCount = 0, updating = false, simPhase = 0;
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade">
       <div class="world-host" id="world-host"></div>
       <div class="hud-top">
         <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong><span class="brand-sep">:</span><b class="brand-sub">DHT-11</b><span class="crumb">2. 모니터링</span></div>
-        <button class="btn btn-sm" id="rm-exit">🚪 복도로</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" id="rm-code">✎ 코드 수정</button>
+          <button class="btn btn-sm" id="rm-exit">🚪 복도로</button>
+        </div>
       </div>
       <div class="dht-hud" id="dht-hud">
         <div class="dh-item"><span class="dh-ic">🌡️</span><b id="dh-t">--</b>℃</div>
@@ -35,6 +38,7 @@ export function showDht11Room(root, { onPlay, onExit } = {}) {
   const hintEl = root.querySelector('#hud-hint');
   const toastEl = root.querySelector('#hud-toast');
   root.querySelector('#rm-exit').onclick = () => { cleanup(); onExit?.(); };
+  root.querySelector('#rm-code').onclick = () => { cleanup(); onCode?.(); };
 
   const map = {
     width: MAP_W, height: MAP_H, bg: '#0a1422',
@@ -67,9 +71,11 @@ export function showDht11Room(root, { onPlay, onExit } = {}) {
       if (r) { cur.temp = r.temp; cur.hum = r.hum; cur.real = true; nullCount = 0; root.querySelector('#dh-update').hidden = true; updateHud(); return; }
       if (++nullCount >= 2) root.querySelector('#dh-update').hidden = false;  // 구펌웨어 → 업데이트 버튼
     }
+    // 시뮬: 천천히 오르내려 더움/추움/축축/건조를 모두 보여준다
     cur.real = false;
-    cur.temp = clamp(cur.temp + (Math.random() - 0.5) * 0.8, 0, 45);
-    cur.hum = clamp(cur.hum + (Math.random() - 0.5) * 1.2, 0, 100);
+    simPhase += 1;
+    cur.temp = clamp(24 + Math.sin(simPhase / 8) * 9 + (Math.random() - 0.5), 0, 45);
+    cur.hum = clamp(52 + Math.sin(simPhase / 6 + 1) * 22 + (Math.random() - 0.5), 0, 100);
     updateHud();
   }
   pollTimer = setInterval(poll, 1500);
@@ -107,29 +113,32 @@ export function showDht11Room(root, { onPlay, onExit } = {}) {
   // ---- 반응형 배경 연출 ----
   function drawReactive(ctx, st, canvas) {
     const W = canvas.width, H = canvas.height, t = cur.temp, h = cur.hum;
-    const heat = clamp((t - 26) / 12, 0, 1);
-    const cold = clamp((18 - t) / 12, 0, 1);
-    const damp = clamp((h - 60) / 35, 0, 1);
+    // 기준: 25℃↑ 더움, 20℃↓ 추움, 55%↑ 축축, 35%↓ 건조 (실내값에서도 반응)
+    const heat = clamp((t - 25) / 9, 0, 1);
+    const cold = clamp((20 - t) / 9, 0, 1);
+    const damp = clamp((h - 55) / 25, 0, 1);
+    const dry = clamp((35 - h) / 22, 0, 1);
     const di = discomfort(t, h);
-    const disc = clamp((di - 75) / 13, 0, 1);
+    const disc = clamp((di - 72) / 12, 0, 1);
 
-    if (heat > 0) { ctx.fillStyle = `rgba(255,90,30,${0.30 * heat})`; ctx.fillRect(0, 0, W, H);
-      // 열기 아지랑이
-      ctx.fillStyle = `rgba(255,160,60,${0.10 * heat})`;
+    if (heat > 0) {
+      ctx.fillStyle = `rgba(255,90,30,${0.10 + 0.34 * heat})`; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = `rgba(255,170,70,${0.12 * heat})`;
       for (let i = 0; i < 4; i++) { const y = H - (st.t * 0.6 + i * 90) % (H + 90); ctx.fillRect(0, y, W, 26); }
     }
-    if (cold > 0) { ctx.fillStyle = `rgba(120,180,255,${0.30 * cold})`; ctx.fillRect(0, 0, W, H); }
+    if (cold > 0) { ctx.fillStyle = `rgba(120,180,255,${0.10 + 0.30 * cold})`; ctx.fillRect(0, 0, W, H); }
+    if (dry > 0) { ctx.fillStyle = `rgba(210,180,120,${0.18 * dry})`; ctx.fillRect(0, 0, W, H); }
     if (damp > 0) {
-      ctx.fillStyle = `rgba(40,120,200,${0.28 * damp})`; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = `rgba(180,220,255,${0.5 * damp})`;
-      for (let i = 0; i < 24; i++) { const x = (i * 73 + 30) % W; const y = ((st.t * 2.2) + i * 130) % (H + 60); ctx.fillRect(x, y, 2, 10); }
+      ctx.fillStyle = `rgba(40,120,200,${0.10 + 0.26 * damp})`; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = `rgba(190,225,255,${0.55 * damp})`;
+      for (let i = 0; i < 26; i++) { const x = (i * 73 + 30) % W; const y = ((st.t * 2.4) + i * 130) % (H + 60); ctx.fillRect(x, y, 2, 11); }
     }
-    if (disc > 0.35) {
-      const pulse = 0.18 + 0.12 * Math.sin(st.t * 0.12);
+    if (disc > 0.3) {
+      const pulse = 0.16 + 0.12 * Math.sin(st.t * 0.12);
       const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.75);
-      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(220,30,120,${(pulse) * disc})`);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(220,30,120,${pulse * disc})`);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      if (disc > 0.7) { ctx.fillStyle = '#fff'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🥵 불쾌지수 폭발!', W / 2, 130); ctx.textAlign = 'start'; }
+      if (disc > 0.6) { ctx.fillStyle = '#fff'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🥵 불쾌지수 폭발!', W / 2, 130); ctx.textAlign = 'start'; }
     }
   }
 }

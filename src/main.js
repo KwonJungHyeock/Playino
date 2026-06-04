@@ -27,7 +27,7 @@ function sceneHouse() { showHouse(app(), { onExit: sceneLab }); }
 
 // DHT-11: 코딩 → 모니터링 방 → 미니게임
 function dhtCoding() { showDhtCoding(app(), { onDone: dhtRoom, onExit: sceneLab }); }
-function dhtRoom() { showDht11Room(app(), { onPlay: dhtGame, onExit: sceneLab }); }
+function dhtRoom() { showDht11Room(app(), { onPlay: dhtGame, onExit: sceneLab, onCode: dhtCoding }); }
 function dhtGame() { showDht11(app(), { onQuit: dhtRoom }); }
 
 window.addEventListener('DOMContentLoaded', sceneSplash);

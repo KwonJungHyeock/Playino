@@ -702,3 +702,28 @@ html, body {
 .dh-src.live { color: var(--ok); }
 .dh-update { background: var(--accent-2); color: #2a1c00; border-color: var(--accent-2); font-weight: 700; }
 .dh-update:hover { background: #ffe066; }
+
+/* ---- 프리미엄 타이포 (플랫폼 느낌) ---- */
+.intro-title { font-family: 'Space Grotesk', var(--sans); letter-spacing: -.01em; }
+.intro-title.gradient {
+  font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+  font-weight: 800; font-size: 48px; letter-spacing: .03em; line-height: 1.05;
+  background: linear-gradient(180deg, #ffffff 0%, #d4e3ff 50%, #8aa6d8 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 22px rgba(120,160,255,.35));
+}
+.intro-title.gradient span { color: var(--accent); -webkit-text-fill-color: var(--accent); }
+.intro-brand {
+  font-family: 'Space Grotesk', var(--sans); letter-spacing: .26em; text-transform: uppercase;
+  font-size: 11px; color: #8aa0c8; font-weight: 600;
+}
+.intro-sub { font-family: 'Space Grotesk', var(--sans); letter-spacing: .01em; color: #aebfdc; }
+.logo-mark {
+  background: linear-gradient(145deg, #243456, #0e1830);
+  border: 1px solid rgba(140,170,255,.28);
+  box-shadow: 0 12px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+}
+.logo-mark span { font-family: 'Orbitron', sans-serif; font-weight: 800; color: #cfe0ff; font-size: 32px; }
+.logo-spark { background: #6fb7ff; box-shadow: 0 0 16px #6fb7ff; }
+.brand strong { font-family: 'Space Grotesk', var(--sans); letter-spacing: .01em; }
+.brand-sub, .phase-badge, .room-chip, .intro-dots + .intro-actions .btn { font-family: 'Space Grotesk', var(--sans); }
