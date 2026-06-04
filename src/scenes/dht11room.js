@@ -6,6 +6,7 @@ import { createWorld } from '../engine/topdown.js';
 import { board } from '../app/board.js';
 import { progress } from '../app/progress.js';
 import { mountSay, eddieRandom } from '../app/eddieSay.js';
+import { mountQuest } from '../app/quest.js';
 
 const MAP_W = 960, MAP_H = 620;
 const ZONES = {
@@ -94,11 +95,34 @@ export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
 
   setTimeout(() => narrate('동그란 3개 구역에서 배터리를 모아 미션을 클리어하자! 🔋'), 400);
 
+  // 퀘스트 패널 + 입장 미션 안내(LED처럼 명확히)
+  const quest = mountQuest(root.querySelector('.game-scene'), {
+    title: 'DHT-11 방 미션', subtitle: `배터리 ${Object.values(got).filter(Boolean).length} / 3`,
+    objectives: [
+      { text: '🔥 더움 구역 배터리', done: false },
+      { text: '❄️ 추움 구역 배터리', done: false },
+      { text: '😣 불쾌 구역 배터리', done: false },
+    ],
+  });
+  world.pause();
+  {
+    const m = document.createElement('div'); m.className = 'modal-backdrop';
+    m.innerHTML = `<div class="modal"><h3>🔋 방 미션 안내</h3>
+      <p>온도·습도에 따라 방 모습이 변해요(실시간 모니터링).<br/>
+      방 안 <b>동그란 3개 구역</b>(🔥더움·❄️추움·😣불쾌)에서 <b>배터리 3개</b>를 모두 모으면 <b>방 클리어</b>!<br/>
+      가운데 <b>[게임하기]</b>로 '쾌적 지키기' 게임도 따로 즐길 수 있어요.</p>
+      <div class="modal-actions"><button class="btn primary" id="ms-go">미션 시작 ▶</button></div></div>`;
+    document.body.appendChild(m);
+    m.querySelector('#ms-go').onclick = () => { m.remove(); world.resume(); };
+  }
+
   function collect(id) {
     if (got[id]) { toast(`${ZONES[id].name} 배터리는 이미 가졌어요`); return; }
     got[id] = true; world.disableTrigger(id);
     const n = Object.values(got).filter(Boolean).length;
     set('#dh-mission', `🔋 ${n} / 3`);
+    quest.setObjective(['bat0', 'bat1', 'bat2'].indexOf(id), true);
+    quest.setSubtitle(`배터리 ${n} / 3`);
     toast(`${ZONES[id].icon} ${ZONES[id].name} 배터리 획득! (${n}/3)`);
     if (n >= 3) {
       cleared = true; progress.mark('dht11');
