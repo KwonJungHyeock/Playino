@@ -5,30 +5,33 @@
 웹 게임(EDDIE 아바타) ↔ 실물 보드(LED) 연동 학습 1레슨(거실)을 만드는
 재사용 템플릿. 통과하면 나머지 4방·다른 테마로 복제한다.
 
-## 현재 진행 상태 (구현 순서 §9)
+## 현재 진행 상태
 
-- [x] **STEP 1 — Scaffold**: Vite + 폴더 구조 + `package.json` + 2단 레이아웃(62/38) + `eddie.svg`
-- [x] **STEP 2 — 시리얼 코어**: `webserial.js` · `protocol.js` · `provisioning.js`
-- [ ] STEP 3~ — 테마 로더 · EDDIE 아바타 · 게임 캔버스 · 에디터 · 폴백 …
+- [x] **Scaffold** + **시리얼 코어** (webserial / protocol / provisioning)
+- [x] **WebSerial 펌웨어 굽기** (Uno STK500, IDE 불필요)
+- [x] **씬 구조 + 인트로** (Eduino AI → PlayHouse → EDDIE 스토리)
+- [x] **사용환경 준비**: 보드 연결 · 체크리스트(자동 완료표시) · **내장 LED(D13) 테스트**
+- [x] **거실 레슨**: 거실 불 켜기(D5) — 스위치 ON → 실물 LED + EDDIE success
+- [ ] 다음: 테마 로더(JSON) · EDDIE 방향키 이동 · 코드 에디터 · 추가 방 · Wokwi 폴백
 
-> **여기서 멈춤(§9.2).** `L2:1` / `L2:0` 로 **실물 D2 LED** 가 토글되는지
-> 사람이 확인한 뒤 다음 단계로 진행한다.
+> 실물 배선은 [`docs/HARDWARE.md`](docs/HARDWARE.md) 기준 (D2=DHT11 이므로 거실 조명=D5).
 
-## 실행 / 검증 방법
+## 실행 방법
 
 ```bash
 npm install
 npm run dev      # http://localhost:5173 (Chrome/Edge 데스크톱)
 ```
 
-1. 우측 패널 **[보드 연결]** → 팝업에서 Arduino/CH340 보드 선택.
-2. 자동으로 `PING` 재전송 → `PLAYHOUSE v*` 수신 시 **연결됨**.
-   - 응답 없으면(펌웨어 없음) **"보드 준비"** 모달 → **[웹으로 펌웨어 굽기]**.
-3. **[불 켜기 · L2:1]** / **[불 끄기 · L2:0]** → **실물 D2 LED** 토글 확인.
-   - 화면 거실 램프 + EDDIE `success` 글로우가 같은 이벤트에서 점등(§5.5 시그니처).
-4. 모든 TX/RX 가 **시리얼 모니터**에 기록된다.
+화면 흐름:
+1. **인트로** — Eduino AI 소개 → PlayHouse 진입 → EDDIE 스토리.
+2. **사용환경 준비** — [보드 연결] → 체크리스트가 자동 완료표시
+   (브라우저/연결/펌웨어). 펌웨어 없으면 **[펌웨어 굽기(웹)]** 진행.
+   마지막으로 **[13번 LED 깜빡이기]**(보드 내장 LED, 외부 배선 불필요) 확인.
+3. **거실 레슨** — [불 켜기 · L5:1]/[불 끄기 · L5:0] → 실물 **D5 LED** 토글,
+   불이 켜지면 EDDIE success 글로우 + 미션 완료(1/5).
 
-> WebSerial 은 Chrome/Edge 데스크톱 전용. 미지원/HW 없음 → STEP 9 에서 Wokwi 폴백 예정.
+> WebSerial 은 Chrome/Edge 데스크톱 전용. 미지원/HW 없음 → 추후 Wokwi 폴백.
 
 ### 펌웨어: IDE 없이 브라우저에서 굽기 (WebSerial · STK500)
 
@@ -67,18 +70,25 @@ playino-playhouse/
 ├── vite.config.js
 ├── public/firmware/        # 펌웨어 산출물 + 참조 .ino (별도 작업자)
 └── src/
-    ├── main.js             # STEP 2 검증 하네스 (연결·핸드셰이크·LED 토글·모니터)
-    ├── styles/main.css     # 2단 레이아웃
-    ├── assets/eddie.svg    # ★ EDDIE 주인공 에셋 (#eddie/#eddie-eyes/#eddie-glow/#eddie-screen)
+    ├── main.js             # 씬 매니저 (인트로 → 사용환경 준비 → 거실 레슨)
+    ├── styles/main.css
+    ├── assets/eddie.svg    # ★ EDDIE 주인공 (#eddie/#eddie-eyes/#eddie-glow/#eddie-screen)
+    ├── app/
+    │   ├── board.js        # 공유 보드 컨트롤러(연결·핸드셰이크·웹굽기·핀제어)
+    │   └── monitor.js      # 공유 시리얼 모니터 컴포넌트
+    ├── scenes/
+    │   ├── intro.js        # Eduino AI → PlayHouse → EDDIE 스토리
+    │   ├── setup.js        # 사용환경 준비(체크리스트 + 내장 LED 테스트)
+    │   └── lesson.js       # 거실 불 켜기(D5)
     └── serial/
         ├── webserial.js    # 포트 연결·VID/PID·라인 read/write·attach(재사용)
-        ├── protocol.js     # 명령 인코딩/디코딩 (L2:1 등)
+        ├── protocol.js     # 명령 인코딩/디코딩 (L5:1 등)
         ├── provisioning.js # PING 핸드셰이크(재시도) + flashFirmware(웹 굽기)
         ├── flasher.js      # Uno STK500v1 WebSerial 플래셔
         └── intelhex.js     # Intel HEX(.hex) 파서
 ```
 
-> STEP 3 이후에 `engine/`, `editor/`, `panel/`, `fallback/`, `themes/` 가 추가된다.
+> 다음 단계에서 `themes/`(테마팩 JSON), 방향키 이동, 코드 에디터 등이 추가된다.
 
 ## HW
 

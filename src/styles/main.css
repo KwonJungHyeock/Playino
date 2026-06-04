@@ -216,13 +216,15 @@ html, body {
 }
 .flash-stat { font-size: 12px; color: var(--muted); margin-top: 7px; font-family: var(--mono); }
 
+/* ---- 씬 공통 ------------------------------------------------------- */
+.scene-fade { animation: scene-in .35s ease; }
+@keyframes scene-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
 /* ---- 인트로 씬 ----------------------------------------------------- */
 .intro {
-  position: fixed; inset: 0; z-index: 100;
+  position: relative; min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
-  opacity: 1; transition: opacity .38s ease;
 }
-.intro.closing { opacity: 0; }
 .intro-bg {
   position: absolute; inset: 0;
   background:
@@ -285,6 +287,58 @@ html, body {
 }
 .intro-skip:hover { color: var(--text); }
 .intro-foot { margin-top: 18px; color: #4b5e80; font-size: 12px; }
+
+/* 인트로 슬라이드 */
+.intro-card.in { animation: slide-in .35s ease; }
+@keyframes slide-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.intro-title .accent { color: var(--accent); }
+.intro-desc { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 6px auto 14px; max-width: 460px; }
+.intro-dots { display: flex; gap: 7px; justify-content: center; margin: 14px 0 16px; }
+.intro-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.intro-dots span.on { background: var(--accent); }
+#i-start { opacity: 0; transform: translateY(8px) scale(.96); transition: opacity .35s, transform .35s; }
+#i-start.show { opacity: 1; transform: none; animation: cta-pulse 2s ease-in-out infinite; }
+
+/* ---- 사용환경 준비 씬 ---------------------------------------------- */
+.setup-body {
+  display: grid;
+  grid-template-columns: 280px 1fr 340px;
+  gap: 20px; padding: 22px; align-items: start;
+}
+@media (max-width: 980px) { .setup-body { grid-template-columns: 1fr; } }
+
+.setup-left { text-align: center; }
+.setup-eddie { width: 200px; height: 220px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+.setup-eddie svg { width: 150px; height: 200px; overflow: visible; }
+.setup-eddie #eddie-glow { animation: intro-glow 2.8s ease-in-out infinite; }
+.setup-speech {
+  background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px 16px; color: var(--text); font-size: 15px; line-height: 1.5; margin-top: 8px;
+}
+
+.setup-title { font-size: 20px; margin: 4px 0 14px; }
+.checklist { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.check-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-elev); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; transition: border-color .2s, background .2s;
+}
+.check-item.done  { border-color: rgba(61,220,145,.55); background: rgba(61,220,145,.06); }
+.check-item.doing { border-color: rgba(255,176,32,.55); }
+.check-item.fail  { border-color: rgba(255,107,107,.55); }
+.check-icon { font-size: 20px; width: 24px; text-align: center; flex: none; }
+.check-text { display: flex; flex-direction: column; }
+.check-text b { font-size: 15px; }
+.check-text small { color: var(--muted); font-size: 12px; }
+
+.setup-action { min-height: 60px; margin-bottom: 14px; }
+.confirm-q { font-size: 15px; margin: 0 0 10px; }
+.setup-go { font-size: 16px; padding: 12px 24px; opacity: .5; }
+.setup-go.show:not(:disabled) { opacity: 1; animation: cta-pulse 2s ease-in-out infinite; }
+.setup-monitor h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+.muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
 
 /* EDDIE success 글로우 펄스 (§5.5 signature) */
 @keyframes eddie-glow-pulse {
