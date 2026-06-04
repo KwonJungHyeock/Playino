@@ -84,6 +84,11 @@ export function showDht11Room(root, { onPlay, onExit, onCode } = {}) {
       else if (ZONES[tr.id]) hintEl.innerHTML = got[tr.id] ? `${ZONES[tr.id].name} 배터리 — 획득함 ✅` : `🔋 Space · ${ZONES[tr.id].icon} ${ZONES[tr.id].name} 구역 미션`;
       hintEl.classList.add('show');
     },
+    onDrawOverlay: (ctx, st, canvas) => {  // 중립 비네트(깊이감) — 온도색 아님
+      const g = ctx.createRadialGradient(canvas.width / 2, canvas.height * 0.46, canvas.height * 0.38, canvas.width / 2, canvas.height * 0.5, canvas.height * 0.92);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.5)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    },
   });
 
   setTimeout(() => narrate('동그란 3개 구역에서 배터리를 모아 미션을 클리어하자! 🔋'), 400);
@@ -214,26 +219,49 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function discomfort(t, h) { return 0.81 * t + 0.01 * h * (0.99 * t - 14.3) + 46.3; }
 
 function drawRoom(ctx, got, cleared) {
-  ctx.fillStyle = '#22304a'; ctx.fillRect(0, 0, MAP_W, MAP_H);
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
-  for (let x = 0; x < MAP_W; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, MAP_H); ctx.stroke(); }
-  for (let y = 0; y < MAP_H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(MAP_W, y); ctx.stroke(); }
-  ctx.fillStyle = '#2b3552'; ctx.fillRect(0, 0, MAP_W, 24); ctx.fillRect(0, MAP_H - 24, MAP_W, 24); ctx.fillRect(0, 0, 24, MAP_H); ctx.fillRect(MAP_W - 24, 0, 24, MAP_H);
-  // 센서 모니터 책상
-  ctx.fillStyle = '#5a4a32'; rr(ctx, 360, 40, 240, 34, 6); ctx.fill();
-  ctx.fillStyle = '#0e1726'; rr(ctx, 410, 30, 140, 14, 4); ctx.fill();
+  // 바닥: 깊이 그라데이션
+  const fg = ctx.createLinearGradient(0, 0, 0, MAP_H);
+  fg.addColorStop(0, '#142036'); fg.addColorStop(0.55, '#172642'); fg.addColorStop(1, '#0e1828');
+  ctx.fillStyle = fg; ctx.fillRect(0, 0, MAP_W, MAP_H);
+  // 미세 격자
+  ctx.strokeStyle = 'rgba(130,170,255,0.045)'; ctx.lineWidth = 1;
+  for (let x = 24; x < MAP_W; x += 44) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, MAP_H); ctx.stroke(); }
+  for (let y = 24; y < MAP_H; y += 44) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(MAP_W, y); ctx.stroke(); }
+  // 중앙 바닥 빛
+  const fl = ctx.createRadialGradient(MAP_W / 2, MAP_H * 0.46, 30, MAP_W / 2, MAP_H * 0.46, MAP_W * 0.5);
+  fl.addColorStop(0, 'rgba(120,170,255,0.06)'); fl.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = fl; ctx.fillRect(0, 0, MAP_W, MAP_H);
+  // 벽 (그라데이션 + 상단 하이라이트 + 발광 베이스보드)
+  const wall = (x, y, w, h) => { const g = ctx.createLinearGradient(x, y, x, y + (h < 40 ? h : 40)); g.addColorStop(0, '#30406a'); g.addColorStop(1, '#1b2740'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h); };
+  wall(0, 0, MAP_W, 24); wall(0, MAP_H - 24, MAP_W, 24); wall(0, 0, 24, MAP_H); wall(MAP_W - 24, 0, 24, MAP_H);
+  ctx.fillStyle = 'rgba(120,180,255,0.18)'; ctx.fillRect(24, 22, MAP_W - 48, 2);
+  // 센서 허브 책상
+  ctx.fillStyle = '#2a3550'; rr(ctx, 356, 44, 248, 30, 10); ctx.fill();
+  const sc = ctx.createLinearGradient(408, 26, 408, 46); sc.addColorStop(0, '#16384f'); sc.addColorStop(1, '#0a1c2c');
+  ctx.fillStyle = sc; rr(ctx, 406, 26, 148, 20, 5); ctx.fill();
+  ctx.strokeStyle = 'rgba(127,214,255,0.4)'; ctx.lineWidth = 1; rr(ctx, 406, 26, 148, 20, 5); ctx.stroke();
+  ctx.fillStyle = '#7fd6ff'; ctx.font = 'bold 11px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('SENSOR HUB', 480, 40);
 
   ctx.textAlign = 'center';
-  // 배터리 구역 (부드러운 빛 디스크)
+  // 배터리 구역 (글로우 + 글래스 디스크 + 림라이트 + 라벨칩)
   for (const [k, z] of Object.entries(ZONES)) {
     const has = !got[k];
     const base = has ? z.color : '61,220,145';
-    const g = ctx.createRadialGradient(z.cx, z.cy, 6, z.cx, z.cy, 92);
-    g.addColorStop(0, `rgba(${base},0.55)`); g.addColorStop(0.55, `rgba(${base},0.18)`); g.addColorStop(1, `rgba(${base},0)`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(z.cx, z.cy, 92, 0, 6.283); ctx.fill();
-    ctx.strokeStyle = `rgba(${base},0.45)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(z.cx, z.cy, 58, 0, 6.283); ctx.stroke();
-    ctx.font = '46px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(has ? '🔋' : '✅', z.cx, z.cy + 8);
-    ctx.fillStyle = '#eaf2ff'; ctx.font = '600 14px sans-serif'; ctx.fillText(`${z.icon} ${z.name}`, z.cx, z.cy + 50);
+    const glow = ctx.createRadialGradient(z.cx, z.cy, 10, z.cx, z.cy, 96);
+    glow.addColorStop(0, `rgba(${base},0.5)`); glow.addColorStop(0.6, `rgba(${base},0.15)`); glow.addColorStop(1, `rgba(${base},0)`);
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(z.cx, z.cy, 96, 0, 6.283); ctx.fill();
+    const disc = ctx.createRadialGradient(z.cx, z.cy - 16, 4, z.cx, z.cy, 58);
+    disc.addColorStop(0, `rgba(${base},0.30)`); disc.addColorStop(1, 'rgba(10,18,30,0.55)');
+    ctx.fillStyle = disc; ctx.beginPath(); ctx.arc(z.cx, z.cy, 58, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = `rgba(${base},0.85)`; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(z.cx, z.cy, 58, 0, 6.283); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(z.cx, z.cy - 2, 53, Math.PI * 1.12, Math.PI * 1.88); ctx.stroke();
+    ctx.save(); ctx.shadowColor = `rgba(${base},0.9)`; ctx.shadowBlur = 18;
+    ctx.font = '46px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(has ? '🔋' : '✅', z.cx, z.cy + 14); ctx.restore();
+    const label = `${z.icon} ${z.name}`;
+    ctx.font = '600 13px "Space Grotesk", sans-serif';
+    const lw = ctx.measureText(label).width + 22;
+    ctx.fillStyle = 'rgba(10,16,28,0.72)'; rr(ctx, z.cx - lw / 2, z.cy + 64, lw, 22, 11); ctx.fill();
+    ctx.fillStyle = '#eaf2ff'; ctx.fillText(label, z.cx, z.cy + 79);
   }
   // 게임하기 받침대 (좌하단 — 미션 영역과 분리)
   const px = PLAY.x + PLAY.w / 2, py = PLAY.y + PLAY.h / 2;
