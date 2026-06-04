@@ -1,44 +1,52 @@
 // interpreter.js — "업로드" 프로토타입 (§6)
-// 실제 컴파일 X. loop() 에서 digitalWrite(pin,HIGH|LOW)·delay(ms) 를 추출해
-// 명령 시퀀스로 변환하고, 목표(goal)를 판정한다. 깜빡임 패턴이면 반복 실행.
+// 실제 컴파일 X. loop() 에서 digitalWrite(pin,HIGH|LOW)·analogWrite(pin,0-255)·
+// delay(ms) 를 추출해 명령 시퀀스로 변환하고 목표(goal)를 판정한다.
+// goal: 'on' | 'off' | 'blink' | 'pwm'
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** loop() 본문에서 write/delay 토큰을 추출 */
+/** loop() 본문에서 토큰 추출 */
 export function parseLoop(code) {
   const m = code.match(/void\s+loop\s*\(\s*\)\s*\{([\s\S]*)\}/);
   const body = m ? m[1] : code;
-  const re = /digitalWrite\s*\(\s*(\d+)\s*,\s*(HIGH|LOW|1|0)\s*\)|delay\s*\(\s*(\d+)\s*\)/g;
+  const re = /digitalWrite\s*\(\s*(\d+)\s*,\s*(HIGH|LOW|1|0)\s*\)|analogWrite\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)|delay\s*\(\s*(\d+)\s*\)/g;
   const tokens = [];
   let t;
   while ((t = re.exec(body))) {
     if (t[1] !== undefined && t[2] !== undefined) {
       tokens.push({ type: 'write', pin: Number(t[1]), val: (t[2] === 'HIGH' || t[2] === '1') ? 1 : 0 });
-    } else if (t[3] !== undefined) {
-      tokens.push({ type: 'delay', ms: Number(t[3]) });
+    } else if (t[3] !== undefined && t[4] !== undefined) {
+      tokens.push({ type: 'awrite', pin: Number(t[3]), val: Number(t[4]) });
+    } else if (t[5] !== undefined) {
+      tokens.push({ type: 'delay', ms: Number(t[5]) });
     }
   }
   return tokens;
 }
 
-/** 토큰 분석 → 목표 판정용 요약 */
 export function analyze(tokens, pin) {
   const writes = tokens.filter((t) => t.type === 'write' && t.pin === pin);
+  const awrites = tokens.filter((t) => t.type === 'awrite' && t.pin === pin);
   const delays = tokens.filter((t) => t.type === 'delay');
   const finalVal = writes.length ? writes[writes.length - 1].val : null;
   const hasHigh = writes.some((w) => w.val === 1);
   const hasLow = writes.some((w) => w.val === 0);
   const blink = hasHigh && hasLow && delays.length >= 2;
-  return { writes, delays, finalVal, hasHigh, hasLow, blink };
+  const dim = awrites.some((a) => a.val > 0 && a.val < 255);
+  const pwmVal = awrites.length ? awrites[awrites.length - 1].val : null;
+  return { writes, awrites, delays, finalVal, hasHigh, hasLow, blink, dim, pwmVal };
 }
 
-/**
- * 목표 판정.
- * @returns {{ok:boolean, reason:string, summary:object}}
- */
 export function judge(code, pin, goal) {
   const tokens = parseLoop(code);
   const s = analyze(tokens, pin);
+
+  if (goal === 'pwm') {
+    return s.dim
+      ? { ok: true, reason: `analogWrite 로 밝기를 조절했어요! (값 ${s.pwmVal}) ✨`, summary: s, tokens }
+      : { ok: false, reason: `${pin}번 핀에 analogWrite(${pin}, 1~254) 로 밝기를 정해보세요.`, summary: s, tokens };
+  }
+
   if (s.writes.length === 0) {
     return { ok: false, reason: `${pin}번 핀을 제어하는 digitalWrite 가 안 보여요.`, summary: s, tokens };
   }
@@ -60,11 +68,7 @@ export function judge(code, pin, goal) {
   return { ok: false, reason: '알 수 없는 목표', summary: s, tokens };
 }
 
-/**
- * 토큰 시퀀스를 실물 보드로 실행. board.digital(pin,on) 사용.
- * 깜빡임(블링크) 패턴이면 loops 회 반복, 정적이면 1회.
- * @param {object} board  src/app/board.js
- */
+/** 토큰 시퀀스를 실물 보드로 실행 (board.digital / board.pwm). */
 export async function execute(tokens, pin, board, { loops = 3, onStep } = {}) {
   const hasDelay = tokens.some((t) => t.type === 'delay');
   const passes = hasDelay ? loops : 1;
@@ -73,6 +77,9 @@ export async function execute(tokens, pin, board, { loops = 3, onStep } = {}) {
       if (t.type === 'write' && t.pin === pin) {
         await board.digital(pin, t.val === 1);
         onStep?.(t.val === 1);
+      } else if (t.type === 'awrite' && t.pin === pin) {
+        await board.pwm(pin, t.val);
+        onStep?.(t.val > 0, t.val);
       } else if (t.type === 'delay') {
         await delay(Math.min(t.ms, 1500));
       }

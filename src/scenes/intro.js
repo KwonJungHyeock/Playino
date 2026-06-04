@@ -7,9 +7,10 @@
 import eddieSvg from '../assets/eddie.svg?raw';
 
 const STORY = [
-  '안녕! 나는 EDDIE야. 🤖',
-  '방금 PlayHouse에 도착했는데… 집이 온통 깜깜해.',
-  '먼저 우리 장비가 잘 작동하는지 같이 점검하자!',
+  '안녕! 나는 EDDIE야. 🤖 갓 배송된 꼬마 홈 AI 로봇이지.',
+  '여기는 내 새 보금자리 PlayHouse… 그런데 전원이 다 꺼져서 깜깜해.',
+  '네가 코드로 나를 도와줄래? 방마다 불을 켜고 집을 깨우는 거야!',
+  '그 전에, 우리 장비가 잘 작동하는지 같이 점검하자!',
 ];
 
 export function showIntro(root, { onDone }) {

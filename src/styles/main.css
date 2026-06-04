@@ -543,3 +543,25 @@ html, body {
 .q-check { color: var(--accent-2); font-weight: 700; flex: none; }
 .quest-list li.done .q-check { color: var(--ok); }
 .quest-foot { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+
+/* ---- 미션룸 추가 요소 ---- */
+.room-skip { background: transparent; color: var(--muted); border-color: var(--line); }
+.room-skip:hover { color: var(--text); background: var(--bg-elev-2); }
+.room-intro {
+  background: rgba(111,183,255,.10); border: 1px solid rgba(111,183,255,.25);
+  border-radius: 10px; padding: 8px 11px; font-size: 12.5px; color: var(--text); line-height: 1.5;
+}
+.pwm-row { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+.pwm-row input[type=range] { flex: 1; accent-color: var(--accent-2); }
+.pwm-val { font-family: var(--mono); min-width: 40px; text-align: right; color: var(--accent-2); font-weight: 700; }
+
+/* ---- 게임 스토리 내레이션 배너 ---- */
+.hud-narrate {
+  position: absolute; left: 50%; bottom: 108px; transform: translateX(-50%) translateY(12px);
+  max-width: 560px; text-align: center;
+  background: rgba(13,22,40,.94); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 18px; color: var(--text); font-size: 15px; line-height: 1.5;
+  opacity: 0; transition: opacity .4s, transform .4s; pointer-events: none; z-index: 6;
+  box-shadow: 0 12px 34px rgba(0,0,0,.4);
+}
+.hud-narrate.show { opacity: 1; transform: translateX(-50%) translateY(0); }
