@@ -11,7 +11,7 @@ const EXIT = { x: 448, y: MAP_H - 58, w: 64, h: 38 };
 
 export function showDht11Room(root, { onPlay, onExit } = {}) {
   const cur = { temp: 24, hum: 50, real: false };
-  let pollTimer = null, nullCount = 0, warned = false;
+  let pollTimer = null, nullCount = 0, updating = false;
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade">
@@ -25,6 +25,7 @@ export function showDht11Room(root, { onPlay, onExit } = {}) {
         <div class="dh-item"><span class="dh-ic">💧</span><b id="dh-h">--</b>%</div>
         <div class="dh-di" id="dh-di">불쾌지수 --</div>
         <div class="dh-src" id="dh-src">연결 확인 중…</div>
+        <button class="btn btn-sm dh-update" id="dh-update" hidden>🔄 펌웨어 v2</button>
       </div>
       <div class="hud-hint" id="hud-hint"></div>
       <div class="hud-toast" id="hud-toast"></div>
@@ -60,10 +61,11 @@ export function showDht11Room(root, { onPlay, onExit } = {}) {
 
   // 센서 폴링(실물) / 미연결 시 시뮬레이션
   async function poll() {
+    if (updating) return;
     if (board.connected) {
       const r = await board.readDht();
-      if (r) { cur.temp = r.temp; cur.hum = r.hum; cur.real = true; nullCount = 0; updateHud(); return; }
-      if (++nullCount >= 2 && !warned) { warned = true; toast('DHT 미응답 — 사용환경 준비에서 펌웨어를 다시 구워보세요(v2 필요).'); }
+      if (r) { cur.temp = r.temp; cur.hum = r.hum; cur.real = true; nullCount = 0; root.querySelector('#dh-update').hidden = true; updateHud(); return; }
+      if (++nullCount >= 2) root.querySelector('#dh-update').hidden = false;  // 구펌웨어 → 업데이트 버튼
     }
     cur.real = false;
     cur.temp = clamp(cur.temp + (Math.random() - 0.5) * 0.8, 0, 45);
@@ -72,6 +74,20 @@ export function showDht11Room(root, { onPlay, onExit } = {}) {
   }
   pollTimer = setInterval(poll, 1500);
   poll();
+
+  // 방 안에서 펌웨어 v2 재굽기
+  root.querySelector('#dh-update').onclick = async () => {
+    if (updating || !board.connected) { if (!board.connected) toast('먼저 사용환경 준비에서 보드를 연결하세요.'); return; }
+    updating = true;
+    const btn = root.querySelector('#dh-update'); btn.disabled = true;
+    toast('펌웨어 v2 굽는 중… 케이블 뽑지 마세요!');
+    try {
+      const r = await board.flash({ onProgress: (d, t) => toast(`펌웨어 굽는 중… ${Math.round((d / t) * 100)}%`) });
+      if (r && r.ok) { toast('업데이트 완료! 실시간 온습도가 읽힙니다 🎉'); nullCount = 0; btn.hidden = true; }
+      else toast('업데이트 실패 — 케이블/포트를 확인하고 다시 시도하세요.');
+    } catch (e) { toast('업데이트 실패: ' + (e?.message ?? e)); }
+    updating = false; btn.disabled = false;
+  };
 
   function updateHud() {
     set('#dh-t', Math.round(cur.temp)); set('#dh-h', Math.round(cur.hum));
