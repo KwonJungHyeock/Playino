@@ -1265,3 +1265,40 @@ html, body {
 .pm-bg.has-img { filter: saturate(.66) brightness(.66) contrast(.96); }
 .pm-bg.has-img::after { content: ''; position: absolute; inset: 0;
   background: radial-gradient(120% 100% at 70% 60%, rgba(8,10,20,.2), rgba(6,8,16,.55)); }
+
+/* ===== 메인 완성도 패스(역제안 일괄) ===== */
+/* 버튼: 좌측 정렬 통일 + 등장(opacity) + hover/press 인터랙션 + 화살표 */
+.btn.pm-cta { align-self: flex-start !important; gap: 8px; opacity: 0;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  animation: pm-fade .5s ease .34s both; }
+.btn.pm-cta:hover { transform: translateY(-2px) scale(1.045); filter: brightness(1.06); box-shadow: 0 16px 40px rgba(255,90,120,.5); }
+.btn.pm-cta:active { transform: translateY(1px) scale(.98); }
+.pm-cta-arrow { display: inline-block; transition: transform .15s ease; }
+.btn.pm-cta:hover .pm-cta-arrow { transform: translateX(4px); }
+@media (max-width: 920px) { .btn.pm-cta { align-self: center !important; } }
+
+/* 요소 stagger 등장 */
+@keyframes pm-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes pm-fade { from { opacity: 0; } to { opacity: 1; } }
+.pm-title { opacity: 0; animation: pm-rise .6s cubic-bezier(.2,.8,.2,1) .05s forwards; }
+.pm-sub   { opacity: 0; animation: pm-rise .6s cubic-bezier(.2,.8,.2,1) .2s forwards; }
+.pm-hero  { opacity: 0; animation: pm-fade .7s ease .25s forwards; transition: transform .25s ease-out; }
+.pm-bg    { transition: transform .25s ease-out; }
+
+/* 사운드 토글 */
+.snd-toggle { position: absolute; top: 18px; right: 22px; z-index: 5; width: 42px; height: 42px; border-radius: 12px;
+  background: rgba(10,14,24,.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.16); color: #fff; font-size: 18px; cursor: pointer;
+  display: grid; place-items: center; transition: transform .15s, background .15s; }
+.snd-toggle:hover { background: rgba(20,28,44,.72); transform: scale(1.06); }
+
+/* EDDIE 말풍선(메인) */
+.pm-eddie-say { position: absolute; z-index: 3; top: 1%; left: 50%; transform: translateX(-50%);
+  background: #fff; color: #1a2440; font-weight: 700; font-size: 13px; white-space: nowrap;
+  padding: 8px 14px; border-radius: 14px 14px 14px 4px; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.pm-eddie-say.pop { animation: say-pop .32s cubic-bezier(.2,.9,.2,1); }
+@keyframes say-pop { 0% { transform: translateX(-50%) translateY(6px) scale(.85); opacity: 0; } 100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; } }
+
+/* 로고 배지 hover */
+.brand-badge { transition: transform .15s, box-shadow .15s; }
+.brand-badge:hover { transform: translateY(-1px); box-shadow: 0 8px 26px rgba(0,0,0,.42); }
