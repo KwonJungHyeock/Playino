@@ -2,7 +2,7 @@
 // 미니멀 블랙 + 중앙 로고 리빌 + 페이드 인/아웃. (레퍼런스 컨셉 차용, 색은 자체 정체성)
 // public/brand/eduino-ai-logo.png 가 있으면 워드마크 대신 자동으로 그 로고를 사용한다.
 
-const HOLD_MS = 2400;    // 등장 후 유지(페이드아웃 전)
+const HOLD_MS = 3200;    // 등장 후 유지(페이드아웃 전)
 const OUT_MS = 760;      // 페이드아웃
 const SAFETY_MS = 7000;
 
@@ -20,6 +20,9 @@ const MARK = `
 export function showPlatformIntro(root, { onDone } = {}) {
   root.innerHTML = `
     <div class="platform-intro" id="pintro">
+      <div class="pi-card" id="pi-card"></div>
+      <div class="pi-grain"></div>
+      <div class="pi-vignette"></div>
       <div class="pi-bg" id="pi-bg"></div>
       <div class="pi-stage">
         <div class="pi-mark">${MARK}</div>
@@ -32,7 +35,16 @@ export function showPlatformIntro(root, { onDone } = {}) {
 
   const el = root.querySelector('#pintro');
 
-  // 배경 이미지가 있으면 적용 (없으면 순수 블랙)
+  // 타이틀 카드 그림(제목이 박힌 한 장)이 있으면 → 카드 모드(로고 숨기고 필름효과로 전환)
+  const cardProbe = new Image();
+  cardProbe.onload = () => {
+    const c = el.querySelector('#pi-card');
+    c.style.backgroundImage = `url(${cardProbe.src})`;
+    el.classList.add('card-mode');
+  };
+  cardProbe.src = '/brand/intro-card.png';
+
+  // (카드 없을 때) 추상 배경 이미지가 있으면 적용
   const bgProbe = new Image();
   bgProbe.onload = () => { const bg = el.querySelector('#pi-bg'); bg.style.backgroundImage = `url(${bgProbe.src})`; bg.classList.add('has-img'); };
   bgProbe.src = '/brand/intro-bg.png';
