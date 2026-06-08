@@ -1342,3 +1342,12 @@ html, body {
   transition: transform .15s, filter .15s, box-shadow .15s; }
 .kits-go:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.06); }
 .kits-go:active { transform: translateY(1px) scale(.98); }
+
+/* ===== 로그인 완성도 패스 ===== */
+.lg-card { opacity: 0; animation: pm-rise .6s cubic-bezier(.2,.8,.2,1) .1s forwards; }
+.lg-hero { opacity: 0; animation: pm-fade .7s ease .28s forwards; }
+.lg-speech.pop { animation: lg-pop .32s cubic-bezier(.2,.9,.2,1); }
+@keyframes lg-pop { 0% { transform: translateY(6px) scale(.85); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+.btn.lg-go { transition: transform .15s ease, filter .15s ease, box-shadow .15s ease; }
+.btn.lg-go:hover { transform: translateY(-2px) scale(1.03); filter: brightness(1.06); box-shadow: 0 14px 34px rgba(255,90,120,.45); }
+.btn.lg-go:active { transform: translateY(1px) scale(.98); }
