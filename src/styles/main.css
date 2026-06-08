@@ -1035,3 +1035,50 @@ html, body {
   0%, 100% { filter: drop-shadow(0 0 16px rgba(111,183,255,.38)); transform: scale(1); }
   50% { filter: drop-shadow(0 0 30px rgba(167,139,250,.6)); transform: scale(1.04); }
 }
+
+/* ===== 상품 메인페이지 (Eduino AI : 미니게임천국) — 밝고 컬러풀 ===== */
+.pm { position: relative; min-height: 100vh; overflow: hidden; display: grid; place-items: center; }
+.pm-bg { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center;
+  background-image:
+    radial-gradient(900px 600px at 14% 12%, rgba(255,210,90,.30), transparent 60%),
+    radial-gradient(820px 620px at 88% 18%, rgba(255,122,184,.28), transparent 60%),
+    radial-gradient(900px 700px at 78% 92%, rgba(111,183,255,.30), transparent 60%),
+    radial-gradient(760px 640px at 10% 88%, rgba(155,140,255,.26), transparent 60%),
+    linear-gradient(160deg, #141b33, #1a1430 60%, #101a2e); }
+.pm-bg.has-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,10,20,.12), rgba(8,10,20,.45)); }
+.pm-blobs span { position: absolute; border-radius: 50%; filter: blur(2px); opacity: .5; animation: pm-float 11s ease-in-out infinite; }
+.pm-blobs span:nth-child(1){ width:90px;height:90px;left:12%;top:24%; background:radial-gradient(circle at 30% 30%,#ffe08a,#ff9e3c); animation-delay:0s; }
+.pm-blobs span:nth-child(2){ width:64px;height:64px;left:82%;top:30%; background:radial-gradient(circle at 30% 30%,#ff9ecb,#ff5a8a); animation-delay:-3s; }
+.pm-blobs span:nth-child(3){ width:74px;height:74px;left:74%;top:74%; background:radial-gradient(circle at 30% 30%,#9ad0ff,#5a9bff); animation-delay:-6s; }
+.pm-blobs span:nth-child(4){ width:54px;height:54px;left:18%;top:76%; background:radial-gradient(circle at 30% 30%,#c5b8ff,#9b8cff); animation-delay:-1.5s; }
+@keyframes pm-float { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-22px) } }
+
+.pm-inner { position: relative; z-index: 1; width: min(1080px, 92%);
+  display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 32px; }
+@media (max-width: 860px) { .pm-inner { grid-template-columns: 1fr; text-align: center; } .pm-hero { order: -1; } }
+
+.pm-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 2px;
+  color: #cdd9f0; text-transform: uppercase; margin-bottom: 12px; }
+.pm-title { font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; line-height: 1.02;
+  font-size: clamp(46px, 8vw, 86px); margin: 0; color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.35); }
+.pm-title .pm-heaven { background: linear-gradient(92deg,#ffd24a,#ff7ab8 55%,#6fb7ff);
+  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 20px rgba(255,150,90,.35)); }
+.pm-sub { font-size: clamp(15px, 2vw, 19px); line-height: 1.6; color: #e7eeff; margin: 14px 0 20px; }
+.pm-sub b { color: #fff; }
+
+.pm-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 26px; }
+@media (max-width: 860px) { .pm-chips { justify-content: center; } }
+.pm-chip { display: inline-flex; flex-direction: column; padding: 8px 14px; border-radius: 14px;
+  background: rgba(255,255,255,.08); border: 1px solid var(--cc); box-shadow: 0 4px 16px rgba(0,0,0,.25), inset 0 0 18px rgba(255,255,255,.04); }
+.pm-chip b { font-size: 14px; color: #fff; }
+.pm-chip i { font-style: normal; font-size: 11px; color: var(--cc); font-weight: 700; }
+
+.pm-cta { font-size: 18px; padding: 14px 30px; border-radius: 14px;
+  background: linear-gradient(92deg,#ff9e3c,#ff5a8a); border: none; box-shadow: 0 12px 30px rgba(255,90,120,.35);
+  animation: cta-pulse 2.4s ease-in-out infinite; }
+
+.pm-hero { display: grid; place-items: center; }
+.pm-hero-img { max-width: min(360px, 78%); filter: drop-shadow(0 24px 50px rgba(0,0,0,.5)); animation: pm-bob 4s ease-in-out infinite; }
+.pm-hero-fallback { width: 230px; max-width: 70%; animation: pm-bob 4s ease-in-out infinite; }
+.pm-hero-fallback svg { width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 18px 40px rgba(0,0,0,.45)); }
+@keyframes pm-bob { 0%,100%{ transform: translateY(0) rotate(-1deg) } 50%{ transform: translateY(-14px) rotate(1deg) } }

@@ -4,6 +4,7 @@
 
 import { showSplash } from './scenes/splash.js';
 import { showPlatformIntro } from './scenes/platformIntro.js';
+import { showProductMain } from './scenes/productMain.js';
 import { showIntro } from './scenes/intro.js';
 import { showLogin } from './scenes/login.js';
 import { showSetup } from './scenes/setup.js';
@@ -23,8 +24,9 @@ const app = () => document.getElementById('app');
 let lastChapter = null;   // HUB 복귀 시 들어갔던 게이트 앞
 let lastRoom = null;      // 챕터 복귀 시 나온 방 앞
 
-function scenePlatformIntro() { showPlatformIntro(app(), { onDone: sceneSplash }); }   // 플랫폼 스튜디오 인트로
-function sceneSplash() { showSplash(app(), { onDone: sceneIntro }); }
+function scenePlatformIntro() { showPlatformIntro(app(), { onDone: sceneProductMain }); }   // ① 플랫폼 스튜디오 인트로
+function sceneProductMain() { showProductMain(app(), { onDone: sceneLogin }); }              // ② 상품 메인페이지
+function sceneSplash() { showSplash(app(), { onDone: sceneIntro }); }   // (구) 커버 — 현재 플로우 미사용
 function sceneIntro() { showIntro(app(), { onDone: sceneLogin }); }
 function sceneLogin() { showLogin(app(), { onDone: sceneSetup }); }
 function sceneSetup() {
