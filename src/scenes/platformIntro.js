@@ -2,9 +2,9 @@
 // 미니멀 블랙 + 중앙 로고 리빌 + 페이드 인/아웃. (레퍼런스 컨셉 차용, 색은 자체 정체성)
 // public/brand/eduino-ai-logo.png 가 있으면 워드마크 대신 자동으로 그 로고를 사용한다.
 
-const HOLD_MS = 3200;    // 등장 후 유지(페이드아웃 전)
-const OUT_MS = 760;      // 페이드아웃
-const SAFETY_MS = 7000;
+const HOLD_MS = 4600;    // 등장 후 유지(페이드아웃 전) — 천천히 감상
+const OUT_MS = 1100;     // 페이드아웃
+const SAFETY_MS = 9000;
 
 const MARK = `
   <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
