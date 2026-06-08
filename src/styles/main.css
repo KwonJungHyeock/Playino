@@ -343,6 +343,7 @@ html, body {
 .check-text small { color: var(--muted); font-size: 12px; }
 
 .setup-action { min-height: 56px; margin-bottom: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; justify-content: center; }
+.setup-note { font-size: 12.5px; line-height: 1.5; margin: 2px 0 0; max-width: 320px; text-align: center; }
 .setup-action .flash-progress, .setup-action .btn-row { width: 100%; }
 .confirm-q { font-size: 15px; margin: 0 0 4px; }
 .setup-go { font-size: 16px; padding: 12px 24px; opacity: .5; align-self: center; }

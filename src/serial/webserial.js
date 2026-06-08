@@ -76,6 +76,19 @@ export class SerialConnection {
     return this.attach(port);
   }
 
+  /** 이전에 권한이 부여된(getPorts) 포트로 선택창 없이 재연결 시도. 없으면 null. */
+  async connectKnown() {
+    if (!isSupported() || this.isOpen) return this.isOpen ? this.port : null;
+    const ports = (await navigator.serial.getPorts?.()) || [];
+    if (!ports.length) return null;
+    // 알려진 VID 우선
+    const known = ports.find((p) => {
+      const id = p.getInfo?.() ?? {};
+      return KNOWN_VENDORS.some((v) => v.usbVendorId === id.usbVendorId);
+    }) || ports[0];
+    return this.attach(known);
+  }
+
   /**
    * 이미 권한이 부여된(또는 선택된) 포트로 런타임 연결한다.
    * 닫힌 포트면 열고, 텍스트 read/write 스트림을 세팅한다.
@@ -84,12 +97,23 @@ export class SerialConnection {
   async attach(port) {
     if (this.isOpen) return this.port;
     this.port = port;
-    if (!port.readable) await port.open({ baudRate: BAUD });
+    if (!port.readable) await this._openWithRetry(port);
     this._closing = false;
     this._setupWriter();
     this._readLoopPromise = this._readLoop();
     this._emitState('open', this.getInfo());
     return this.port;
+  }
+
+  /** 포트 open 을 일시 오류(직전 해제 직후 등)에 대비해 짧게 재시도한다. */
+  async _openWithRetry(port, tries = 3) {
+    for (let i = 1; i <= tries; i++) {
+      try { await port.open({ baudRate: BAUD }); return; }
+      catch (e) {
+        if (i >= tries) throw e;
+        await new Promise((r) => setTimeout(r, 350 * i));
+      }
+    }
   }
 
   getInfo() {

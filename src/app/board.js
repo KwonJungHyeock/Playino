@@ -77,6 +77,34 @@ export const board = {
     return r;
   },
 
+  /** 선택창 없이 이전 허용 포트로 자동 연결 + 핸드셰이크. (일시 오류 복구용)
+   *  반환: {ok} | {ok:false, reason:'no_known'|'no_response'|'open_fail'|'unsupported', open?} */
+  async connectAuto() {
+    if (!_isSupported()) return { ok: false, reason: 'unsupported' };
+    if (this.connected) return { ok: true, version: _version };
+    let port;
+    try { port = await conn.connectKnown(); }
+    catch (e) { emitLine('sys', '자동 연결 실패(포트 열기): ' + (e?.message ?? e)); return { ok: false, reason: 'open_fail', error: e }; }
+    if (!port) return { ok: false, reason: 'no_known' };
+    emitLine('sys', '이전에 허용한 포트로 자동 연결 시도…');
+    emitLine('tx', 'PING (최대 4회)');
+    const r = await handshake(conn);
+    if (r.ok) { _version = r.version; emitLine('sys', `핸드셰이크 통과: ${r.raw}`); return { ok: true, version: r.version }; }
+    return { ok: false, reason: 'no_response', open: true };
+  },
+
+  /** 연결 예외를 원인별로 분류해 안내 문구를 만든다. */
+  classify(e) {
+    const name = e?.name || '';
+    const msg = (e?.message || String(e) || '').toLowerCase();
+    if (!_isSupported()) return { kind: 'unsupported', note: '이 브라우저는 WebSerial 을 지원하지 않아요. Chrome/Edge 데스크톱에서 열어주세요.', speak: '이 브라우저는 보드 연결을 지원 안 해. Chrome이나 Edge에서 열어줘.' };
+    if (name === 'NotFoundError' || /no port selected|cancel/.test(msg))
+      return { kind: 'cancel', note: '포트 선택이 취소됐어요. [다시 연결 시도]를 눌러 포트를 골라주세요.', speak: '취소됐구나! 다시 [보드 연결]을 눌러 포트를 골라줘.' };
+    if (name === 'InvalidStateError' || /open|in use|busy|already|access/.test(msg))
+      return { kind: 'busy', note: '포트가 다른 프로그램(아두이노 IDE 등)이나 다른 탭에서 사용 중일 수 있어요. 닫고 다시 시도해주세요.', speak: '포트가 사용 중인 것 같아. 아두이노 IDE나 다른 탭을 닫고 다시!' };
+    return { kind: 'unknown', note: '연결 중 오류가 났어요. 케이블을 다시 꽂고 [다시 연결 시도]를 눌러주세요.', speak: '오류가 났어. 케이블을 다시 꽂고 시도해보자.' };
+  },
+
   async disconnect() { await conn.disconnect(); _version = null; },
 
   /** digitalWrite (write 가 멈춰도 UI 가 막히지 않도록 타임아웃 보호) */

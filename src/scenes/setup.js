@@ -21,6 +21,7 @@ const ICON = { todo: '⬜', doing: '⏳', done: '✅', fail: '⚠️' };
 export function showSetup(root, { onDone }) {
   const status = { browser: 'todo', connect: 'todo', firmware: 'todo', led13: 'todo' };
   let led13Confirm = false;
+  let connectHint = '';   // 연결 실패 시 원인별 안내
 
   root.innerHTML = `
     <div class="scene setup scene-fade">
@@ -87,9 +88,14 @@ export function showSetup(root, { onDone }) {
       return;
     }
     if (status.connect !== 'done') {
-      const dis = status.connect === 'doing' ? 'disabled' : '';
-      actionEl.innerHTML = `<button class="btn primary" id="b-connect" ${dis}>${status.connect === 'doing' ? '연결 중…' : '보드 연결'}</button>`;
-      if (!dis) actionEl.querySelector('#b-connect').onclick = doConnect;
+      if (status.connect === 'doing') { actionEl.innerHTML = `<button class="btn primary" disabled>연결 중…</button>`; return; }
+      const failed = status.connect === 'fail';
+      actionEl.innerHTML = `
+        <button class="btn primary" id="b-connect">${failed ? '🔌 다시 연결 시도' : '보드 연결'}</button>
+        <button class="btn" id="b-diag">🔧 자동 진단·복구</button>
+        ${connectHint ? `<p class="muted setup-note">${connectHint}</p>` : ''}`;
+      actionEl.querySelector('#b-connect').onclick = doConnect;
+      actionEl.querySelector('#b-diag').onclick = doDiagnose;
       return;
     }
     if (status.firmware !== 'done') {
@@ -131,24 +137,66 @@ export function showSetup(root, { onDone }) {
   }
 
   // ---- 핸들러 ----
+  function onConnected(r) {
+    connectHint = '';
+    setStatus('connect', 'done');
+    if (r && r.ok) {
+      setStatus('firmware', 'done');
+      speak('좋아, 보드랑 인사 끝! 이제 내장 LED를 깜빡여 보자. 💡');
+    } else {
+      setStatus('firmware', 'doing');
+      speak('펌웨어가 없네. 내가 브라우저에서 바로 구워줄게! [펌웨어 굽기]를 눌러줘.');
+    }
+  }
+
   async function doConnect() {
     setStatus('connect', 'doing');
+    connectHint = '';
     speak('USB 포트를 선택해줘!');
     try {
-      const r = await board.connect();
-      setStatus('connect', 'done');
-      if (r.ok) {
-        setStatus('firmware', 'done');
-        speak('좋아, 보드랑 인사 끝! 이제 내장 LED를 깜빡여 보자. 💡');
-      } else {
-        setStatus('firmware', 'doing');
-        speak('펌웨어가 없네. 내가 브라우저에서 바로 구워줄게! [펌웨어 굽기]를 눌러줘.');
-      }
+      onConnected(await board.connect());
     } catch (e) {
-      setStatus('connect', 'todo');
-      speak('연결이 취소됐어. 다시 [보드 연결]을 눌러줘.');
-      board.log('sys', '연결 취소/실패: ' + (e?.message ?? e));
+      const c = board.classify(e);
+      connectHint = c.note;
+      setStatus('connect', c.kind === 'cancel' ? 'todo' : 'fail');
+      speak(c.speak);
+      board.log('sys', `연결 실패(${c.kind}): ` + (e?.message ?? e));
+      renderAction();
     }
+  }
+
+  // 일시 오류/포트 미인식 시: 원인을 찾아 알아서 복구 시도
+  async function doDiagnose() {
+    connectHint = '';
+    speak('자동 진단을 시작할게… 🔧');
+    board.log('sys', '── 자동 진단·복구 시작 ──');
+    if (!board.isSupported()) {
+      setStatus('browser', 'fail');
+      speak('이 브라우저는 WebSerial 미지원이야. Chrome / Edge 데스크톱에서 열어줘.');
+      return;
+    }
+    setStatus('connect', 'doing');
+    const a = await board.connectAuto();   // 선택창 없이 이전 허용 포트로 재연결 시도
+    if (a.ok) { board.log('sys', '자동 재연결 성공'); onConnected({ ok: true }); return; }
+    if (a.reason === 'no_response') {
+      setStatus('connect', 'done'); setStatus('firmware', 'doing');
+      speak('보드는 열렸는데 응답이 없어 — 펌웨어를 구우면 해결돼! 아래 [펌웨어 굽기]를 눌러줘.');
+      return;
+    }
+    if (a.reason === 'no_known') {
+      setStatus('connect', 'fail');
+      connectHint = '보안상 포트는 처음 한 번 직접 선택해야 해요. [보드 연결]로 포트를 고르면 다음부턴 자동으로 잡아요.';
+      speak('포트를 한 번만 직접 골라줘! 다음부턴 일시 오류가 나도 내가 자동으로 잡을게.');
+    } else if (a.reason === 'open_fail') {
+      setStatus('connect', 'fail');
+      connectHint = '포트가 다른 프로그램(아두이노 IDE 등)이나 다른 탭에서 사용 중일 수 있어요. 닫고 [다시 연결 시도]를 눌러주세요.';
+      speak('포트가 사용 중인 것 같아. 아두이노 IDE나 다른 탭을 닫고 다시!');
+    } else {
+      setStatus('connect', 'fail');
+      connectHint = '케이블을 다시 꽂고 [다시 연결 시도]를 눌러주세요.';
+      speak('케이블을 다시 꽂고 시도해보자.');
+    }
+    renderAction();
   }
 
   async function doFlash() {
@@ -197,7 +245,18 @@ export function showSetup(root, { onDone }) {
   if (board.isSupported()) {
     status.browser = 'done';
     // 이미 연결되어 있으면(앞 단계에서) 건너뛰기
-    if (board.connected) { status.connect = 'done'; status.firmware = 'done'; }
+    if (board.connected) {
+      status.connect = 'done'; status.firmware = 'done';
+    } else {
+      // 일시 오류/재진입 대비: 이전에 허용한 포트가 있으면 선택창 없이 자동 재연결
+      board.connectAuto().then((a) => {
+        if (a.ok) onConnected({ ok: true });
+        else if (a.reason === 'no_response') {
+          setStatus('connect', 'done'); setStatus('firmware', 'doing');
+          speak('보드는 열렸는데 응답이 없어 — [펌웨어 굽기]로 해결할 수 있어!');
+        }
+      }).catch(() => {});
+    }
   } else {
     status.browser = 'fail';
     speak('이런! 이 브라우저는 WebSerial 을 지원하지 않아. Chrome이나 Edge에서 열어줘.');
