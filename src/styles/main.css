@@ -1057,11 +1057,11 @@ html, body {
 .pm-blobs span:nth-child(4){ width:54px;height:54px;left:18%;top:76%; background:radial-gradient(circle at 30% 30%,#c5b8ff,#9b8cff); animation-delay:-1.5s; }
 @keyframes pm-float { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-22px) } }
 
-.pm-inner { position: relative; z-index: 1; width: min(1200px, 94%);
-  display: flex; align-items: center; justify-content: space-between; gap: 32px; }
-.pm-copy { flex: 1 1 auto; min-width: 0; max-width: 720px; align-self: center;
+.pm-inner { position: relative; z-index: 1; width: min(1280px, 94%);
+  display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+.pm-copy { flex: 1 1 auto; min-width: 0; max-width: 660px; align-self: center;
   display: flex; flex-direction: column; align-items: flex-start; text-align: left; justify-content: center; gap: 22px; }
-.pm-hero { position: relative; flex: 0 0 clamp(280px, 34vw, 440px); display: grid; place-items: center; }
+.pm-hero { position: relative; flex: 0 0 clamp(320px, 40vw, 540px); display: grid; place-items: center; }
 @media (max-width: 920px) {
   .pm-inner { flex-direction: column; text-align: center; gap: 18px; }
   .pm-copy { align-items: center; text-align: center; max-width: none; }
@@ -1232,9 +1232,9 @@ html, body {
 @media (max-width: 800px) { .lg-speech { display: none; } }
 
 /* ===== EDDIE 퍼펫 리깅 (부위 분리 → 움직임) ===== */
-.eddie-rig { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1; margin: auto;
+.eddie-rig { position: relative; width: 100%; max-width: 520px; aspect-ratio: 1; margin: auto;
   z-index: 1; transform-origin: 50% 72%; animation: eddie-live 4.6s ease-in-out infinite; }
-.lg .eddie-rig { max-width: 300px; }
+.lg .eddie-rig { max-width: 320px; }
 .eddie-rig .er-part { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; }
 .eddie-rig.rigged .er-part { opacity: 1; }
 .eddie-rig.rigged .er-fallback { display: none; }
