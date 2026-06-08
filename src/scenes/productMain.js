@@ -47,7 +47,7 @@ export function showProductMain(root, { onDone } = {}) {
     const img = root.querySelector('#pm-hero'); img.src = heroProbe.src; img.hidden = false;
     root.querySelector('#pm-hero-fb').hidden = true;
   };
-  heroProbe.src = '/brand/eddie-hero.png';
+  heroProbe.src = '/brand/eddie/eddie-hero.png';
 
   root.querySelector('#pm-go').addEventListener('click', () => onDone?.());
 }
