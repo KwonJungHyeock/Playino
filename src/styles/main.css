@@ -1081,8 +1081,10 @@ html, body {
   font-size: clamp(46px, 7.2vw, 92px); margin: 0; color: #fff; white-space: nowrap; letter-spacing: -.5px;
   -webkit-text-stroke: 2px #221334; paint-order: stroke fill;
   text-shadow: 0 4px 0 rgba(20,8,30,.5), 0 12px 30px rgba(0,0,0,.55); }
-.pm-title .pm-heaven { background: linear-gradient(92deg,#ffd24a,#ff8a3c 45%,#ff6aa8); -webkit-text-stroke: 2px #221334;
-  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pm-title .pm-heaven { -webkit-text-stroke: 0; paint-order: normal;
+  background: linear-gradient(95deg, #7ef0ff, #b48bff 52%, #ff86c8);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 3px 8px rgba(0,0,0,.5), 0 0 22px rgba(150,150,255,.5); }
 .pm-sub { margin: 0; font-size: clamp(15px, 1.7vw, 19px); line-height: 1.5; color: #eaf1ff; white-space: nowrap;
   text-shadow: 0 2px 8px rgba(0,0,0,.55); }
 .pm-sub b { color: #ffd27a; }
