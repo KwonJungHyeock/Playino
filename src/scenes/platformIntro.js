@@ -20,9 +20,13 @@ const MARK = `
 export function showPlatformIntro(root, { onDone } = {}) {
   root.innerHTML = `
     <div class="platform-intro" id="pintro">
-      <div class="pi-card" id="pi-card"></div>
-      <div class="pi-grain"></div>
-      <div class="pi-vignette"></div>
+      <div class="pi-screen" id="pi-screen">
+        <div class="pi-card" id="pi-card"></div>
+        <div class="pi-scanlines"></div>
+        <div class="pi-grain"></div>
+        <div class="pi-vignette"></div>
+      </div>
+      <div class="pi-flash"></div>
       <div class="pi-bg" id="pi-bg"></div>
       <div class="pi-stage">
         <div class="pi-mark">${MARK}</div>
