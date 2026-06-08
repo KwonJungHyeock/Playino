@@ -1237,3 +1237,9 @@ html, body {
 @keyframes er-arm-r   { 0%,100%{ transform: rotate(-6deg) } 50%{ transform: rotate(10deg) } }
 @keyframes er-arm-l   { 0%,100%{ transform: rotate(5deg) } 50%{ transform: rotate(-7deg) } }
 @keyframes er-antenna { 0%,100%{ transform: rotate(-5deg) } 50%{ transform: rotate(5deg) } }
+
+/* EDDIE 풀바디 포즈 교차 애니(idle/wave/cheer) */
+.eddie-rig .er-pose { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+  opacity: 0; transition: opacity .45s ease; filter: drop-shadow(0 16px 30px rgba(0,0,0,.4)); }
+.eddie-rig.posed .er-fallback, .eddie-rig.posed .er-part { display: none; }
+.eddie-rig.rigged .er-pose { display: none; }

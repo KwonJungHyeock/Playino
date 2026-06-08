@@ -1,27 +1,62 @@
-// eddieRig.js — EDDIE 퍼펫 리깅(부위 분리 → CSS로 움직임).
-// /brand/eddie/rig/{body,head,arm-l,arm-r,antenna}.png 5장이 모두 있으면 리깅 모드로
-// 머리 갸웃·팔 흔들·안테나 펄스·전체 둥실 애니메이션. 하나라도 없으면 정지 히어로로 폴백.
+// eddieRig.js — 움직이는 EDDIE.
+// 우선순위: ① rig 부위(body/head/arm-l/arm-r/antenna) 5장 → 퍼펫 리깅
+//          ② 풀바디 포즈(idle/wave/cheer) → 부드러운 교차 애니(둥실+손흔들+만세)
+//          ③ 둘 다 없으면 정지 히어로(eddie-hero.png) 폴백  (전부 전체 둥실 모션)
 const RIG_BASE = '/brand/eddie/rig/';
 const PARTS = { 'er-arm-l': 'arm-l.png', 'er-body': 'body.png', 'er-arm-r': 'arm-r.png', 'er-head': 'head.png', 'er-antenna': 'antenna.png' };
+const POSE_BASE = '/brand/eddie/';
+const POSES = ['idle', 'wave', 'cheer'];
 const FALLBACK = '/brand/eddie/eddie-hero.png';
 
-// container 안에 EDDIE를 mount. 반환 element.
 export function mountEddieRig(container) {
   const el = document.createElement('div');
   el.className = 'eddie-rig';
   el.innerHTML =
     Object.keys(PARTS).map((cls) => `<img class="er-part ${cls}" alt="" />`).join('') +
+    POSES.map((p) => `<img class="er-pose er-pose-${p}" alt="" />`).join('') +
     `<img class="er-fallback" alt="EDDIE" />`;
+  container.appendChild(el);
 
-  let loaded = 0; const need = Object.keys(PARTS).length; let failed = false;
+  // ① rig 부위 (모두 있으면 리깅)
+  let rigLoaded = 0; const rigNeed = Object.keys(PARTS).length; let rigFailed = false;
   for (const [cls, file] of Object.entries(PARTS)) {
     const img = el.querySelector('.' + cls);
-    img.onload = () => { if (failed) return; loaded++; if (loaded === need) el.classList.add('rigged'); };
-    img.onerror = () => { failed = true; };
+    img.onload = () => { if (rigFailed) return; if (++rigLoaded === rigNeed) el.classList.add('rigged'); };
+    img.onerror = () => { rigFailed = true; };
     img.src = RIG_BASE + file;
   }
+
+  // ② 풀바디 포즈
+  const loaded = new Set();
+  let pending = POSES.length;
+  POSES.forEach((p) => {
+    const img = el.querySelector('.er-pose-' + p);
+    img.onload = () => { loaded.add(p); settle(); };
+    img.onerror = () => { settle(); };
+    img.src = POSE_BASE + p + '.png';
+  });
+  function settle() { if (--pending > 0) return; if (!el.classList.contains('rigged') && loaded.has('idle')) startPoses(); }
+
+  // ③ 폴백
   el.querySelector('.er-fallback').src = FALLBACK;
 
-  container.appendChild(el);
+  function startPoses() {
+    el.classList.add('posed');
+    const order = ['idle'];
+    if (loaded.has('wave')) order.push('wave');
+    order.push('idle');
+    if (loaded.has('cheer')) order.push('cheer');
+    const dur = { idle: 3400, wave: 1300, cheer: 1500 };
+    const show = (p) => POSES.forEach((q) => { const im = el.querySelector('.er-pose-' + q); if (im) im.style.opacity = q === p ? '1' : '0'; });
+    let i = 0;
+    const tick = () => {
+      if (!document.contains(el)) return;          // 씬 전환 시 자동 정지(누수 방지)
+      const p = order[i % order.length]; show(p); i++;
+      setTimeout(tick, dur[p] || 3000);
+    };
+    show('idle');
+    setTimeout(tick, dur.idle);
+  }
+
   return el;
 }
