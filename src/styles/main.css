@@ -1060,11 +1060,15 @@ html, body {
 .pm-inner { position: relative; z-index: 1; width: min(1040px, 92%);
   display: flex; align-items: center; justify-content: space-between; gap: 40px; }
 .pm-copy { flex: 1 1 auto; min-width: 0; max-width: 560px;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
-.pm-hero { flex: 0 0 auto; }
-@media (max-width: 860px) { .pm-inner { flex-direction: column; text-align: center; gap: 14px; } .pm-copy { align-items: center; max-width: none; } .pm-hero { order: -1; } }
+  display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.pm-hero { position: relative; flex: 0 0 clamp(240px, 32vw, 380px); display: grid; place-items: center; }
+@media (max-width: 860px) {
+  .pm-inner { flex-direction: column; text-align: center; gap: 16px; }
+  .pm-copy { align-items: center; max-width: none; }
+  .pm-hero { order: -1; flex-basis: auto; width: min(300px, 70vw); }
+}
 
-/* 플랫폼 로고 배지(둥근 박스, 고정) — 모든 페이지 좌상단 공용 */
+/* 플랫폼 로고 배지(둥근 박스, 고정) — 좌상단 공용 */
 .brand-badge { position: absolute; top: 18px; left: 22px; z-index: 4;
   display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 14px;
   background: rgba(10,14,24,.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -1072,30 +1076,13 @@ html, body {
   font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; font-size: 18px; letter-spacing: .3px; color: #eef3ff; }
 .brand-badge b { background: linear-gradient(92deg,#6fb7ff,#a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-.pm-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 2px;
-  color: #cdd9f0; text-transform: uppercase; margin-bottom: 12px; }
 .pm-title { font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; line-height: 1.04;
-  font-size: clamp(34px, 5vw, 72px); margin: 0; color: #fff; white-space: nowrap;
+  font-size: clamp(32px, 4.6vw, 68px); margin: 0; color: #fff; white-space: nowrap;
   text-shadow: 0 4px 4px rgba(0,0,0,.45), 0 10px 40px rgba(0,0,0,.5); }
-.pm-sub { margin: 0; }
 .pm-title .pm-heaven { background: linear-gradient(92deg,#ffd24a,#ff7ab8 55%,#6fb7ff);
   -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 22px rgba(255,150,90,.5)); }
-
-/* 인트로와 톤 맞춤: 텍스트 가독 스크림 + 은은한 비네트 */
-.pm-scrim { position: absolute; inset: 0; z-index: 0; opacity: 0; pointer-events: none;
-  background: linear-gradient(90deg, rgba(6,8,16,.74) 0%, rgba(6,8,16,.36) 40%, transparent 66%); }
-.pm.has-bg .pm-scrim { opacity: 1; }
-.pm-vig { position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: radial-gradient(130% 100% at 50% 42%, transparent 58%, rgba(0,0,0,.46)); }
-.pm-sub { font-size: clamp(15px, 2vw, 19px); line-height: 1.6; color: #e7eeff; margin: 14px 0 20px; }
+.pm-sub { margin: 0; font-size: clamp(15px, 2vw, 18px); line-height: 1.6; color: #e7eeff; }
 .pm-sub b { color: #fff; }
-
-.pm-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 26px; }
-@media (max-width: 860px) { .pm-chips { justify-content: center; } }
-.pm-chip { display: inline-flex; flex-direction: column; padding: 8px 14px; border-radius: 14px;
-  background: rgba(255,255,255,.08); border: 1px solid var(--cc); box-shadow: 0 4px 16px rgba(0,0,0,.25), inset 0 0 18px rgba(255,255,255,.04); }
-.pm-chip b { font-size: 14px; color: #fff; }
-.pm-chip i { font-style: normal; font-size: 11px; color: var(--cc); font-weight: 700; }
 
 .btn.pm-cta { display: inline-flex; align-items: center; align-self: flex-start; flex: 0 0 auto;
   width: auto; height: auto; font-size: 18px; padding: 14px 30px; border-radius: 14px; color: #2a1200;
@@ -1103,18 +1090,19 @@ html, body {
   animation: cta-pulse 2.4s ease-in-out infinite; }
 @media (max-width: 860px) { .btn.pm-cta { align-self: center; } }
 
-.pm-hero { position: relative; display: grid; place-items: center; }
-/* EDDIE 뒤 은은한 글로우(둥실 떠 있는 느낌) */
+/* 배경 스크림 + 비네트(인트로 톤) */
+.pm-scrim { position: absolute; inset: 0; z-index: 0; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(6,8,16,.74) 0%, rgba(6,8,16,.36) 40%, transparent 66%); }
+.pm.has-bg .pm-scrim { opacity: 1; }
+.pm-vig { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(130% 100% at 50% 42%, transparent 58%, rgba(0,0,0,.46)); }
+
+/* EDDIE 뒤 글로우 + 바닥 그림자 */
 .pm-hero::before { content: ''; position: absolute; width: 62%; aspect-ratio: 1; border-radius: 50%;
   background: radial-gradient(circle, rgba(255,210,120,.34), rgba(255,150,200,.12) 55%, transparent 72%);
   filter: blur(6px); animation: eddie-glow 4.6s ease-in-out infinite; }
-/* 바닥 그림자(둥실 위아래에 따라 크기 변화) */
 .pm-hero::after { content: ''; position: absolute; bottom: 6%; width: 40%; height: 26px; border-radius: 50%;
   background: radial-gradient(ellipse, rgba(0,0,0,.42), transparent 70%); filter: blur(4px); animation: eddie-shadow 4.6s ease-in-out infinite; }
-.pm-hero-img, .pm-hero-fallback { position: relative; z-index: 1; }
-.pm-hero-img { max-width: min(360px, 78%); filter: drop-shadow(0 18px 34px rgba(0,0,0,.45)); animation: eddie-live 4.6s ease-in-out infinite; transform-origin: 50% 70%; }
-.pm-hero-fallback { width: 230px; max-width: 70%; animation: eddie-live 4.6s ease-in-out infinite; transform-origin: 50% 70%; }
-.pm-hero-fallback svg { width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 18px 40px rgba(0,0,0,.45)); }
 
 /* 살아있는 둥실+갸웃 모션 (공용) */
 @keyframes eddie-live {
