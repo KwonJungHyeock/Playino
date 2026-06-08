@@ -46,8 +46,13 @@ export function mountEddieRig(container) {
     if (loaded.has('wave')) order.push('wave');
     order.push('idle');
     if (loaded.has('cheer')) order.push('cheer');
-    const dur = { idle: 3400, wave: 1300, cheer: 1500 };
-    const show = (p) => POSES.forEach((q) => { const im = el.querySelector('.er-pose-' + q); if (im) im.style.opacity = q === p ? '1' : '0'; });
+    const dur = { idle: 4200, wave: 1500, cheer: 1700 };
+    const show = (p) => POSES.forEach((q) => {
+      const im = el.querySelector('.er-pose-' + q); if (!im) return;
+      const on = q === p;
+      im.style.opacity = on ? '1' : '0';
+      im.style.transform = on ? 'translateY(0) scale(1)' : 'translateY(12px) scale(.965)';
+    });
     let i = 0;
     const tick = () => {
       if (!document.contains(el)) return;          // 씬 전환 시 자동 정지(누수 방지)
