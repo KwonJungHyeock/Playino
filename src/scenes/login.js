@@ -1,6 +1,6 @@
 // login.js — 로그인(플레이어 입장). 미니게임천국 톤(컬러풀)에 맞춘 디자인 + 살아있는 EDDIE.
 // 열린 로그인: 아이디/비번 없이도 입장 가능(데모). 배경/캐릭터는 메인페이지와 통일.
-import eddieSvg from '../assets/eddie.svg?raw';
+import { mountEddieRig } from '../app/eddieRig.js';
 
 export function showLogin(root, { onDone } = {}) {
   root.innerHTML = `
@@ -22,21 +22,14 @@ export function showLogin(root, { onDone } = {}) {
           </div>
           <div class="lg-foot">이용약관 · 개인정보처리방침</div>
         </div>
-        <div class="lg-hero">
-          <img class="lg-hero-img" id="lg-hero" alt="EDDIE" hidden />
-          <div class="lg-hero-fallback" id="lg-hero-fb">${eddieSvg}</div>
+        <div class="lg-hero" id="lg-hero">
           <div class="lg-speech">같이 입장하자! 🚀</div>
         </div>
       </div>
     </div>`;
 
-  // EDDIE 마스터 히어로가 있으면 SVG 대신 사용
-  const heroProbe = new Image();
-  heroProbe.onload = () => {
-    const img = root.querySelector('#lg-hero'); img.src = heroProbe.src; img.hidden = false;
-    root.querySelector('#lg-hero-fb').hidden = true;
-  };
-  heroProbe.src = '/brand/eddie/eddie-hero.png';
+  // 움직이는 EDDIE (퍼펫 리깅, 없으면 정지 히어로 폴백)
+  mountEddieRig(root.querySelector('#lg-hero'));
 
   const go = () => onDone?.();
   root.querySelector('#lf-login').onclick = go;

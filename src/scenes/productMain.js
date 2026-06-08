@@ -1,8 +1,6 @@
 // productMain.js — 상품 메인페이지 'Eduino AI : 미니게임천국' (밝고 컬러풀).
-// 에셋 자동 교체형: public/brand/main-bg.png(배경), public/brand/eddie-hero.png(주인공)
-// 파일을 넣으면 코드 수정 없이 자동 반영. 없으면 컬러 그라데이션/SVG 폴백.
-
-import eddieSvg from '../assets/eddie.svg?raw';
+// 에셋 자동 교체형: public/brand/main-bg.png(배경), EDDIE 퍼펫 리깅(움직이는 캐릭터)
+import { mountEddieRig } from '../app/eddieRig.js';
 
 // 방마다의 '센서 상황' 미리보기 칩(다양성 어필) — 컬러풀
 const CHIPS = [
@@ -29,10 +27,7 @@ export function showProductMain(root, { onDone } = {}) {
           </div>
           <button class="btn primary lg pm-cta" id="pm-go">시작하기 ▶</button>
         </div>
-        <div class="pm-hero">
-          <img class="pm-hero-img" id="pm-hero" alt="EDDIE" hidden />
-          <div class="pm-hero-fallback" id="pm-hero-fb">${eddieSvg}</div>
-        </div>
+        <div class="pm-hero" id="pm-hero"></div>
       </div>
     </div>`;
 
@@ -41,13 +36,8 @@ export function showProductMain(root, { onDone } = {}) {
   bgProbe.onload = () => { const bg = root.querySelector('#pm-bg'); bg.style.backgroundImage = `url(${bgProbe.src})`; bg.classList.add('has-img'); };
   bgProbe.src = '/brand/main-bg.png';
 
-  // 주인공(EDDIE) 이미지가 있으면 SVG 대신 적용
-  const heroProbe = new Image();
-  heroProbe.onload = () => {
-    const img = root.querySelector('#pm-hero'); img.src = heroProbe.src; img.hidden = false;
-    root.querySelector('#pm-hero-fb').hidden = true;
-  };
-  heroProbe.src = '/brand/eddie/eddie-hero.png';
+  // 움직이는 EDDIE (퍼펫 리깅, 없으면 정지 히어로 폴백)
+  mountEddieRig(root.querySelector('#pm-hero'));
 
   root.querySelector('#pm-go').addEventListener('click', () => onDone?.());
 }
