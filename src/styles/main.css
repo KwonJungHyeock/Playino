@@ -1253,3 +1253,8 @@ html, body {
   filter: drop-shadow(0 16px 30px rgba(0,0,0,.4)); }
 .eddie-rig.posed .er-fallback, .eddie-rig.posed .er-part { display: none; }
 .eddie-rig.rigged .er-pose { display: none; }
+
+/* 메인 배경: 전경(EDDIE/타이틀)이 떠오르게 배경을 뒤로 밀어내는 recede 처리 */
+.pm-bg.has-img { filter: saturate(.66) brightness(.66) contrast(.96); }
+.pm-bg.has-img::after { content: ''; position: absolute; inset: 0;
+  background: radial-gradient(120% 100% at 70% 60%, rgba(8,10,20,.2), rgba(6,8,16,.55)); }
