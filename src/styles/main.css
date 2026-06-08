@@ -1095,48 +1095,49 @@ html, body {
 .platform-intro.card-mode::after { background: radial-gradient(120% 80% at 50% 45%, transparent 50%, rgba(20,4,4,.6)); }
 
 .pi-screen { position: absolute; inset: 0; z-index: 0; }
-.platform-intro.card-mode .pi-screen { inset: 7.5% 0; overflow: hidden; transform-origin: center;
+.platform-intro.card-mode .pi-screen { inset: 7.5% 0; overflow: hidden; background: #000;
   box-shadow: 0 0 70px rgba(0,0,0,.7); }
-.platform-intro.in.card-mode .pi-screen { animation: tv-on 1.25s cubic-bezier(.2,.8,.25,1) forwards; }
 
+/* 화면(그림)은 검정에서 스노우 사이로 서서히 잡혀 떠오른다 */
 .pi-card { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; }
-.platform-intro.in.card-mode .pi-card { opacity: 1; animation: pi-flicker 4.5s steps(1) infinite, pi-weave 7s ease-in-out infinite; }
+.platform-intro.in.card-mode .pi-card { animation: pi-tune 2s ease-out forwards, pi-flicker 4.5s steps(1) infinite, pi-weave 7s ease-in-out infinite; }
 
-/* CRT 스캔라인 */
+/* CRT 스캔라인 (그림이 잡힐 때 같이 들어옴) */
 .pi-scanlines { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0;
   background: repeating-linear-gradient(0deg, rgba(0,0,0,.26) 0, rgba(0,0,0,.26) 1px, transparent 1px, transparent 3px); }
-.platform-intro.in.card-mode .pi-scanlines { opacity: .5; }
+.platform-intro.in.card-mode .pi-scanlines { animation: pi-scan-in 2s ease-out forwards; }
 
-/* 필름/TV 그레인(지지직) — 시작에 강하게 터지고 잦아듦 */
-.pi-grain { position: absolute; inset: -60%; z-index: 2; pointer-events: none; opacity: 0;
+/* TV 스노우(지지직): 검정 위에서도 보이는 흰 노이즈(normal blend), 꽉 찼다가 잦아듦 */
+.pi-snow { position: absolute; inset: -60%; z-index: 2; pointer-events: none; opacity: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.85 0'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>");
+  background-size: 130px 130px; }
+.platform-intro.in.card-mode .pi-snow { animation: pi-snow-move .26s steps(4) infinite, pi-snow-out 2.3s ease-out forwards; }
+
+/* 정착 후 잔잔한 필름 그레인 */
+.pi-grain { position: absolute; inset: -60%; z-index: 3; pointer-events: none; opacity: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   background-size: 150px 150px; mix-blend-mode: overlay; }
-.platform-intro.in.card-mode .pi-grain { animation: pi-grain .35s steps(4) infinite, pi-static 1.6s ease-out forwards; }
+.platform-intro.in.card-mode .pi-grain { opacity: .12; animation: pi-grain .4s steps(4) infinite; }
 
 /* 비네트 */
-.pi-vignette { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0;
+.pi-vignette { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0;
   background: radial-gradient(120% 90% at 50% 45%, transparent 54%, rgba(0,0,0,.78)); }
 .platform-intro.in.card-mode .pi-vignette { opacity: 1; }
 
-/* 전원 켜질 때 흰 플래시 */
-.pi-flash { position: absolute; inset: 0; z-index: 4; background: #fff; opacity: 0; pointer-events: none; }
-.platform-intro.in.card-mode .pi-flash { animation: tv-flash 1.25s ease-out forwards; }
-
-@keyframes tv-on {                 /* 가로 한 줄 → 밝게 → 화면 펼쳐짐(옛날 TV 켜짐) */
-  0%   { transform: scale(1.35, .003); filter: brightness(7) contrast(1.5); }
-  16%  { transform: scale(1.35, .004); filter: brightness(7) contrast(1.5); }
-  34%  { transform: scale(1.08, .02);  filter: brightness(5); }
-  62%  { transform: scale(1, .55);     filter: brightness(2.2); }
-  100% { transform: scale(1, 1);       filter: brightness(1); }
+@keyframes pi-tune {               /* 검정 → 스노우 사이로 그림이 잡혀감 */
+  0%   { opacity: 0; filter: brightness(1.5) contrast(1.35); }
+  28%  { opacity: .1; }
+  52%  { opacity: .45; filter: brightness(1.25) contrast(1.2); }
+  78%  { opacity: .85; }
+  100% { opacity: 1; filter: brightness(1) contrast(1); }
 }
-@keyframes tv-flash {
-  0%, 12% { opacity: 0 }
-  15% { opacity: .9 }
-  24% { opacity: 0 }
-  100% { opacity: 0 }
+@keyframes pi-scan-in { 0%, 52% { opacity: 0 } 100% { opacity: .5 } }
+@keyframes pi-snow-out {           /* 지지직: 꽉 찬 스노우 → 잦아들어 옅은 그레인 */
+  0% { opacity: .95 } 22% { opacity: .82 } 52% { opacity: .42 } 80% { opacity: .14 } 100% { opacity: .06 }
 }
-@keyframes pi-static {             /* 지지직 노이즈: 강하게 시작 → 잦아듦 */
-  0% { opacity: .7 } 18% { opacity: .5 } 45% { opacity: .28 } 100% { opacity: .16 }
+@keyframes pi-snow-move {
+  0% { transform: translate(0,0) } 25% { transform: translate(-7%,5%) }
+  50% { transform: translate(6%,-6%) } 75% { transform: translate(-5%,6%) } 100% { transform: translate(0,0) }
 }
 @keyframes pi-grain {
   0%   { transform: translate(0,0) }
