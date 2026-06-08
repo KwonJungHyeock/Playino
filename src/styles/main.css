@@ -1057,15 +1057,16 @@ html, body {
 .pm-blobs span:nth-child(4){ width:54px;height:54px;left:18%;top:76%; background:radial-gradient(circle at 30% 30%,#c5b8ff,#9b8cff); animation-delay:-1.5s; }
 @keyframes pm-float { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-22px) } }
 
-.pm-inner { position: relative; z-index: 1; width: min(1040px, 92%);
-  display: flex; align-items: center; justify-content: space-between; gap: 40px; }
-.pm-copy { flex: 0 1 auto; min-width: 0; max-width: 600px; align-self: center;
-  display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; gap: 16px; }
-.pm-hero { position: relative; flex: 0 0 clamp(240px, 32vw, 380px); display: grid; place-items: center; }
-@media (max-width: 860px) {
-  .pm-inner { flex-direction: column; text-align: center; gap: 16px; }
-  .pm-copy { align-items: center; max-width: none; }
-  .pm-hero { order: -1; flex-basis: auto; width: min(300px, 70vw); }
+.pm-inner { position: relative; z-index: 1; width: min(1200px, 94%);
+  display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.pm-copy { flex: 1 1 auto; min-width: 0; max-width: 720px; align-self: center;
+  display: flex; flex-direction: column; align-items: flex-start; text-align: left; justify-content: center; gap: 22px; }
+.pm-hero { position: relative; flex: 0 0 clamp(280px, 34vw, 440px); display: grid; place-items: center; }
+@media (max-width: 920px) {
+  .pm-inner { flex-direction: column; text-align: center; gap: 18px; }
+  .pm-copy { align-items: center; text-align: center; max-width: none; }
+  .pm-hero { order: -1; flex-basis: auto; width: min(320px, 70vw); }
+  .pm-sub { white-space: normal !important; }
 }
 
 /* 플랫폼 로고 배지(둥근 박스, 고정) — 좌상단 공용 */
@@ -1076,18 +1077,20 @@ html, body {
   font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; font-size: 18px; letter-spacing: .3px; color: #eef3ff; }
 .brand-badge b { background: linear-gradient(92deg,#6fb7ff,#a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-.pm-title { font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; line-height: 1.04;
-  font-size: clamp(32px, 4.6vw, 68px); margin: 0; color: #fff; white-space: nowrap;
-  text-shadow: 0 4px 4px rgba(0,0,0,.45), 0 10px 40px rgba(0,0,0,.5); }
-.pm-title .pm-heaven { background: linear-gradient(92deg,#ffd24a,#ff7ab8 55%,#6fb7ff);
-  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 22px rgba(255,150,90,.5)); }
-.pm-sub { margin: 0; font-size: clamp(15px, 2vw, 18px); line-height: 1.6; color: #e7eeff; }
-.pm-sub b { color: #fff; }
+.pm-title { font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; line-height: 1.02;
+  font-size: clamp(46px, 7.2vw, 92px); margin: 0; color: #fff; white-space: nowrap; letter-spacing: -.5px;
+  -webkit-text-stroke: 2px #221334; paint-order: stroke fill;
+  text-shadow: 0 4px 0 rgba(20,8,30,.5), 0 12px 30px rgba(0,0,0,.55); }
+.pm-title .pm-heaven { background: linear-gradient(92deg,#ffd24a,#ff8a3c 45%,#ff6aa8); -webkit-text-stroke: 2px #221334;
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pm-sub { margin: 0; font-size: clamp(15px, 1.7vw, 19px); line-height: 1.5; color: #eaf1ff; white-space: nowrap;
+  text-shadow: 0 2px 8px rgba(0,0,0,.55); }
+.pm-sub b { color: #ffd27a; }
 
 .btn.pm-cta { display: inline-flex !important; align-items: center; justify-content: center;
   align-self: center !important; flex: 0 0 auto !important;
-  width: auto !important; height: 56px !important; min-height: 0 !important; max-height: 56px !important; line-height: 1;
-  font-size: 18px; padding: 0 32px; border-radius: 14px; color: #2a1200;
+  width: auto !important; height: 60px !important; min-height: 0 !important; max-height: 60px !important; line-height: 1;
+  font-size: 19px; font-weight: 700; padding: 0 40px; border-radius: 14px; color: #2a1200;
   background: linear-gradient(92deg,#ff9e3c,#ff5a8a); border: none; box-shadow: 0 12px 30px rgba(255,90,120,.35);
   animation: cta-pulse 2.4s ease-in-out infinite; }
 @media (max-width: 860px) { .btn.pm-cta { align-self: center; } }

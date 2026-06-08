@@ -14,7 +14,7 @@ export function showProductMain(root, { onDone } = {}) {
       <div class="pm-inner">
         <div class="pm-copy">
           <h1 class="pm-title">미니게임<span class="pm-heaven">천국</span></h1>
-          <p class="pm-sub">센서로 즐기는 미니게임 어드벤처 —<br/>방을 깨며 <b>진척 100%</b>에 도달하라! 🎉</p>
+          <p class="pm-sub">다양한 <b>센서</b>를 게임으로 배우고, 모든 미션을 클리어해 <b>진척 100%</b>를 달성하라!</p>
           <button class="btn primary lg pm-cta" id="pm-go">시작하기 ▶</button>
         </div>
         <div class="pm-hero" id="pm-hero"></div>
