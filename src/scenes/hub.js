@@ -28,7 +28,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
     </div>`;
 
   const header = mountCurriculumHeader(root.querySelector('.escape-scene'), {
-    active: null, crumb: '연구소 복도 (탈출)',
+    active: null, crumb: '미니게임 광장',
     onChapter: (id) => tryEnter(id),
   });
 
@@ -41,7 +41,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   const dctx = dark.getContext('2d');
 
   const map = {
-    width: MAP_W, height: MAP_H, bg: '#04060c',
+    width: MAP_W, height: MAP_H, bg: '#bfe3ff',
     spawn: spawnPt,
     walls: [
       { x: 0, y: 0, w: MAP_W, h: 196 },
@@ -59,7 +59,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
     onDrawOverlay: drawDark,
   });
 
-  setTimeout(() => narrate('여기서… 나가야 해. 복도의 잠긴 챕터를 하나씩 풀어 시스템을 복구하자.'), 500);
+  setTimeout(() => narrate('미니게임천국에 온 걸 환영해! 🎉 스테이지를 골라 미니게임을 즐기자!'), 500);
 
   function tryEnter(id) {
     const c = getChapter(id); if (!c) return;
@@ -82,82 +82,85 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   function toast(m) { toastEl.textContent = m; toastEl.classList.add('show'); clearTimeout(tT); tT = setTimeout(() => toastEl.classList.remove('show'), 2400); }
   function narrate(t) { narrateEl.innerHTML = `<span>🤖 ${t}</span>`; narrateEl.classList.add('show'); clearTimeout(nT); nT = setTimeout(() => narrateEl.classList.remove('show'), 5000); }
 
-  // 어둠: 클리어한 챕터 수만큼 복도가 밝아진다(EDDIE 손전등 + 게이트 빛 홀)
+  // 밝은 톤: 호러 어둠 제거 → 은은한 비네트만
   function drawDark(ctx, st, canvas) {
-    const doneN = CHAPTERS.filter((c) => chapterDone(c.id)).length;
-    const baseDark = Math.max(0.28, 0.9 - doneN * 0.16);   // 풀수록 옅어짐
-    if (dark.width !== canvas.width || dark.height !== canvas.height) { dark.width = canvas.width; dark.height = canvas.height; }
-    const cam = st.cam, p = st.player;
-    dctx.clearRect(0, 0, dark.width, dark.height);
-    dctx.fillStyle = `rgba(2,4,10,${baseDark})`; dctx.fillRect(0, 0, dark.width, dark.height);
-    dctx.globalCompositeOperation = 'destination-out';
-    hole(dctx, p.x + p.w / 2 - cam.x, p.y + p.h / 2 - cam.y, 175);
-    for (const g of gates) { if (chapterDone(g.id) || chapterUnlocked(g.id)) hole(dctx, g.x + GATE_W / 2 - cam.x, 196 - cam.y, chapterDone(g.id) ? 200 : 120); }
-    dctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(dark, 0, 0);
+    const g = ctx.createRadialGradient(canvas.width / 2, canvas.height * 0.46, canvas.height * 0.42, canvas.width / 2, canvas.height / 2, canvas.height * 0.98);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(30,12,50,0.2)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 }
 
-function hole(c, x, y, r) {
-  const g = c.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.62, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-}
+const PAL = ['255,200,74', '255,122,184', '90,201,255', '155,140,255'];   // 챕터별 캔디 컬러
 
 function drawHub(ctx, st, gates, MAP_W) {
   const t = st?.t || 0;
-  // 콘크리트 복도
-  ctx.fillStyle = '#070a12'; ctx.fillRect(0, 0, MAP_W, MAP_H);
-  const cf = ctx.createLinearGradient(0, 196, 0, 392);
-  cf.addColorStop(0, '#141a2a'); cf.addColorStop(0.5, '#1a2236'); cf.addColorStop(1, '#101626');
-  ctx.fillStyle = cf; ctx.fillRect(0, 196, MAP_W, 196);
-  // 바닥 타일 결
-  ctx.strokeStyle = 'rgba(120,150,210,0.05)'; ctx.lineWidth = 1;
-  for (let x = 0; x < MAP_W; x += 56) { ctx.beginPath(); ctx.moveTo(x, 198); ctx.lineTo(x, 390); ctx.stroke(); }
-  for (let y = 220; y < 392; y += 44) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(MAP_W, y); ctx.stroke(); }
-  // 벽 패널(상/하)
-  const band = (y, h) => { const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#0c111d'); g.addColorStop(1, '#070a12'); ctx.fillStyle = g; ctx.fillRect(0, y, MAP_W, h); };
-  band(0, 196); band(392, MAP_H - 392);
-  ctx.fillStyle = 'rgba(90,120,180,0.12)'; ctx.fillRect(0, 194, MAP_W, 2); ctx.fillRect(0, 392, MAP_W, 2);
+  // 하늘
+  const sky = ctx.createLinearGradient(0, 0, 0, 200); sky.addColorStop(0, '#bfe6ff'); sky.addColorStop(1, '#ffe6f1');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, MAP_W, 200);
+  // 구름
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  for (let i = 0; i < MAP_W / 320 + 1; i++) cloud(ctx, 120 + i * 320 + (t * 0.15) % 320, 60 + (i % 2) * 26);
+  // 바닥(따뜻한 길)
+  const fl = ctx.createLinearGradient(0, 200, 0, 392); fl.addColorStop(0, '#ffe7bd'); fl.addColorStop(1, '#f3cd92');
+  ctx.fillStyle = fl; ctx.fillRect(0, 200, MAP_W, 192);
+  // 중앙 레인(점선)
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 5; ctx.setLineDash([22, 18]);
+  ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(MAP_W, 300); ctx.stroke(); ctx.setLineDash([]);
+  // 하단 잔디
+  const gr = ctx.createLinearGradient(0, 392, 0, MAP_H); gr.addColorStop(0, '#92d97e'); gr.addColorStop(1, '#6fbf5e');
+  ctx.fillStyle = gr; ctx.fillRect(0, 392, MAP_W, MAP_H - 392);
+  // 가랜드(깃발 줄)
+  bunting(ctx, MAP_W, t);
 
-  // 비상등(깜빡이는 앰버) — 천장
-  for (let x = 90; x < MAP_W; x += GAP) {
-    const blink = 0.35 + 0.35 * (0.5 + 0.5 * Math.sin(t * 0.08 + x));
-    const g = ctx.createRadialGradient(x, 150, 2, x, 150, 70);
-    g.addColorStop(0, `rgba(255,176,32,${blink})`); g.addColorStop(1, 'rgba(255,176,32,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, 150, 70, 0, 6.283); ctx.fill();
-    ctx.fillStyle = `rgba(255,200,90,${0.6 * blink})`; ctx.beginPath(); ctx.arc(x, 150, 5, 0, 6.283); ctx.fill();
-  }
-
-  // 게이트
+  // 스테이지 텐트(게이트)
   ctx.textAlign = 'center';
-  for (const g of gates) {
+  for (let i = 0; i < gates.length; i++) {
+    const g = gates[i];
     const unlocked = chapterUnlocked(g.id), done = chapterDone(g.id);
-    const fx = g.x, fy = 96, fw = GATE_W, fh = 104;
-    const accent = done ? '61,220,145' : unlocked ? '255,176,32' : '120,60,60';
-    if (unlocked || done) { const lg = ctx.createRadialGradient(fx + fw / 2, fy + fh / 2, 6, fx + fw / 2, fy + fh / 2, 100); lg.addColorStop(0, `rgba(${accent},0.30)`); lg.addColorStop(1, `rgba(${accent},0)`); ctx.fillStyle = lg; ctx.fillRect(fx - 34, fy - 34, fw + 68, fh + 68); }
-    // 문틀
-    const ff = ctx.createLinearGradient(fx, fy, fx, fy + fh); ff.addColorStop(0, unlocked ? '#26324f' : '#1a1620'); ff.addColorStop(1, unlocked ? '#161f36' : '#120e16');
-    ctx.fillStyle = ff; rr(ctx, fx, fy, fw, fh, 12); ctx.fill();
-    ctx.strokeStyle = `rgba(${accent},${unlocked ? 0.9 : 0.55})`; ctx.lineWidth = 2; rr(ctx, fx, fy, fw, fh, 12); ctx.stroke();
-    // 문 내부(어두운 통로)
-    const gg = ctx.createLinearGradient(0, fy + 12, 0, fy + fh - 12); gg.addColorStop(0, 'rgba(6,10,18,0.95)'); gg.addColorStop(1, done ? 'rgba(61,220,145,0.18)' : unlocked ? 'rgba(255,176,32,0.12)' : 'rgba(6,8,14,0.95)');
-    ctx.fillStyle = gg; rr(ctx, fx + 12, fy + 12, fw - 24, fh - 24, 8); ctx.fill();
-    // 아이콘 / 잠금
-    ctx.font = '34px sans-serif'; ctx.fillStyle = unlocked ? '#fff' : '#6a4a4a';
-    ctx.fillText(done ? '✓' : unlocked ? g.icon : '🔒', fx + fw / 2, fy + 50);
-    // 라벨 칩
-    ctx.font = '600 13px "Space Grotesk", sans-serif';
-    const label = g.label;
-    const lw = ctx.measureText(label).width + 22;
-    ctx.fillStyle = done ? 'rgba(61,220,145,0.2)' : unlocked ? 'rgba(255,176,32,0.16)' : 'rgba(20,16,22,0.85)';
-    rr(ctx, fx + fw / 2 - lw / 2, fy + fh + 8, lw, 24, 12); ctx.fill();
-    ctx.fillStyle = done ? '#bfffd9' : unlocked ? '#ffe2a8' : '#9a8088'; ctx.fillText(label, fx + fw / 2, fy + fh + 24);
-    // 탈출 서사 서브
-    ctx.font = '11px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(180,190,210,0.5)';
-    ctx.fillText(`ACT ${g.no} · ${g.act}`, fx + fw / 2, fy + fh + 44);
+    const fx = g.x, fy = 92, fw = GATE_W, fh = 116;
+    const cx = fx + fw / 2;
+    const col = unlocked ? PAL[i % PAL.length] : '150,150,160';
+    // 글로우
+    if (unlocked) { const lg = ctx.createRadialGradient(cx, fy + 60, 8, cx, fy + 60, 110); lg.addColorStop(0, `rgba(${col},0.30)`); lg.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = lg; ctx.fillRect(fx - 36, fy - 30, fw + 72, fh + 80); }
+    // 텐트 지붕(삼각 + 줄무늬)
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(cx, fy - 14); ctx.lineTo(fx - 6, fy + 34); ctx.lineTo(fx + fw + 6, fy + 34); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = `rgba(${col},${unlocked ? 0.95 : 0.5})`; ctx.fillRect(fx - 6, fy - 14, fw + 12, 50);
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    for (let s = -1; s < fw / 20 + 1; s++) { ctx.beginPath(); ctx.moveTo(fx - 6 + s * 38, fy - 14); ctx.lineTo(fx - 6 + s * 38 + 19, fy - 14); ctx.lineTo(fx - 6 + s * 38 + 9, fy + 36); ctx.closePath(); ctx.fill(); }
+    ctx.restore();
+    ctx.fillStyle = `rgba(${col},1)`; ctx.beginPath(); ctx.arc(cx, fy - 14, 4, 0, 6.283); ctx.fill();   // 깃대 꼭지
+    // 부스 몸체
+    const bf = ctx.createLinearGradient(fx, fy + 34, fx, fy + fh); bf.addColorStop(0, '#ffffff'); bf.addColorStop(1, '#f2f5fb');
+    ctx.fillStyle = unlocked ? bf : '#d9dde6'; rr(ctx, fx, fy + 34, fw, fh - 34, 10); ctx.fill();
+    ctx.strokeStyle = `rgba(${col},0.9)`; ctx.lineWidth = 2.5; rr(ctx, fx, fy + 34, fw, fh - 34, 10); ctx.stroke();
+    // 카운터/아이콘 패널
+    ctx.fillStyle = `rgba(${col},0.16)`; rr(ctx, fx + 12, fy + 46, fw - 24, 50, 8); ctx.fill();
+    ctx.save(); if (unlocked && !done) { ctx.shadowColor = `rgba(${col},0.8)`; ctx.shadowBlur = 12; }
+    ctx.font = '34px sans-serif'; ctx.fillStyle = unlocked ? '#2a3550' : '#8a8f9c';
+    ctx.fillText(done ? '✅' : unlocked ? g.icon : '🔒', cx, fy + 82); ctx.restore();
+    // 라벨
+    ctx.font = '700 13px "Space Grotesk", sans-serif'; ctx.fillStyle = unlocked ? '#2a3550' : '#8a8f9c';
+    ctx.fillText(g.label, cx, fy + fh - 16);
+    ctx.font = '11px "Space Grotesk", sans-serif'; ctx.fillStyle = unlocked ? `rgba(${col},1)` : '#9aa0ac';
+    ctx.fillText(done ? '클리어 완료 ✓' : unlocked ? `스테이지 ${g.no}` : '곧 열려요', cx, fy + fh - 2);
   }
   ctx.textAlign = 'start';
+}
+
+function cloud(ctx, x, y) {
+  ctx.beginPath(); ctx.arc(x, y, 20, 0, 6.283); ctx.arc(x + 22, y + 4, 26, 0, 6.283); ctx.arc(x + 50, y, 18, 0, 6.283);
+  ctx.rect(x - 4, y, 56, 18); ctx.fill();
+}
+function bunting(ctx, MAP_W, t) {
+  const cols = ['#ff6b6b', '#ffd24a', '#5ad17a', '#6fb7ff', '#b18bff'];
+  ctx.strokeStyle = 'rgba(120,90,60,0.5)'; ctx.lineWidth = 2;
+  ctx.beginPath(); for (let x = 0; x <= MAP_W; x += 6) ctx.lineTo(x, 200 + Math.sin(x / 60) * 6); ctx.stroke();
+  for (let i = 0, x = 18; x < MAP_W; x += 40, i++) {
+    const yy = 206 + Math.sin(x / 60) * 6;
+    ctx.fillStyle = cols[i % cols.length];
+    ctx.beginPath(); ctx.moveTo(x - 10, yy); ctx.lineTo(x + 10, yy); ctx.lineTo(x, yy + 18); ctx.closePath(); ctx.fill();
+  }
 }
 
 function rr(ctx, x, y, w, h, r) {
