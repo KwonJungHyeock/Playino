@@ -1004,6 +1004,9 @@ html, body {
 }
 .platform-intro.in { opacity: 1; }
 .platform-intro.out { opacity: 0; transition: opacity .76s ease; }
+.pi-bg { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center;
+  opacity: 0; transition: opacity 1.1s ease; }
+.platform-intro.in .pi-bg.has-img { opacity: 1; }
 
 .pi-stage {
   position: relative; z-index: 1; text-align: center;
@@ -1037,7 +1040,8 @@ html, body {
 }
 
 /* ===== 상품 메인페이지 (Eduino AI : 미니게임천국) — 밝고 컬러풀 ===== */
-.pm { position: relative; min-height: 100vh; overflow: hidden; display: grid; place-items: center; }
+.pm { position: relative; min-height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.pm-blobs { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .pm-bg { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center;
   background-image:
     radial-gradient(900px 600px at 14% 12%, rgba(255,210,90,.30), transparent 60%),

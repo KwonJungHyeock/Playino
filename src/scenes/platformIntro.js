@@ -20,6 +20,7 @@ const MARK = `
 export function showPlatformIntro(root, { onDone } = {}) {
   root.innerHTML = `
     <div class="platform-intro" id="pintro">
+      <div class="pi-bg" id="pi-bg"></div>
       <div class="pi-stage">
         <div class="pi-mark">${MARK}</div>
         <img class="pi-logo-img" id="pi-img" alt="Eduino AI" hidden />
@@ -30,6 +31,11 @@ export function showPlatformIntro(root, { onDone } = {}) {
     </div>`;
 
   const el = root.querySelector('#pintro');
+
+  // 배경 이미지가 있으면 적용 (없으면 순수 블랙)
+  const bgProbe = new Image();
+  bgProbe.onload = () => { const bg = el.querySelector('#pi-bg'); bg.style.backgroundImage = `url(${bgProbe.src})`; bg.classList.add('has-img'); };
+  bgProbe.src = '/brand/intro-bg.png';
 
   // 실제 로고 이미지가 준비돼 있으면 워드마크 대신 사용
   const probe = new Image();
