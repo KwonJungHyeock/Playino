@@ -12,13 +12,13 @@ const KITS = [
 export function showKits(root, { onDone } = {}) {
   root.innerHTML = `
     <div class="kits scene-fade">
-      <div class="kits-bg"></div>
+      <div class="kits-bg" id="kits-bg"></div>
       <div class="brand-badge"><span class="brand-dot"></span>Eduino&nbsp;<b>AI</b></div>
       <div class="kits-inner">
         <div class="kits-head">
           <div class="kits-kicker"><span class="brand-dot"></span>호환 키트 안내</div>
           <h1 class="kits-title">어떤 <span class="grad">에듀이노 키트</span>로도 즐겨요</h1>
-          <p class="kits-sub">이 <b>미니게임천국</b>은 <b>[종합편]</b> 기준으로 제작됐지만,<br/>아래 키트들도 모두 <b>호환</b>되어 함께 학습할 수 있어요.</p>
+          <p class="kits-sub">이 <b>미니게임천국</b>은 <b>[종합편]</b> 기준으로 제작됐어요.<br/>아래 에듀이노 키트들과 <b>함께 사용</b>하시길 권장해요!</p>
         </div>
         <div class="kits-grid">
           ${KITS.map((k) => `
@@ -32,6 +32,11 @@ export function showKits(root, { onDone } = {}) {
         <button class="btn primary lg kits-go" id="kits-go">계속하기 ▶</button>
       </div>
     </div>`;
+
+  // 배경 컨셉 통일(메인 카니발 있으면 recede로 깔기)
+  const bgProbe = new Image();
+  bgProbe.onload = () => { const b = root.querySelector('#kits-bg'); b.style.backgroundImage = `url(${bgProbe.src})`; b.classList.add('has-img'); };
+  bgProbe.src = '/brand/main-bg.png';
 
   // 제품 사진 자동 적용
   KITS.forEach((k) => {
