@@ -243,6 +243,11 @@ function drawStall(ctx, c, t) {
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   for (let x = fx + 10; x < fx + fw - 12; x += 20) ctx.fillRect(x, fy + 6, 10, 22);
 
+  // 센서 힌트 칩(좌상단) — 어떤 부품을 쓰는지 암시
+  ctx.fillStyle = 'rgba(255,255,255,0.96)'; rr(ctx, fx + 8, fy + 8, 32, 28, 9); ctx.fill();
+  ctx.strokeStyle = `rgba(${c2},0.9)`; ctx.lineWidth = 1.5; rr(ctx, fx + 8, fy + 8, 32, 28, 9); ctx.stroke();
+  ctx.font = '17px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(c.icon, fx + 24, fy + 28);
+
   // 대표 썸네일(있으면) 또는 이모지 아이콘
   const cov = coverImg(c.id);
   if ((ready || clr) && cov.complete && cov.naturalWidth) {

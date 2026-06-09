@@ -1647,3 +1647,14 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .prep-actions .cel-go { margin-left: auto; height: 48px; }
 .prep-skip { display: block; margin: 14px auto 0; background: none; border: none; color: #8a90a0; font-size: 13px; text-decoration: underline; cursor: pointer; }
 @media (max-width: 760px) { .prep-grid { flex-direction: column; } }
+
+/* ===== LED 게임: 단계 인트로/결과 패널 ===== */
+.led-panel { position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center;
+  background: rgba(10,6,18,.66); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); padding: 22px; }
+.led-pcard { max-width: 560px; text-align: center; }
+.lp-no { font-weight: 800; color: #ff7ab8; font-size: 13px; letter-spacing: 1px; margin-bottom: 4px; }
+.led-pcard h2 { margin: 0 0 10px; font-size: 26px; }
+.lp-cond { margin: 14px 0 18px; font-weight: 700; color: #2a3040; background: #fff6df; border-radius: 10px; padding: 10px; font-size: 14px; }
+.lp-grade { font-family: "Space Grotesk", sans-serif; font-weight: 900; font-size: 66px; line-height: 1; margin-bottom: 4px; }
+.lp-grade span { font-size: 18px; margin-left: 4px; color: #6b7280; }
+.lp-S { color: #ffb800; } .lp-A { color: #2ec27e; } .lp-B { color: #3aa0e0; } .lp-C { color: #ff9e3c; } .lp-D { color: #ef5470; }
