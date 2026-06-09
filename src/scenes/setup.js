@@ -1,74 +1,74 @@
-// setup.js — 사용환경 준비 씬
-// 학습 전 장비 점검: 브라우저 확인 -> 보드 연결 -> 펌웨어/통신(자동 굽기)
-// -> 내장 LED(D13) 제어 테스트. 각 항목 완료가 체크리스트에 실시간 반영되고,
-// 모두 완료되면 [학습 시작하기] 가 열린다. 외부 배선 없이 보드만으로 진행.
-
+// setup.js — 사용환경 준비(학습 준비 체크리스트).
+// 가로 진행형 스텝퍼(회색→초록) + EDDIE가 박스 위로 올라타 peeking + 단계별 말풍선 + 하단 시리얼 로그.
+// 기능(브라우저→연결→펌웨어→내장 LED, 자동 진단/복구)은 동일.
 import { board } from '../app/board.js';
 import { mountMonitor } from '../app/monitor.js';
-import eddieSvg from '../assets/eddie.svg?raw';
+import { mountEddieRig } from '../app/eddieRig.js';
+import { sfx } from '../app/sfx.js';
 
-const BUILTIN_LED = 13; // 보드 내장 LED ('L' 표시) — 외부 배선 불필요
+const BUILTIN_LED = 13;
 
 const ITEMS = [
-  { id: 'browser',  label: '브라우저 확인',   desc: 'Chrome / Edge 데스크톱 (WebSerial)' },
+  { id: 'browser',  label: '브라우저 확인',   desc: 'Chrome / Edge' },
   { id: 'connect',  label: '보드 연결',       desc: 'USB 포트 선택' },
-  { id: 'firmware', label: '펌웨어 & 통신',   desc: '보드 통신 확인 (필요 시 자동 굽기)' },
-  { id: 'led13',    label: '내장 LED 테스트', desc: '보드 13번 LED 깜빡임 확인' },
+  { id: 'firmware', label: '펌웨어 & 통신',   desc: '통신 확인' },
+  { id: 'led13',    label: '내장 LED 테스트', desc: '13번 LED' },
 ];
-
-const ICON = { todo: '⬜', doing: '⏳', done: '✅', fail: '⚠️' };
 
 export function showSetup(root, { onDone }) {
   const status = { browser: 'todo', connect: 'todo', firmware: 'todo', led13: 'todo' };
   let led13Confirm = false;
-  let connectHint = '';   // 연결 실패 시 원인별 안내
+  let connectHint = '';
 
   root.innerHTML = `
-    <div class="scene setup scene-fade">
-      <header class="app-header">
-        <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong> · 스타터 키트</div>
-        <div class="phase-badge">사용환경 준비</div>
-      </header>
-
-      <div class="setup-body">
-        <div class="setup-left">
-          <div class="setup-eddie">${eddieSvg}</div>
-          <div class="setup-speech" id="setup-speech">먼저 우리 장비가 잘 작동하는지 같이 점검하자! 💪</div>
+    <div class="setup2 scene-fade">
+      <div class="pm-bg"></div>
+      <div class="pm-blobs"><span></span><span></span><span></span><span></span></div>
+      <button class="snd-toggle" id="snd-toggle" title="소리 켜기/끄기">${sfx.muted ? '🔇' : '🔊'}</button>
+      <div class="brand-badge"><span class="brand-dot"></span>Eduino&nbsp;<b>AI</b></div>
+      <div class="su-wrap">
+        <div class="su-stage">
+          <div class="su-eddie" id="su-eddie"></div>
+          <div class="su-speech" id="su-speech">장비가 잘 작동하는지 같이 점검하자! 💪</div>
+          <div class="su-panel">
+            <div class="su-kicker"><span class="brand-dot"></span>사용환경 준비</div>
+            <h2 class="su-title">학습 준비 체크리스트</h2>
+            <div class="su-steps" id="su-steps"></div>
+            <div class="su-action" id="su-action"></div>
+            <button class="btn su-go" id="su-go" disabled>학습 시작하기 ▶</button>
+            <button class="su-skip" id="su-skip">건너뛰기 ▶ (장비 준비 생략)</button>
+          </div>
         </div>
-
-        <div class="setup-main">
-          <h2 class="setup-title">학습 준비 체크리스트</h2>
-          <ul class="checklist" id="checklist"></ul>
-          <div class="setup-action" id="setup-action"></div>
-          <button class="btn primary setup-go" id="setup-go" disabled>학습 시작하기 ▶</button>
-          <div class="setup-skip-wrap"><button class="btn setup-skip" id="setup-skip">건너뛰기 ▶ (장비 준비 생략하고 학습방으로)</button></div>
-        </div>
-
-        <aside class="setup-monitor">
+        <div class="su-monitor">
           <h3>시리얼 모니터</h3>
-          <div id="setup-mon"></div>
-        </aside>
+          <div id="su-mon"></div>
+        </div>
       </div>
-    </div>
-  `;
+    </div>`;
 
-  const speechEl = root.querySelector('#setup-speech');
-  const checklistEl = root.querySelector('#checklist');
-  const actionEl = root.querySelector('#setup-action');
-  const goBtn = root.querySelector('#setup-go');
+  const speechEl = root.querySelector('#su-speech');
+  const stepsEl = root.querySelector('#su-steps');
+  const actionEl = root.querySelector('#su-action');
+  const goBtn = root.querySelector('#su-go');
 
-  mountMonitor(root.querySelector('#setup-mon'));
-  goBtn.addEventListener('click', onDone);
-  root.querySelector('#setup-skip').addEventListener('click', onDone);
+  mountEddieRig(root.querySelector('#su-eddie'));
+  mountMonitor(root.querySelector('#su-mon'));
+  goBtn.addEventListener('click', () => { sfx.start(); onDone?.(); });
+  root.querySelector('#su-skip').addEventListener('click', () => { sfx.click(); onDone?.(); });
+  const snd = root.querySelector('#snd-toggle');
+  snd.onclick = () => { const m = sfx.toggle(); snd.textContent = m ? '🔇' : '🔊'; if (!m) sfx.click(); };
 
-  const speak = (t) => { speechEl.textContent = t; };
+  const speak = (t) => { speechEl.textContent = t; speechEl.classList.remove('pop'); void speechEl.offsetWidth; speechEl.classList.add('pop'); };
 
-  function renderChecklist() {
-    checklistEl.innerHTML = ITEMS.map((it) => `
-      <li class="check-item ${status[it.id]}">
-        <span class="check-icon">${ICON[status[it.id]]}</span>
-        <span class="check-text"><b>${it.label}</b><small>${it.desc}</small></span>
-      </li>`).join('');
+  function renderSteps() {
+    stepsEl.innerHTML = ITEMS.map((it, i) => {
+      const s = status[it.id];
+      const node = s === 'done' ? '✓' : s === 'fail' ? '!' : s === 'doing' ? '···' : String(i + 1);
+      const prevDone = i > 0 ? status[ITEMS[i - 1].id] === 'done' : false;
+      const link = i > 0 ? `<div class="su-link ${prevDone ? 'on' : ''}"></div>` : '';
+      return `${link}<div class="su-step ${s}"><div class="su-node">${node}</div>
+        <div class="su-step-label"><b>${it.label}</b><small>${it.desc}</small></div></div>`;
+    }).join('');
   }
 
   function updateGo() {
@@ -77,22 +77,23 @@ export function showSetup(root, { onDone }) {
     if (!goBtn.disabled) goBtn.classList.add('show');
   }
 
-  function setStatus(id, s) { status[id] = s; renderChecklist(); renderAction(); updateGo(); }
+  function setStatus(id, s) { status[id] = s; renderSteps(); renderAction(); updateGo(); }
 
-  // ---- 액션 영역: 현재 단계에 맞는 버튼/안내 ----
+  // ---- 액션 영역(현재 단계 버튼/안내) ----
   function renderAction() {
     actionEl.innerHTML = '';
-
     if (status.browser === 'fail') {
-      actionEl.innerHTML = `<p class="muted">이 브라우저는 WebSerial 을 지원하지 않아요. Chrome 또는 Edge 데스크톱에서 다시 열어주세요. <small>(추후 Wokwi 시뮬레이터 지원 예정)</small></p>`;
+      actionEl.innerHTML = `<p class="muted">이 브라우저는 WebSerial 을 지원하지 않아요. Chrome 또는 Edge 데스크톱에서 다시 열어주세요.</p>`;
       return;
     }
     if (status.connect !== 'done') {
       if (status.connect === 'doing') { actionEl.innerHTML = `<button class="btn primary" disabled>연결 중…</button>`; return; }
       const failed = status.connect === 'fail';
       actionEl.innerHTML = `
-        <button class="btn primary" id="b-connect">${failed ? '🔌 다시 연결 시도' : '보드 연결'}</button>
-        <button class="btn" id="b-diag">🔧 자동 진단·복구</button>
+        <div class="btn-row">
+          <button class="btn primary" id="b-connect">${failed ? '🔌 다시 연결 시도' : '보드 연결'}</button>
+          <button class="btn" id="b-diag">🔧 자동 진단·복구</button>
+        </div>
         ${connectHint ? `<p class="muted setup-note">${connectHint}</p>` : ''}`;
       actionEl.querySelector('#b-connect').onclick = doConnect;
       actionEl.querySelector('#b-diag').onclick = doDiagnose;
@@ -117,15 +118,8 @@ export function showSetup(root, { onDone }) {
             <button class="btn primary" id="cy">네, 봤어요 ✅</button>
             <button class="btn" id="cn">아니요, 다시</button>
           </div>`;
-        actionEl.querySelector('#cy').onclick = () => {
-          setStatus('led13', 'done');
-          speak('완벽해! 준비 끝 🎉 이제 진짜 거실로 가보자.');
-        };
-        actionEl.querySelector('#cn').onclick = () => {
-          led13Confirm = false;
-          setStatus('led13', 'todo');
-          speak('안 보였구나. 보드가 잘 꽂혔는지 확인하고 다시 깜빡여줄게.');
-        };
+        actionEl.querySelector('#cy').onclick = () => { setStatus('led13', 'done'); speak('완벽해! 준비 끝 🎉 이제 미니게임천국으로 출발!'); };
+        actionEl.querySelector('#cn').onclick = () => { led13Confirm = false; setStatus('led13', 'todo'); speak('안 보였구나. 보드가 잘 꽂혔는지 확인하고 다시 깜빡여줄게.'); };
       } else {
         const dis = status.led13 === 'doing' ? 'disabled' : '';
         actionEl.innerHTML = `<button class="btn primary" id="b-blink" ${dis}>13번 LED 깜빡이기 💡</button>`;
@@ -140,128 +134,56 @@ export function showSetup(root, { onDone }) {
   function onConnected(r) {
     connectHint = '';
     setStatus('connect', 'done');
-    if (r && r.ok) {
-      setStatus('firmware', 'done');
-      speak('좋아, 보드랑 인사 끝! 이제 내장 LED를 깜빡여 보자. 💡');
-    } else {
-      setStatus('firmware', 'doing');
-      speak('펌웨어가 없네. 내가 브라우저에서 바로 구워줄게! [펌웨어 굽기]를 눌러줘.');
-    }
+    if (r && r.ok) { setStatus('firmware', 'done'); speak('좋아, 보드랑 인사 끝! 이제 내장 LED를 깜빡여 보자 💡'); }
+    else { setStatus('firmware', 'doing'); speak('펌웨어가 없네. 내가 바로 구워줄게! [펌웨어 굽기]를 눌러줘.'); }
   }
-
   async function doConnect() {
-    setStatus('connect', 'doing');
-    connectHint = '';
-    speak('USB 포트를 선택해줘!');
-    try {
-      onConnected(await board.connect());
-    } catch (e) {
-      const c = board.classify(e);
-      connectHint = c.note;
-      setStatus('connect', c.kind === 'cancel' ? 'todo' : 'fail');
-      speak(c.speak);
-      board.log('sys', `연결 실패(${c.kind}): ` + (e?.message ?? e));
-      renderAction();
+    setStatus('connect', 'doing'); connectHint = ''; speak('USB로 보드를 연결하고 포트를 골라줘!');
+    try { onConnected(await board.connect()); }
+    catch (e) {
+      const c = board.classify(e); connectHint = c.note;
+      setStatus('connect', c.kind === 'cancel' ? 'todo' : 'fail'); speak(c.speak);
+      board.log('sys', `연결 실패(${c.kind}): ` + (e?.message ?? e)); renderAction();
     }
   }
-
-  // 일시 오류/포트 미인식 시: 원인을 찾아 알아서 복구 시도
   async function doDiagnose() {
-    connectHint = '';
-    speak('자동 진단을 시작할게… 🔧');
-    board.log('sys', '── 자동 진단·복구 시작 ──');
-    if (!board.isSupported()) {
-      setStatus('browser', 'fail');
-      speak('이 브라우저는 WebSerial 미지원이야. Chrome / Edge 데스크톱에서 열어줘.');
-      return;
-    }
+    connectHint = ''; speak('자동 진단을 시작할게… 🔧'); board.log('sys', '── 자동 진단·복구 시작 ──');
+    if (!board.isSupported()) { setStatus('browser', 'fail'); speak('이 브라우저는 WebSerial 미지원이야. Chrome / Edge 에서 열어줘.'); return; }
     setStatus('connect', 'doing');
-    const a = await board.connectAuto();   // 선택창 없이 이전 허용 포트로 재연결 시도
+    const a = await board.connectAuto();
     if (a.ok) { board.log('sys', '자동 재연결 성공'); onConnected({ ok: true }); return; }
-    if (a.reason === 'no_response') {
-      setStatus('connect', 'done'); setStatus('firmware', 'doing');
-      speak('보드는 열렸는데 응답이 없어 — 펌웨어를 구우면 해결돼! 아래 [펌웨어 굽기]를 눌러줘.');
-      return;
-    }
-    if (a.reason === 'no_known') {
-      setStatus('connect', 'fail');
-      connectHint = '보안상 포트는 처음 한 번 직접 선택해야 해요. [보드 연결]로 포트를 고르면 다음부턴 자동으로 잡아요.';
-      speak('포트를 한 번만 직접 골라줘! 다음부턴 일시 오류가 나도 내가 자동으로 잡을게.');
-    } else if (a.reason === 'open_fail') {
-      setStatus('connect', 'fail');
-      connectHint = '포트가 다른 프로그램(아두이노 IDE 등)이나 다른 탭에서 사용 중일 수 있어요. 닫고 [다시 연결 시도]를 눌러주세요.';
-      speak('포트가 사용 중인 것 같아. 아두이노 IDE나 다른 탭을 닫고 다시!');
-    } else {
-      setStatus('connect', 'fail');
-      connectHint = '케이블을 다시 꽂고 [다시 연결 시도]를 눌러주세요.';
-      speak('케이블을 다시 꽂고 시도해보자.');
-    }
+    if (a.reason === 'no_response') { setStatus('connect', 'done'); setStatus('firmware', 'doing'); speak('보드는 열렸는데 응답이 없어 — [펌웨어 굽기]로 해결돼!'); return; }
+    if (a.reason === 'no_known') { setStatus('connect', 'fail'); connectHint = '보안상 포트는 처음 한 번 직접 선택해야 해요. [보드 연결]로 고르면 다음부턴 자동으로 잡아요.'; speak('포트를 한 번만 골라줘! 다음부턴 자동으로 잡을게.'); }
+    else if (a.reason === 'open_fail') { setStatus('connect', 'fail'); connectHint = '포트가 다른 프로그램/탭에서 사용 중일 수 있어요. 닫고 [다시 연결 시도]를 눌러주세요.'; speak('포트가 사용 중인 것 같아. 다른 프로그램을 닫고 다시!'); }
+    else { setStatus('connect', 'fail'); connectHint = '케이블을 다시 꽂고 [다시 연결 시도]를 눌러주세요.'; speak('케이블을 다시 꽂고 시도해보자.'); }
     renderAction();
   }
-
   async function doFlash() {
-    const fp = actionEl.querySelector('#fp');
-    const fb = actionEl.querySelector('#fb');
-    const fs = actionEl.querySelector('#fs');
-    actionEl.querySelector('#b-flash').disabled = true;
-    fp.hidden = false;
-    speak('펌웨어 굽는 중… 케이블 뽑지 말고 잠깐만 기다려줘!');
+    const fp = actionEl.querySelector('#fp'), fb = actionEl.querySelector('#fb'), fs = actionEl.querySelector('#fs');
+    actionEl.querySelector('#b-flash').disabled = true; fp.hidden = false;
+    speak('펌웨어 굽는 중… 케이블 뽑지 말고 잠깐만!');
     try {
-      const r = await board.flash({
-        onLog: (m) => { fs.textContent = m; },
-        onProgress: (d, t) => {
-          const pct = Math.round((d / t) * 100);
-          fb.style.width = pct + '%';
-          fs.textContent = `굽는 중… ${pct}% (${d}/${t} bytes)`;
-        },
-      });
-      if (r.ok) {
-        setStatus('firmware', 'done');
-        speak('펌웨어 완료! 이제 내장 LED 테스트로 가자. 💡');
-      } else {
-        setStatus('firmware', 'fail');
-        speak('굽긴 했는데 응답이 없어… 케이블/포트를 확인하고 다시 시도해줘.');
-      }
-    } catch (e) {
-      setStatus('firmware', 'fail');
-      speak('플래싱 실패: ' + (e?.message ?? e));
-    }
+      const r = await board.flash({ onLog: (m) => { fs.textContent = m; }, onProgress: (d, t) => { const pct = Math.round((d / t) * 100); fb.style.width = pct + '%'; fs.textContent = `굽는 중… ${pct}% (${d}/${t} bytes)`; } });
+      if (r.ok) { setStatus('firmware', 'done'); speak('펌웨어 완료! 이제 내장 LED 테스트로 가자 💡'); }
+      else { setStatus('firmware', 'fail'); speak('굽긴 했는데 응답이 없어… 케이블/포트 확인하고 다시!'); }
+    } catch (e) { setStatus('firmware', 'fail'); speak('플래싱 실패: ' + (e?.message ?? e)); }
   }
-
   async function doBlink() {
-    setStatus('led13', 'doing');
-    speak("보드에서 'L' 표시 옆 작은 LED를 봐! 네 번 깜빡일 거야.");
-    try {
-      await board.blink(BUILTIN_LED, 4, 250);
-    } catch (e) {
-      board.log('sys', 'LED 테스트 실패: ' + (e?.message ?? e));
-    }
-    led13Confirm = true;
-    renderAction();
+    setStatus('led13', 'doing'); speak("보드에서 'L' 표시 옆 작은 LED를 봐! 네 번 깜빡일 거야.");
+    try { await board.blink(BUILTIN_LED, 4, 250); } catch (e) { board.log('sys', 'LED 테스트 실패: ' + (e?.message ?? e)); }
+    led13Confirm = true; renderAction();
   }
 
   // ---- 시작 ----
-  renderChecklist();
   if (board.isSupported()) {
     status.browser = 'done';
-    // 이미 연결되어 있으면(앞 단계에서) 건너뛰기
-    if (board.connected) {
-      status.connect = 'done'; status.firmware = 'done';
-    } else {
-      // 일시 오류/재진입 대비: 이전에 허용한 포트가 있으면 선택창 없이 자동 재연결
+    if (board.connected) { status.connect = 'done'; status.firmware = 'done'; }
+    else {
       board.connectAuto().then((a) => {
         if (a.ok) onConnected({ ok: true });
-        else if (a.reason === 'no_response') {
-          setStatus('connect', 'done'); setStatus('firmware', 'doing');
-          speak('보드는 열렸는데 응답이 없어 — [펌웨어 굽기]로 해결할 수 있어!');
-        }
+        else if (a.reason === 'no_response') { setStatus('connect', 'done'); setStatus('firmware', 'doing'); speak('보드는 열렸는데 응답이 없어 — [펌웨어 굽기]로 해결할 수 있어!'); }
       }).catch(() => {});
     }
-  } else {
-    status.browser = 'fail';
-    speak('이런! 이 브라우저는 WebSerial 을 지원하지 않아. Chrome이나 Edge에서 열어줘.');
-  }
-  renderChecklist();
-  renderAction();
-  updateGo();
+  } else { status.browser = 'fail'; speak('이 브라우저는 WebSerial 을 지원하지 않아. Chrome이나 Edge에서 열어줘.'); }
+  renderSteps(); renderAction(); updateGo();
 }

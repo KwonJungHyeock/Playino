@@ -1370,3 +1370,47 @@ html, body {
 .lg-help { display: block; width: 100%; margin-top: 12px; background: none; border: none;
   color: var(--muted); font-size: 13px; cursor: pointer; text-decoration: underline; }
 .lg-help:hover { color: #cfe0ff; }
+
+/* ===== 사용환경 준비(재디자인): 가로 스텝퍼 + EDDIE peeking + 하단 로그 ===== */
+.setup2 { position: relative; min-height: 100vh; overflow-x: hidden; overflow-y: auto;
+  display: flex; align-items: center; justify-content: center; padding: 60px 16px 40px; }
+.su-wrap { position: relative; z-index: 1; width: min(820px, 94%); display: flex; flex-direction: column; gap: 18px; }
+.su-stage { position: relative; margin-top: 128px; }   /* EDDIE 머리 공간 */
+.su-eddie { position: absolute; left: 50%; top: -138px; transform: translateX(-50%); width: 210px; z-index: 0; pointer-events: auto; }
+.su-eddie .eddie-rig { max-width: 210px; }
+.su-speech { position: absolute; left: calc(50% + 96px); top: -116px; z-index: 3; background: #fff; color: #1a2440;
+  font-weight: 700; font-size: 13px; line-height: 1.35; padding: 9px 14px; border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.3); max-width: 250px; }
+.su-speech.pop { animation: lg-pop .3s cubic-bezier(.2,.9,.2,1); }
+@media (max-width: 620px) { .su-speech { position: static; transform: none; max-width: none; margin: 0 auto 10px; border-radius: 14px; } }
+
+.su-panel { position: relative; z-index: 1; background: rgba(16,20,36,.66); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.14); border-radius: 22px; padding: 30px 30px 22px; box-shadow: 0 24px 70px rgba(0,0,0,.42); text-align: center; }
+.su-kicker { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; letter-spacing: 1.5px; color: #cdd9f0; text-transform: uppercase; }
+.su-title { font-size: 22px; font-weight: 800; margin: 8px 0 18px; color: #fff; }
+
+.su-steps { display: flex; align-items: flex-start; justify-content: center; }
+.su-step { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 116px; }
+.su-node { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 16px;
+  background: rgba(120,140,180,.3); color: #cfe0ff; transition: background .25s, color .25s, box-shadow .25s; }
+.su-step.doing .su-node { background: #ffb020; color: #1a1304; box-shadow: 0 0 0 4px rgba(255,176,32,.2); }
+.su-step.done .su-node { background: #3ddc91; color: #07210f; }
+.su-step.fail .su-node { background: #ff6b6b; color: #3a0a0a; }
+.su-step-label b { font-size: 13px; color: #fff; display: block; }
+.su-step.todo .su-step-label b { color: #aab4c6; }
+.su-step-label small { font-size: 10.5px; color: var(--muted); display: block; margin-top: 2px; }
+.su-link { flex: 1; height: 3px; min-width: 18px; margin-top: 19px; background: rgba(120,140,180,.3); border-radius: 3px; transition: background .25s; }
+.su-link.on { background: #3ddc91; }
+
+.su-action { min-height: 54px; margin: 18px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.su-action .btn-row { justify-content: center; }
+.btn.su-go { width: auto; height: 50px !important; max-height: 50px !important; min-height: 0 !important; padding: 0 30px; font-size: 16px; font-weight: 700;
+  border: none; color: #2a1200; background: linear-gradient(92deg,#ff9e3c,#ff5a8a); box-shadow: 0 12px 30px rgba(255,90,120,.35); opacity: .5; transition: opacity .2s, transform .15s; }
+.btn.su-go:disabled { opacity: .4; cursor: not-allowed; }
+.btn.su-go.show:not(:disabled) { opacity: 1; }
+.btn.su-go.show:not(:disabled):hover { transform: translateY(-2px) scale(1.03); }
+.su-skip { display: block; margin: 10px auto 0; background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; text-decoration: underline; }
+.su-skip:hover { color: #cfe0ff; }
+
+.su-monitor { background: rgba(13,22,40,.55); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+.su-monitor h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
