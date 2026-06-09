@@ -106,7 +106,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     onDrawOverlay: drawVignette,
   });
 
-  setTimeout(() => guide(`${ch.short}에 입장! ${ch.act} — 부스로 걸어가 Space로 입장해 메달을 모으자! 🎖️`), 500);
+  setTimeout(() => guide(`${ch.short} 입장! 부스에서 Space로 메달 획득 🎖️`), 500);
 
   function destroyAll() { try { world.destroy(); } catch (_) {} header.destroy(); }
 

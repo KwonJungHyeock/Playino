@@ -74,7 +74,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   const onResize = () => { measure(); buildGates(); map.width = VW; map.height = VH; map.walls = buildWalls(); map.triggers = buildTriggers(); };
   window.addEventListener('resize', onResize);
 
-  setTimeout(() => guide('미니게임천국에 온 걸 환영해! 🎉 길을 따라 무대로 걸어가 Space로 입장하자!'), 500);
+  setTimeout(() => guide('길을 따라 무대로 가서 Space로 입장! 🎮'), 500);
 
   function destroyAll() { window.removeEventListener('resize', onResize); world.destroy(); header.destroy(); }
 
