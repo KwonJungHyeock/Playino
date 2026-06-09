@@ -8,7 +8,7 @@ import { showKits } from './scenes/kits.js';
 import { showLogin } from './scenes/login.js';
 import { showSetup } from './scenes/setup.js';
 import { showBasics } from './scenes/basics.js';
-import { showLedGame } from './scenes/ledGame.js';
+import { showSensorRoom } from './scenes/sensorRoom.js';
 import { showHub } from './scenes/hub.js';
 import { showChapter } from './scenes/chapter.js';
 import { showDhtCoding } from './scenes/dhtCoding.js';
@@ -51,7 +51,7 @@ function enterRoom(roomId) {
   const back = () => backToChapter(roomId);
   switch (roomId) {
     case 'basics': showBasics(app(), { onExit: back }); break;
-    case 'led': showLedGame(app(), { onExit: back }); break;
+    case 'led': showSensorRoom(app(), { id: 'led', onExit: back }); break;
     case 'dht11': dhtCoding(back); break;
     case 'relay': showRelay(app(), { onExit: back }); break;
     case 'setup': showSetup(app(), { onDone: () => { progress.mark('setup'); back(); } }); break;
