@@ -18,7 +18,7 @@ const LEDS = [
 ];
 const GAMES = [
   { key: 'timing', no: 1, name: '타이밍 쇼', icon: '🎯', desc: '빛 마커가 <b>판정선(◎)</b>에 닿는 순간 <b>Space</b>! 박자에 맞춰 무대 조명을 켜자.', n: 44 },
-  { key: 'play', no: 2, name: '라이트 연주', icon: '🎹', desc: '노트 <b>색</b>에 맞는 LED를 눌러 연주! <b>① 초록 · ② 주황 · ③ 빨강</b> (키 1·2·3 또는 LED 클릭)', n: 30 },
+  { key: 'play', no: 2, name: '라이트 연주', icon: '🎹', desc: '음 높이에 맞는 LED를 눌러 <b>작은별</b>을 연주! <b>① 초록(낮음) · ② 주황(중간) · ③ 빨강(높음)</b> — 키 1·2·3 또는 LED 클릭. 제때 누르면 멜로디가 흘러요 🎵' },
 ];
 const PASS_ACC = 0.85;   // A등급 이상
 
@@ -38,15 +38,23 @@ function buildBeats(game) {
     }
     return a;
   }
-  // 라이트 연주: 색 노트 + 점점 빠르게 + 가끔 더블
-  const a = []; let t = 1000, gap = 720;
-  for (let i = 0; i < game.n; i++) {
-    a.push({ target: t, color: (i * 7 + 3) % 3 });
-    if (i >= 10 && i % 4 === 0) a.push({ target: t + gap * 0.5, color: (i * 3 + 1) % 3 });
-    gap = Math.max(360, gap - 10); t += gap;
+  // 라이트 연주: 저작권 없는 멜로디(작은별, public domain)를 실제로 연주.
+  // 음 높이에 따라 LED 배정(낮음=초록·중간=주황·높음=빨강), 제때 누르면 그 음정이 소리난다.
+  const a = []; let t = 900; const gap = 470;
+  for (let i = 0; i < MELODY.length; i++) {
+    const f = MELODY[i];
+    a.push({ target: t, color: f <= 300 ? 0 : f <= 355 ? 1 : 2, freq: f });
+    t += gap; if ((i + 1) % 7 === 0) t += 170;     // 7음마다 한 박 쉼(프레이즈)
   }
   return a;
 }
+// 작은별: 도도 솔솔 라라 솔 / 파파 미미 레레 도 / 솔솔 파파 미미 레 (×2) / 도도 솔솔 라라 솔 / 파파 미미 레레 도
+const C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.0, A4 = 440.0;
+const MELODY = [
+  C4, C4, G4, G4, A4, A4, G4, F4, F4, E4, E4, D4, D4, C4,
+  G4, G4, F4, F4, E4, E4, D4, G4, G4, F4, F4, E4, E4, D4,
+  C4, C4, G4, G4, A4, A4, G4, F4, F4, E4, E4, D4, D4, C4,
+];
 function gradeOf(acc) { return acc >= 0.95 ? 'S' : acc >= 0.85 ? 'A' : acc >= 0.7 ? 'B' : acc >= 0.5 ? 'C' : 'D'; }
 
 export function showLedGame(root, { onExit } = {}) {
@@ -197,7 +205,8 @@ export function showLedGame(root, { onExit } = {}) {
       state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo);
       state.score += (perfect ? 100 : 60) + state.combo * 5; state.hits++;
       const li = game.key === 'play' ? best.color : (perfect ? 0 : 1);
-      perfect ? sfx.perfect() : sfx.ok(); flashLed(li);
+      if (game.key === 'play') sfx.note(best.freq); else perfect ? sfx.perfect() : sfx.ok();
+      flashLed(li);
       pop(perfect ? 'PERFECT!' : 'GOOD!', `rgb(${LEDS[li].color})`);
     } else { state.combo = 0; sfx.no(); flashLed(2); pop('MISS', `rgb(${LEDS[2].color})`); }
     sync();

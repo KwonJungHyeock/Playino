@@ -27,4 +27,6 @@ export const sfx = {
   ok() { blip(880, 70, 'triangle', 0.16); setTimeout(() => blip(1320, 95, 'triangle', 0.14), 55); },
   perfect() { blip(988, 60, 'triangle', 0.16); setTimeout(() => blip(1480, 110, 'triangle', 0.15), 50); },
   no() { blip(150, 200, 'sawtooth', 0.16); },
+  // 멜로디 연주용 — 지정한 음정을 또렷한 음색으로
+  note(freq, ms = 300, vol = 0.2) { blip(freq, ms, 'triangle', vol); },
 };
