@@ -1,6 +1,7 @@
 // kits.js — 호환 키트 안내 페이지.
 // 이 게임은 '스타터 키트 [종합편]' 기준으로 제작됐지만, 다른 키트들도 호환됨을 안내한다.
 // 제품 사진은 public/brand/kits/<id>.png 자동 교체형(없으면 📦 플레이스홀더).
+import { sfx } from '../app/sfx.js';
 
 const KITS = [
   { id: 'comprehensive', name: '스타터 키트 [종합편]', note: '이 게임의 기준 키트', base: true },
@@ -13,6 +14,7 @@ export function showKits(root, { onDone } = {}) {
   root.innerHTML = `
     <div class="kits scene-fade">
       <div class="kits-bg" id="kits-bg"></div>
+      <button class="snd-toggle" id="snd-toggle" title="소리 켜기/끄기">${sfx.muted ? '🔇' : '🔊'}</button>
       <div class="brand-badge"><span class="brand-dot"></span>Eduino&nbsp;<b>AI</b></div>
       <div class="kits-inner">
         <div class="kits-head">
@@ -45,5 +47,11 @@ export function showKits(root, { onDone } = {}) {
     probe.src = `/brand/kits/${k.id}.png`;
   });
 
-  root.querySelector('#kits-go').addEventListener('click', () => onDone?.());
+  const goBtn = root.querySelector('#kits-go');
+  goBtn.addEventListener('mouseenter', () => sfx.hover());
+  goBtn.addEventListener('click', () => { sfx.start(); onDone?.(); });
+  root.querySelectorAll('.kit-card').forEach((c) => c.addEventListener('click', () => sfx.pop()));
+
+  const snd = root.querySelector('#snd-toggle');
+  snd.onclick = () => { const m = sfx.toggle(); snd.textContent = m ? '🔇' : '🔊'; if (!m) sfx.click(); };
 }

@@ -1427,3 +1427,13 @@ html, body {
 .su-monitor { padding: 12px 16px; }
 .su-monitor h3 { margin: 0 0 6px; }
 .su-monitor .serial-monitor { height: 130px; }
+
+/* ===== 전역 완성도 폴리시 ===== */
+/* 키보드 포커스 가시성(접근성) */
+button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-visible { outline: 2px solid #8ac6ff; outline-offset: 3px; }
+/* 로그인 CTA 잔여 펄스 링 제거(주황 버튼에 파란 링 방지) */
+.btn.lg-go { animation: none; }
+/* 모션 최소화 환경 배려 */
+@media (prefers-reduced-motion: reduce) {
+  .pm-blobs span { animation: none; }
+}
