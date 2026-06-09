@@ -65,6 +65,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
       <div class="hud-hint" id="hud-hint"></div>
       <div class="hud-toast" id="hud-toast"></div>
       <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 입장/조작 · 🎪 광장으로 · EDDIE 클릭</div>
+      <button class="snd-toggle" id="snd-toggle" title="소리 켜기/끄기">${sfx.muted ? '🔇' : '🔊'}</button>
     </div>`;
 
   const header = mountCurriculumHeader(root.querySelector('.escape-scene'), {
@@ -77,6 +78,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   const host = root.querySelector('#world-host');
   const hintEl = root.querySelector('#hud-hint');
   const toastEl = root.querySelector('#hud-toast');
+  const sndEl = root.querySelector('#snd-toggle'); sndEl.onclick = () => { const m = sfx.toggle(); sndEl.textContent = m ? '🔇' : '🔊'; };
   // EDDIE 머리 위 말풍선(가이드)
   const bubble = document.createElement('div'); bubble.className = 'eddie-bubble'; host.appendChild(bubble);
   let bubbleT = null;

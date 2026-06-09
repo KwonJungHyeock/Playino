@@ -5,6 +5,7 @@
 
 import { createWorld } from '../engine/topdown.js';
 import { eddieRandom } from '../app/eddieSay.js';
+import { sfx } from '../app/sfx.js';
 import { mountCurriculumHeader } from '../app/curriculumHeader.js';
 import { CHAPTERS, getChapter, chapterDone, chapterUnlocked, chapterClearedCount, chapterTotal } from '../content/curriculum.js';
 
@@ -21,6 +22,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
       <div class="hud-toast" id="hud-toast"></div>
       <div class="hub-banner" id="hub-banner"></div>
       <div class="hud-controls">⬅➡⬆⬇ 이동 · Space 입장 · EDDIE 클릭 · 상단에서 챕터 이동</div>
+      <button class="snd-toggle" id="snd-toggle" title="소리 켜기/끄기">${sfx.muted ? '🔇' : '🔊'}</button>
     </div>`;
 
   const header = mountCurriculumHeader(root.querySelector('.escape-scene'), {
@@ -32,6 +34,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   const hintEl = root.querySelector('#hud-hint');
   const toastEl = root.querySelector('#hud-toast');
   const bannerEl = root.querySelector('#hub-banner');
+  const sndEl = root.querySelector('#snd-toggle'); sndEl.onclick = () => { const m = sfx.toggle(); sndEl.textContent = m ? '🔇' : '🔊'; };
   // EDDIE 머리 위를 따라다니는 말풍선(가이드) — 하단 자막이 캐릭터를 가리던 문제 해결
   const bubble = document.createElement('div'); bubble.className = 'eddie-bubble'; host.appendChild(bubble);
   let bubbleT = null;
