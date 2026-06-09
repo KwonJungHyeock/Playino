@@ -1,5 +1,5 @@
-// chapter.js — 챕터 입구 안. 하위 미션 방(문)들이 보인다. 문으로 입장해 미션을 풀면
-// 그 방이 환해지고 ✓. 모든 방을 풀면 다음 챕터가 열린다. 어둠/비상등 = 탈출 분위기.
+// chapter.js — 무대 안(부스 목록). 부스로 입장해 미니게임을 클리어하면 ✓, 모두 클리어하면 다음 무대 개방.
+// 밝은 미니게임천국 톤: 따뜻한 부스 내부(스테이지별 배경 슬롯) + 글로시 스톨 카드(메달 컬러).
 
 import { createWorld } from '../engine/topdown.js';
 import { mountSay, eddieRandom } from '../app/eddieSay.js';
@@ -7,6 +7,11 @@ import { mountCurriculumHeader } from '../app/curriculumHeader.js';
 import { getChapter, chapterRooms, isRoomCleared } from '../content/curriculum.js';
 
 const CARD_W = 152, CARD_H = 104, COL_W = 210, ROW_H = 196, MARGIN = 90, TOP = 150;
+const PAL = [['255,200,74', '255,170,40'], ['255,122,184', '233,80,150'], ['90,201,255', '40,160,235'], ['155,140,255', '120,100,235'], ['120,220,150', '60,185,110']];
+
+// 스테이지별 배경(있으면 사용): /brand/stage-{chapterId}-bg.png
+const STAGE_IMG = {};
+function stageImg(id) { if (!STAGE_IMG[id]) { const im = new Image(); im.src = `/brand/stage-${id}-bg.png`; STAGE_IMG[id] = im; } return STAGE_IMG[id]; }
 
 export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt } = {}) {
   const ch = getChapter(chapter);
@@ -20,11 +25,10 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     const col = i % cols, row = (i / cols) | 0;
     const x = MARGIN + col * COL_W + (COL_W - CARD_W) / 2;
     const y = TOP + row * ROW_H;
-    return { ...r, cx: x, cy: y };
+    return { ...r, idx: i, cx: x, cy: y };
   });
   const EXIT = { x: MAP_W / 2 - 34, y: MAP_H - 58, w: 68, h: 40 };
 
-  // 기본 스폰: 첫 번째 '플레이 가능' 방 바로 앞(바로 입장할 수 있게)
   const firstReady = cells.find((c) => c.status === 'ready') || cells[0];
   let spawnPt = firstReady
     ? { x: firstReady.cx + CARD_W / 2 - 14, y: firstReady.cy + CARD_H + 12 }
@@ -37,7 +41,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
       <div class="hud-hint" id="hud-hint"></div>
       <div class="hud-toast" id="hud-toast"></div>
       <div class="hud-narrate" id="hud-narrate"></div>
-      <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 입장 · 🚪 복도로 · EDDIE 클릭</div>
+      <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 입장 · 🎪 광장으로 · EDDIE 클릭</div>
     </div>`;
 
   const header = mountCurriculumHeader(root.querySelector('.escape-scene'), {
@@ -50,16 +54,13 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   const narrateEl = root.querySelector('#hud-narrate');
   const say = mountSay(root.querySelector('.game-scene'));
 
-  const dark = document.createElement('canvas');
-  const dctx = dark.getContext('2d');
-
   const map = {
-    width: MAP_W, height: MAP_H, bg: '#04060c',
+    width: MAP_W, height: MAP_H, bg: '#e7dcc4',
     spawn: spawnPt,
     walls: [
       { x: 0, y: 0, w: MAP_W, h: 24 }, { x: 0, y: MAP_H - 24, w: MAP_W, h: 24 },
       { x: 0, y: 0, w: 24, h: MAP_H }, { x: MAP_W - 24, y: 0, w: 24, h: MAP_H },
-      ...cells.map((c) => ({ x: c.cx, y: c.cy, w: CARD_W, h: CARD_H })),   // 방(문)은 못 뚫고 지나감
+      ...cells.map((c) => ({ x: c.cx, y: c.cy, w: CARD_W, h: CARD_H })),
     ],
     triggers: [
       ...cells.map((c) => ({ id: c.id, x: c.cx, y: c.cy + CARD_H, w: CARD_W, h: 48 })),
@@ -72,7 +73,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     onInteract: handle,
     onFrame: updateHint,
     onEddieClick: (x, y) => say(eddieRandom(), x, y),
-    onDrawOverlay: drawDark,
+    onDrawOverlay: drawVignette,
   });
 
   setTimeout(() => narrate(`${ch.short}에 입장! ${ch.act} — 부스마다 미니게임을 클리어해 메달을 모으자! 🎖️`), 500);
@@ -89,8 +90,8 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
 
   function confirmReenter(r, yes, no) {
     const m = document.createElement('div'); m.className = 'modal-backdrop';
-    m.innerHTML = `<div class="modal"><h3>✅ ${r.icon} ${r.name} — 복구 완료된 방</h3>
-      <p>이미 미션을 클리어한 방이에요. <b>다시 학습할까요?</b></p>
+    m.innerHTML = `<div class="modal"><h3>✅ ${r.icon} ${r.name} — 클리어한 부스</h3>
+      <p>이미 메달을 받은 부스예요. <b>다시 플레이할까요?</b></p>
       <div class="modal-actions"><button class="btn" id="re-no">아니오</button><button class="btn primary" id="re-yes">예, 다시 ▶</button></div></div>`;
     document.body.appendChild(m);
     m.querySelector('#re-no').onclick = () => { m.remove(); no(); };
@@ -101,7 +102,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     world.pause();
     const m = document.createElement('div'); m.className = 'modal-backdrop';
     m.innerHTML = `<div class="modal"><h3>${r.icon} ${r.name} · ${r.mission}</h3>
-      <p><b>준비중인 방</b>이에요. 곧 미니게임으로 만나요!<br/>
+      <p><b>준비중인 부스</b>예요. 곧 미니게임으로 만나요!<br/>
       <span class="muted">개념: ${r.concept} · 보상: ${r.reward}</span></p>
       <div class="modal-actions"><button class="btn primary" id="soon-ok">알겠어요 ▶</button></div></div>`;
     document.body.appendChild(m);
@@ -111,11 +112,11 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   function updateHint(state) {
     const tr = state.activeTrigger;
     if (!tr) { hintEl.classList.remove('show'); return; }
-    if (tr.id === '__exit') { hintEl.innerHTML = '🚪 Space · 복도로 나가기'; hintEl.classList.add('show'); return; }
+    if (tr.id === '__exit') { hintEl.innerHTML = '🎪 Space · 광장으로 나가기'; hintEl.classList.add('show'); return; }
     const r = cells.find((c) => c.id === tr.id); if (!r) { hintEl.classList.remove('show'); return; }
     const clr = isRoomCleared(r.id);
     hintEl.innerHTML = r.status === 'ready'
-      ? (clr ? `${r.icon} ${r.name} · 클리어됨 ✓ (다시 학습)` : `▶ Space · <b>${r.icon} ${r.name}</b> — ${r.mission}`)
+      ? (clr ? `${r.icon} ${r.name} · 클리어 ✓ (다시 플레이)` : `▶ Space · <b>${r.icon} ${r.name}</b> — ${r.mission}`)
       : `🔒 ${r.icon} ${r.name} (준비중)`;
     hintEl.classList.add('show');
   }
@@ -124,65 +125,94 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   function toast(m) { toastEl.textContent = m; toastEl.classList.add('show'); clearTimeout(tT); tT = setTimeout(() => toastEl.classList.remove('show'), 2400); }
   function narrate(t) { narrateEl.innerHTML = `<span>🤖 ${t}</span>`; narrateEl.classList.add('show'); clearTimeout(nT); nT = setTimeout(() => narrateEl.classList.remove('show'), 5000); }
 
-  function drawDark(ctx, st, canvas) {
-    if (dark.width !== canvas.width || dark.height !== canvas.height) { dark.width = canvas.width; dark.height = canvas.height; }
-    const cam = st.cam, p = st.player;
-    dctx.clearRect(0, 0, dark.width, dark.height);
-    dctx.fillStyle = 'rgba(2,4,10,0.84)'; dctx.fillRect(0, 0, dark.width, dark.height);
-    dctx.globalCompositeOperation = 'destination-out';
-    hole(dctx, p.x + p.w / 2 - cam.x, p.y + p.h / 2 - cam.y, 175);
-    for (const c of cells) { if (isRoomCleared(c.id)) hole(dctx, c.cx + CARD_W / 2 - cam.x, c.cy + CARD_H / 2 - cam.y, 165); }
-    dctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(dark, 0, 0);
+  // 밝은 톤: 은은한 따뜻한 비네트만
+  function drawVignette(ctx, st, canvas) {
+    const g = ctx.createRadialGradient(canvas.width / 2, canvas.height * 0.46, canvas.height * 0.42, canvas.width / 2, canvas.height / 2, canvas.height * 1.02);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(60,30,10,0.22)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 }
 
-function hole(c, x, y, r) {
-  const g = c.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.62, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+function drawCover(ctx, img, W, H) {
+  const ir = img.naturalWidth / img.naturalHeight, r = W / H;
+  let dw, dh; if (ir > r) { dh = H; dw = H * ir; } else { dw = W; dh = W / ir; }
+  ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
 }
 
 function drawChapter(ctx, st, cells, MAP_W, MAP_H, EXIT, ch) {
-  // 바닥(콘크리트)
-  const fg = ctx.createLinearGradient(0, 0, 0, MAP_H); fg.addColorStop(0, '#101626'); fg.addColorStop(1, '#080b14');
-  ctx.fillStyle = fg; ctx.fillRect(0, 0, MAP_W, MAP_H);
-  ctx.strokeStyle = 'rgba(120,150,210,0.05)'; ctx.lineWidth = 1;
-  for (let x = 24; x < MAP_W; x += 52) { ctx.beginPath(); ctx.moveTo(x, 24); ctx.lineTo(x, MAP_H - 24); ctx.stroke(); }
-  for (let y = 24; y < MAP_H; y += 52) { ctx.beginPath(); ctx.moveTo(24, y); ctx.lineTo(MAP_W - 24, y); ctx.stroke(); }
-  // 벽
-  ctx.fillStyle = '#0c111d'; ctx.fillRect(0, 0, MAP_W, 24); ctx.fillRect(0, MAP_H - 24, MAP_W, 24); ctx.fillRect(0, 0, 24, MAP_H); ctx.fillRect(MAP_W - 24, 0, 24, MAP_H);
-  ctx.fillStyle = 'rgba(90,120,180,0.12)'; ctx.fillRect(24, 22, MAP_W - 48, 2);
-
-  ctx.textAlign = 'center';
-  for (const c of cells) {
-    const ready = c.status === 'ready', clr = isRoomCleared(c.id);
-    const accent = clr ? '61,220,145' : ready ? '111,183,255' : '120,90,90';
-    const fx = c.cx, fy = c.cy, fw = CARD_W, fh = CARD_H;
-    if (ready || clr) { const lg = ctx.createRadialGradient(fx + fw / 2, fy + fh / 2, 6, fx + fw / 2, fy + fh / 2, 96); lg.addColorStop(0, `rgba(${accent},0.26)`); lg.addColorStop(1, `rgba(${accent},0)`); ctx.fillStyle = lg; ctx.fillRect(fx - 28, fy - 28, fw + 56, fh + 56); }
-    const ff = ctx.createLinearGradient(fx, fy, fx, fy + fh); ff.addColorStop(0, ready ? '#26324f' : '#1c1822'); ff.addColorStop(1, ready ? '#161f36' : '#141018');
-    ctx.fillStyle = ff; rr(ctx, fx, fy, fw, fh, 12); ctx.fill();
-    ctx.strokeStyle = `rgba(${accent},${ready ? 0.9 : 0.5})`; ctx.lineWidth = 2; rr(ctx, fx, fy, fw, fh, 12); ctx.stroke();
-    // 내부 통로
-    const gg = ctx.createLinearGradient(0, fy + 12, 0, fy + fh - 12); gg.addColorStop(0, 'rgba(6,10,18,0.92)'); gg.addColorStop(1, clr ? 'rgba(61,220,145,0.16)' : ready ? 'rgba(111,183,255,0.12)' : 'rgba(8,8,14,0.92)');
-    ctx.fillStyle = gg; rr(ctx, fx + 10, fy + 10, fw - 20, fh - 38, 8); ctx.fill();
-    ctx.font = '30px sans-serif'; ctx.fillStyle = ready ? '#fff' : '#6a4a4a';
-    ctx.fillText(clr ? '✓' : ready ? c.icon : '🔒', fx + fw / 2, fy + 42);
-    // 이름 + 상태/탈출 상황
-    ctx.font = '700 12px "Space Grotesk", sans-serif'; ctx.fillStyle = clr ? '#bfffd9' : ready ? '#dce8ff' : '#9a8088';
-    ctx.fillText(c.name, fx + fw / 2, fy + fh - 22);
-    if (clr) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(120,230,170,0.7)'; ctx.fillText('복구 완료 ✓', fx + fw / 2, fy + fh - 8); }
-    else if (ready) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(180,200,255,0.6)'; ctx.fillText(`▶ ${c.mission}`, fx + fw / 2, fy + fh - 8); }
-    else { ctx.font = '700 10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(255,176,32,0.6)'; ctx.fillText('준비중 · 곧 공개', fx + fw / 2, fy + fh - 8); }
-    // 플레이 가능 방엔 'PLAY' 핀(눈에 띄게)
-    if (ready && !clr) { ctx.fillStyle = 'rgba(111,183,255,0.9)'; rr(ctx, fx + fw - 44, fy + 8, 36, 16, 8); ctx.fill(); ctx.fillStyle = '#06121f'; ctx.font = '700 9px "Space Grotesk", sans-serif'; ctx.fillText('PLAY', fx + fw - 26, fy + 19); }
+  const t = st?.t || 0;
+  const img = stageImg(ch.id);
+  if (img.complete && img.naturalWidth) {
+    drawCover(ctx, img, MAP_W, MAP_H);
+  } else {
+    // 따뜻한 부스 내부(폴백): 위쪽 천막 줄무늬 띠 + 나무 바닥
+    const top = ctx.createLinearGradient(0, 0, 0, 150); top.addColorStop(0, '#f3e6d2'); top.addColorStop(1, '#e9d2bf');
+    ctx.fillStyle = top; ctx.fillRect(0, 0, MAP_W, 150);
+    ctx.fillStyle = 'rgba(220,120,120,0.16)';
+    for (let x = 0; x < MAP_W; x += 64) ctx.fillRect(x, 0, 32, 150);
+    const fl = ctx.createLinearGradient(0, 150, 0, MAP_H); fl.addColorStop(0, '#e7cfa6'); fl.addColorStop(1, '#d8b889');
+    ctx.fillStyle = fl; ctx.fillRect(0, 150, MAP_W, MAP_H - 150);
+    ctx.strokeStyle = 'rgba(120,90,50,0.18)'; ctx.lineWidth = 2;
+    for (let y = 188; y < MAP_H; y += 46) { ctx.beginPath(); ctx.moveTo(24, y); ctx.lineTo(MAP_W - 24, y); ctx.stroke(); }
   }
 
-  // 나가기(복도로)
-  ctx.fillStyle = '#2c3c68'; rr(ctx, EXIT.x - 6, EXIT.y, EXIT.w + 12, 26, 8); ctx.fill();
-  ctx.strokeStyle = 'rgba(111,183,255,0.6)'; ctx.lineWidth = 1.5; rr(ctx, EXIT.x - 6, EXIT.y, EXIT.w + 12, 26, 8); ctx.stroke();
-  ctx.fillStyle = '#cfe0ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('🚪 복도로', EXIT.x + EXIT.w / 2, EXIT.y + 17);
+  ctx.textAlign = 'center';
+  for (const c of cells) drawStall(ctx, c, t);
+
+  // 나가기(광장으로)
+  ctx.save();
+  ctx.fillStyle = 'rgba(20,26,44,0.9)'; rr(ctx, EXIT.x - 10, EXIT.y, EXIT.w + 20, 28, 9); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,210,120,0.85)'; ctx.lineWidth = 2; rr(ctx, EXIT.x - 10, EXIT.y, EXIT.w + 20, 28, 9); ctx.stroke();
+  ctx.fillStyle = '#ffe6b0'; ctx.font = '800 12px "Space Grotesk", sans-serif'; ctx.fillText('🎪 광장으로', EXIT.x + EXIT.w / 2, EXIT.y + 18);
+  ctx.restore();
   ctx.textAlign = 'start';
+}
+
+// 밝은 글로시 스톨 카드(메달 컬러)
+function drawStall(ctx, c, t) {
+  const ready = c.status === 'ready', clr = isRoomCleared(c.id);
+  const [c1, c2] = clr ? ['255,205,80', '245,170,40'] : ready ? PAL[c.idx % PAL.length] : ['175,180,190', '135,140,150'];
+  const fx = c.cx, fy = c.cy, fw = CARD_W, fh = CARD_H, cx = fx + fw / 2;
+
+  // 바닥 풋라이트 + 접지 그림자
+  if (ready || clr) {
+    const fg = ctx.createRadialGradient(cx, fy + fh + 14, 4, cx, fy + fh + 14, 76);
+    fg.addColorStop(0, `rgba(${c1},0.32)`); fg.addColorStop(1, `rgba(${c1},0)`);
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(cx, fy + fh + 14, 70, 18, 0, 0, 6.283); ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(60,40,20,0.18)'; ctx.beginPath(); ctx.ellipse(cx, fy + fh + 12, 56, 9, 0, 0, 6.283); ctx.fill();
+
+  // 카드 패널(밝은 글래스)
+  ctx.save();
+  ctx.shadowColor = 'rgba(40,24,10,0.3)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 8;
+  const pf = ctx.createLinearGradient(fx, fy, fx, fy + fh);
+  pf.addColorStop(0, 'rgba(255,255,255,0.97)'); pf.addColorStop(1, 'rgba(248,243,235,0.97)');
+  ctx.fillStyle = pf; rr(ctx, fx, fy, fw, fh, 14); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = `rgba(${c1},0.95)`; ctx.lineWidth = 2.5; rr(ctx, fx, fy, fw, fh, 14); ctx.stroke();
+
+  // 상단 컬러 차양(awning)
+  ctx.fillStyle = `rgba(${c2},0.95)`; rr(ctx, fx + 6, fy + 6, fw - 12, 22, 8); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  for (let x = fx + 10; x < fx + fw - 12; x += 20) ctx.fillRect(x, fy + 6, 10, 22);
+
+  // 아이콘
+  ctx.font = '30px sans-serif'; ctx.fillStyle = ready || clr ? '#1a1f2e' : '#8a8f9c';
+  ctx.fillText(clr ? '✅' : ready ? c.icon : '🔒', cx, fy + 64);
+
+  // 이름 + 상태
+  ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillStyle = '#23283a';
+  ctx.fillText(c.name, cx, fy + fh - 22);
+  if (clr) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(210,150,20,1)'; ctx.fillText('클리어 ✓', cx, fy + fh - 8); }
+  else if (ready) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = `rgba(${c2},1)`; ctx.fillText('▶ 입장하기', cx, fy + fh - 8); }
+  else { ctx.font = '700 10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(150,120,60,0.95)'; ctx.fillText('준비중 · 곧 공개', cx, fy + fh - 8); }
+
+  // PLAY 핀(플레이 가능 + 미클리어): 살짝 둥실
+  if (ready && !clr) {
+    const py = fy - 12 + Math.sin(t * 0.14 + c.idx) * 2;
+    ctx.fillStyle = `rgb(${c1})`; rr(ctx, fx + fw - 46, py, 40, 18, 9); ctx.fill();
+    ctx.fillStyle = '#2a1500'; ctx.font = '800 9.5px "Space Grotesk", sans-serif'; ctx.fillText('PLAY', fx + fw - 26, py + 12);
+  }
 }
 
 function rr(ctx, x, y, w, h, r) {
