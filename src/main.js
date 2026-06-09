@@ -19,6 +19,7 @@ import { showRelay } from './scenes/relay.js';
 import { showEscapeRoom } from './scenes/escapeRoom.js';
 import { progress } from './app/progress.js';
 import { getRoom } from './content/curriculum.js';
+import { bgm } from './app/bgm.js';
 
 const app = () => document.getElementById('app');
 
@@ -68,4 +69,4 @@ function dhtCoding(back) { showDhtCoding(app(), { onDone: () => dhtRoom(back), o
 function dhtRoom(back) { showDht11Room(app(), { onPlay: () => dhtGame(back), onExit: back, onCode: () => dhtCoding(back) }); }
 function dhtGame(back) { showDht11(app(), { onQuit: () => dhtRoom(back) }); }
 
-window.addEventListener('DOMContentLoaded', scenePlatformIntro);
+window.addEventListener('DOMContentLoaded', () => { bgm.armAutostart(); scenePlatformIntro(); });
