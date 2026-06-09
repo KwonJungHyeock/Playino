@@ -13,6 +13,14 @@ const PAL = [['255,200,74', '255,170,40'], ['255,122,184', '233,80,150'], ['90,2
 // 스테이지별 배경(있으면 사용): /brand/stage-{chapterId}-bg.png
 const STAGE_IMG = {};
 function stageImg(id) { if (!STAGE_IMG[id]) { const im = new Image(); im.src = `/brand/stage-${id}-bg.png`; STAGE_IMG[id] = im; } return STAGE_IMG[id]; }
+// 부스 대표 썸네일(있으면 사용): /brand/game-{roomId}-cover.png
+const COVER_IMG = {};
+function coverImg(id) { if (!COVER_IMG[id]) { const im = new Image(); im.src = `/brand/game-${id}-cover.png`; COVER_IMG[id] = im; } return COVER_IMG[id]; }
+function drawCoverInto(ctx, img, x, y, w, h) {
+  const ir = img.naturalWidth / img.naturalHeight, r = w / h;
+  let dw, dh; if (ir > r) { dh = h; dw = h * ir; } else { dw = w; dh = w / ir; }
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
 
 export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt } = {}) {
   const ch = getChapter(chapter);
@@ -231,11 +239,21 @@ function drawStall(ctx, c, t) {
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   for (let x = fx + 10; x < fx + fw - 12; x += 20) ctx.fillRect(x, fy + 6, 10, 22);
 
-  // 아이콘
-  ctx.font = '30px sans-serif'; ctx.fillStyle = ready || clr ? '#1a1f2e' : '#8a8f9c';
-  ctx.fillText(clr ? '✅' : ready ? c.icon : '🔒', cx, fy + 64);
+  // 대표 썸네일(있으면) 또는 이모지 아이콘
+  const cov = coverImg(c.id);
+  if ((ready || clr) && cov.complete && cov.naturalWidth) {
+    ctx.save();
+    rr(ctx, fx + 5, fy + 30, fw - 10, fh - 56, 9); ctx.clip();
+    drawCoverInto(ctx, cov, fx + 5, fy + 30, fw - 10, fh - 56);
+    if (clr) { ctx.fillStyle = 'rgba(255,255,255,0.34)'; ctx.fillRect(fx + 5, fy + 30, fw - 10, fh - 56); ctx.font = '30px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✅', cx, fy + 70); }
+    ctx.restore();
+  } else {
+    ctx.font = '30px sans-serif'; ctx.fillStyle = ready || clr ? '#1a1f2e' : '#8a8f9c';
+    ctx.fillText(clr ? '✅' : ready ? c.icon : '🔒', cx, fy + 64);
+  }
 
-  // 이름 + 상태
+  // 이름 + 상태(하단 흰 바)
+  ctx.fillStyle = 'rgba(255,255,255,0.94)'; rr(ctx, fx + 4, fy + fh - 34, fw - 8, 30, 8); ctx.fill();
   ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillStyle = '#23283a';
   ctx.fillText(c.name, cx, fy + fh - 22);
   if (clr) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(210,150,20,1)'; ctx.fillText('클리어 ✓', cx, fy + fh - 8); }
