@@ -90,62 +90,64 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   }
 }
 
+const hubImg = new Image(); hubImg.src = '/brand/hub-bg.png';   // 일러스트 광장(있으면 사용)
 const PAL = ['255,200,74', '255,122,184', '90,201,255', '155,140,255'];   // 챕터별 캔디 컬러
+
+function drawCover(ctx, img, W, H) {
+  const ir = img.naturalWidth / img.naturalHeight, r = W / H;
+  let dw, dh; if (ir > r) { dh = H; dw = H * ir; } else { dw = W; dh = W / ir; }
+  ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+}
 
 function drawHub(ctx, st, gates, MAP_W) {
   const t = st?.t || 0;
-  // 하늘
-  const sky = ctx.createLinearGradient(0, 0, 0, 200); sky.addColorStop(0, '#bfe6ff'); sky.addColorStop(1, '#ffe6f1');
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, MAP_W, 200);
-  // 구름
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  for (let i = 0; i < MAP_W / 320 + 1; i++) cloud(ctx, 120 + i * 320 + (t * 0.15) % 320, 60 + (i % 2) * 26);
-  // 바닥(따뜻한 길)
-  const fl = ctx.createLinearGradient(0, 200, 0, 392); fl.addColorStop(0, '#ffe7bd'); fl.addColorStop(1, '#f3cd92');
-  ctx.fillStyle = fl; ctx.fillRect(0, 200, MAP_W, 192);
-  // 중앙 레인(점선)
-  ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 5; ctx.setLineDash([22, 18]);
-  ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(MAP_W, 300); ctx.stroke(); ctx.setLineDash([]);
-  // 하단 잔디
-  const gr = ctx.createLinearGradient(0, 392, 0, MAP_H); gr.addColorStop(0, '#92d97e'); gr.addColorStop(1, '#6fbf5e');
-  ctx.fillStyle = gr; ctx.fillRect(0, 392, MAP_W, MAP_H - 392);
-  // 가랜드(깃발 줄)
-  bunting(ctx, MAP_W, t);
-
-  // 스테이지 텐트(게이트)
-  ctx.textAlign = 'center';
-  for (let i = 0; i < gates.length; i++) {
-    const g = gates[i];
-    const unlocked = chapterUnlocked(g.id), done = chapterDone(g.id);
-    const fx = g.x, fy = 92, fw = GATE_W, fh = 116;
-    const cx = fx + fw / 2;
-    const col = unlocked ? PAL[i % PAL.length] : '150,150,160';
-    // 글로우
-    if (unlocked) { const lg = ctx.createRadialGradient(cx, fy + 60, 8, cx, fy + 60, 110); lg.addColorStop(0, `rgba(${col},0.30)`); lg.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = lg; ctx.fillRect(fx - 36, fy - 30, fw + 72, fh + 80); }
-    // 텐트 지붕(삼각 + 줄무늬)
-    ctx.save();
-    ctx.beginPath(); ctx.moveTo(cx, fy - 14); ctx.lineTo(fx - 6, fy + 34); ctx.lineTo(fx + fw + 6, fy + 34); ctx.closePath(); ctx.clip();
-    ctx.fillStyle = `rgba(${col},${unlocked ? 0.95 : 0.5})`; ctx.fillRect(fx - 6, fy - 14, fw + 12, 50);
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    for (let s = -1; s < fw / 20 + 1; s++) { ctx.beginPath(); ctx.moveTo(fx - 6 + s * 38, fy - 14); ctx.lineTo(fx - 6 + s * 38 + 19, fy - 14); ctx.lineTo(fx - 6 + s * 38 + 9, fy + 36); ctx.closePath(); ctx.fill(); }
-    ctx.restore();
-    ctx.fillStyle = `rgba(${col},1)`; ctx.beginPath(); ctx.arc(cx, fy - 14, 4, 0, 6.283); ctx.fill();   // 깃대 꼭지
-    // 부스 몸체
-    const bf = ctx.createLinearGradient(fx, fy + 34, fx, fy + fh); bf.addColorStop(0, '#ffffff'); bf.addColorStop(1, '#f2f5fb');
-    ctx.fillStyle = unlocked ? bf : '#d9dde6'; rr(ctx, fx, fy + 34, fw, fh - 34, 10); ctx.fill();
-    ctx.strokeStyle = `rgba(${col},0.9)`; ctx.lineWidth = 2.5; rr(ctx, fx, fy + 34, fw, fh - 34, 10); ctx.stroke();
-    // 카운터/아이콘 패널
-    ctx.fillStyle = `rgba(${col},0.16)`; rr(ctx, fx + 12, fy + 46, fw - 24, 50, 8); ctx.fill();
-    ctx.save(); if (unlocked && !done) { ctx.shadowColor = `rgba(${col},0.8)`; ctx.shadowBlur = 12; }
-    ctx.font = '34px sans-serif'; ctx.fillStyle = unlocked ? '#2a3550' : '#8a8f9c';
-    ctx.fillText(done ? '✅' : unlocked ? g.icon : '🔒', cx, fy + 82); ctx.restore();
-    // 라벨
-    ctx.font = '700 13px "Space Grotesk", sans-serif'; ctx.fillStyle = unlocked ? '#2a3550' : '#8a8f9c';
-    ctx.fillText(g.label, cx, fy + fh - 16);
-    ctx.font = '11px "Space Grotesk", sans-serif'; ctx.fillStyle = unlocked ? `rgba(${col},1)` : '#9aa0ac';
-    ctx.fillText(done ? '클리어 완료 ✓' : unlocked ? `스테이지 ${g.no}` : '곧 열려요', cx, fy + fh - 2);
+  if (hubImg.complete && hubImg.naturalWidth) {
+    drawCover(ctx, hubImg, MAP_W, MAP_H);                       // 일러스트 광장
+  } else {
+    // 절차적 광장(폴백)
+    const sky = ctx.createLinearGradient(0, 0, 0, 200); sky.addColorStop(0, '#bfe6ff'); sky.addColorStop(1, '#ffe6f1');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, MAP_W, 200);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    for (let i = 0; i < MAP_W / 320 + 1; i++) cloud(ctx, 120 + i * 320 + (t * 0.15) % 320, 60 + (i % 2) * 26);
+    const fl = ctx.createLinearGradient(0, 200, 0, 392); fl.addColorStop(0, '#ffe7bd'); fl.addColorStop(1, '#f3cd92');
+    ctx.fillStyle = fl; ctx.fillRect(0, 200, MAP_W, 192);
+    const gr = ctx.createLinearGradient(0, 392, 0, MAP_H); gr.addColorStop(0, '#92d97e'); gr.addColorStop(1, '#6fbf5e');
+    ctx.fillStyle = gr; ctx.fillRect(0, 392, MAP_W, MAP_H - 392);
+    bunting(ctx, MAP_W, t);
   }
+  // 스테이지 사인 게이트(어떤 배경에서도 또렷)
+  for (let i = 0; i < gates.length; i++) drawStageSign(ctx, gates[i], i);
   ctx.textAlign = 'start';
+}
+
+function drawStageSign(ctx, g, i) {
+  const fx = g.x, fw = GATE_W, cx = fx + fw / 2;
+  const unlocked = chapterUnlocked(g.id), done = chapterDone(g.id);
+  const col = unlocked ? PAL[i % PAL.length] : '165,168,178';
+  const py = 84, ph = 128;
+  ctx.textAlign = 'center';
+  if (unlocked) {
+    const lg = ctx.createRadialGradient(cx, py + ph * 0.5, 8, cx, py + ph * 0.5, 120);
+    lg.addColorStop(0, `rgba(${col},0.32)`); lg.addColorStop(1, `rgba(${col},0)`);
+    ctx.fillStyle = lg; ctx.fillRect(fx - 44, py - 30, fw + 88, ph + 96);
+    const fgr = ctx.createRadialGradient(cx, py + ph + 8, 4, cx, py + ph + 8, 70);
+    fgr.addColorStop(0, `rgba(${col},0.5)`); fgr.addColorStop(1, `rgba(${col},0)`);
+    ctx.fillStyle = fgr; ctx.beginPath(); ctx.ellipse(cx, py + ph + 12, 64, 18, 0, 0, 6.283); ctx.fill();
+  }
+  const pf = ctx.createLinearGradient(fx, py, fx, py + ph);
+  pf.addColorStop(0, 'rgba(22,28,46,0.84)'); pf.addColorStop(1, 'rgba(12,16,28,0.88)');
+  ctx.fillStyle = pf; rr(ctx, fx, py, fw, ph, 16); ctx.fill();
+  ctx.strokeStyle = `rgba(${col},${unlocked ? 0.95 : 0.55})`; ctx.lineWidth = 2.5; rr(ctx, fx, py, fw, ph, 16); ctx.stroke();
+  ctx.fillStyle = `rgba(${col},${unlocked ? 0.95 : 0.5})`; rr(ctx, fx + 10, py + 10, fw - 20, 24, 8); ctx.fill();
+  ctx.fillStyle = unlocked ? '#10131f' : '#33363f'; ctx.font = '800 12px "Space Grotesk", sans-serif';
+  ctx.fillText(`STAGE ${g.no}${done ? ' ✓' : ''}`, cx, py + 27);
+  ctx.save(); if (unlocked && !done) { ctx.shadowColor = `rgba(${col},0.8)`; ctx.shadowBlur = 14; }
+  ctx.font = '40px sans-serif'; ctx.fillStyle = '#fff';
+  ctx.fillText(done ? '✅' : unlocked ? g.icon : '🔒', cx, py + 84); ctx.restore();
+  ctx.font = '700 13px "Space Grotesk", sans-serif'; ctx.fillStyle = unlocked ? '#eaf1ff' : '#9aa0ac';
+  ctx.fillText(g.short || g.label, cx, py + ph - 26);
+  ctx.font = '10.5px "Space Grotesk", sans-serif'; ctx.fillStyle = unlocked ? `rgba(${col},1)` : '#8a8f9c';
+  ctx.fillText(done ? '클리어 완료' : unlocked ? '입장하기 ▸' : '곧 열려요', cx, py + ph - 9);
 }
 
 function cloud(ctx, x, y) {

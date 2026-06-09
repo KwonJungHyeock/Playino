@@ -17,6 +17,11 @@ import eddieSvg from '../assets/eddie.svg?raw';
 const eddieImg = new Image();
 eddieImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(eddieSvg);
 
+// EDDIE 탑다운 4방향 스프라이트(있으면 사용): /brand/eddie/dir/{down,up,left,right}.png
+const DIR_IMG = { down: new Image(), up: new Image(), left: new Image(), right: new Image() };
+for (const d in DIR_IMG) DIR_IMG[d].src = `/brand/eddie/dir/${d}.png`;
+const dirLoaded = (d) => DIR_IMG[d] && DIR_IMG[d].complete && DIR_IMG[d].naturalWidth > 0;
+
 const MOVE_KEYS = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'];
 
 export function createWorld(container, map, handlers = {}) {
@@ -26,7 +31,7 @@ export function createWorld(container, map, handlers = {}) {
   const ctx = canvas.getContext('2d');
 
   const state = {
-    player: { x: map.spawn.x, y: map.spawn.y, w: 28, h: 30, face: 1, moving: false },
+    player: { x: map.spawn.x, y: map.spawn.y, w: 28, h: 30, face: 1, dir: 'down', moving: false },
     keys: new Set(),
     paused: false,
     t: 0,
@@ -104,6 +109,8 @@ export function createWorld(container, map, handlers = {}) {
       if (dx && dy) { dx *= 0.707; dy *= 0.707; }
       p.moving = !!(dx || dy);
       if (dx < 0) p.face = -1; else if (dx > 0) p.face = 1;
+      if (Math.abs(dy) > Math.abs(dx)) { if (dy) p.dir = dy > 0 ? 'down' : 'up'; }
+      else if (dx) p.dir = dx > 0 ? 'right' : 'left';
       moveAxis(dx, dy);
 
       const pc = { x: p.x, y: p.y, w: p.w, h: p.h };
@@ -144,7 +151,11 @@ export function createWorld(container, map, handlers = {}) {
     ctx.ellipse(cx, feet - 2, 17, 6, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-    if (eddieImg.complete && eddieImg.naturalWidth) {
+    if (dirLoaded(p.dir)) {
+      // 3D 맵 스프라이트(방향별 단일 프레임). 각 방향이 자체 이미지라 좌우 반전 안 함.
+      const sw = 66, sh = 72;
+      ctx.drawImage(DIR_IMG[p.dir], cx - sw / 2, feet - sh + 10 + bob, sw, sh);
+    } else if (eddieImg.complete && eddieImg.naturalWidth) {
       ctx.save();
       ctx.translate(cx, feet - dh + bob);
       if (p.face < 0) ctx.scale(-1, 1);
