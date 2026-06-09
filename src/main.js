@@ -1,12 +1,10 @@
-// main.js — Playino : Escape Room
-// 플로우: 스플래시 → 인트로 → 로그인 → 사용환경 준비(CH1) → 연구소 복도(HUB)
-//   → 챕터 입구 → 미션 방(LED·DHT11·릴레이 …) → 복귀.
+// main.js — Eduino AI : 미니게임천국
+// 플로우: 플랫폼 인트로 → 상품 메인 → 호환 키트 → 로그인 → 사용환경 준비(시작의 천막)
+//   → 미니게임 광장(HUB) → 무대 입구 → 미니게임 부스 → 복귀.
 
-import { showSplash } from './scenes/splash.js';
 import { showPlatformIntro } from './scenes/platformIntro.js';
 import { showProductMain } from './scenes/productMain.js';
 import { showKits } from './scenes/kits.js';
-import { showIntro } from './scenes/intro.js';
 import { showLogin } from './scenes/login.js';
 import { showSetup } from './scenes/setup.js';
 import { showHub } from './scenes/hub.js';
@@ -29,8 +27,6 @@ let lastRoom = null;      // 챕터 복귀 시 나온 방 앞
 function scenePlatformIntro() { showPlatformIntro(app(), { onDone: sceneProductMain }); }   // ① 플랫폼 스튜디오 인트로
 function sceneProductMain() { showProductMain(app(), { onDone: sceneKits }); }                // ② 상품 메인페이지
 function sceneKits() { showKits(app(), { onDone: sceneLogin }); }                              // ②-b 호환 키트 안내
-function sceneSplash() { showSplash(app(), { onDone: sceneIntro }); }   // (구) 커버 — 현재 플로우 미사용
-function sceneIntro() { showIntro(app(), { onDone: sceneLogin }); }
 function sceneLogin() { showLogin(app(), { onDone: sceneSetup }); }
 function sceneSetup() {
   showSetup(app(), { onDone: () => { progress.mark('setup'); sceneHub(); } });   // CH1 클리어
