@@ -17,8 +17,8 @@ export function showKits(root, { onDone } = {}) {
       <div class="kits-inner">
         <div class="kits-head">
           <div class="kits-kicker"><span class="brand-dot"></span>호환 키트 안내</div>
-          <h1 class="kits-title">어떤 <span class="grad">에듀이노 키트</span>로도 즐겨요</h1>
-          <p class="kits-sub">이 <b>미니게임천국</b>은 <b>[종합편]</b> 기준으로 제작됐어요.<br/>아래 에듀이노 키트들과 <b>함께 사용</b>하시길 권장해요!</p>
+          <h1 class="kits-title">어떤 <span class="grad">에듀이노 키트</span>든 바로 시작!</h1>
+          <p class="kits-sub">이 게임은 <b>[종합편]</b> 기준으로 만들었어요.<br/>다른 키트를 갖고 있어도 <b>그대로 즐길 수 있어요</b> 👍</p>
         </div>
         <div class="kits-grid">
           ${KITS.map((k) => `
