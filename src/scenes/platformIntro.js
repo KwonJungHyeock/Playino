@@ -39,15 +39,6 @@ export function showPlatformIntro(root, { onDone } = {}) {
 
   const el = root.querySelector('#pintro');
 
-  // 타이틀 카드 그림(제목이 박힌 한 장)이 있으면 → 카드 모드(로고 숨기고 필름효과로 전환)
-  const cardProbe = new Image();
-  cardProbe.onload = () => {
-    const c = el.querySelector('#pi-card');
-    c.style.backgroundImage = `url(${cardProbe.src})`;
-    el.classList.add('card-mode');
-  };
-  cardProbe.src = '/brand/intro-card.png';
-
   // (카드 없을 때) 추상 배경 이미지가 있으면 적용
   const bgProbe = new Image();
   bgProbe.onload = () => { const bg = el.querySelector('#pi-bg'); bg.style.backgroundImage = `url(${bgProbe.src})`; bg.classList.add('has-img'); };
@@ -63,9 +54,30 @@ export function showPlatformIntro(root, { onDone } = {}) {
   };
   probe.src = '/brand/eduino-ai-logo.png';
 
-  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+  // 모드(카드 vs 로고)를 '먼저' 결정한 뒤에 화면을 띄운다.
+  // → 로고 인트로가 떴다가 카드로 휙 바뀌는(이전 배경처럼 보이는) 전환 제거.
+  // 결정 전에는 솔리드 검정만 보이므로 깔끔하다.
+  let revealed = false;
+  function reveal() {
+    if (revealed) return; revealed = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+    t1 = setTimeout(finish, HOLD_MS);        // 등장 후 유지 타이머는 '등장 시점'부터
+  }
 
-  let done = false;
+  let decided = false;
+  const cardProbe = new Image();
+  cardProbe.onload = () => {
+    if (decided) return; decided = true;
+    el.querySelector('#pi-card').style.backgroundImage = `url(${cardProbe.src})`;
+    el.classList.add('card-mode');
+    reveal();
+  };
+  cardProbe.onerror = () => { if (!decided) { decided = true; reveal(); } };   // 카드 없음 → 로고 모드
+  cardProbe.src = '/brand/intro-card.png';
+  // 대용량 카드가 너무 느리게 로드되면 그때만 로고 모드로(드묾). 그래도 '검정→로고'라 이전 배경은 안 보임.
+  const dT = setTimeout(() => { if (!decided) { decided = true; reveal(); } }, 3500);
+
+  let done = false, t1 = null;
   const finish = () => {
     if (done) return; done = true;
     cleanup();
@@ -75,8 +87,7 @@ export function showPlatformIntro(root, { onDone } = {}) {
   const onSkip = () => finish();
   window.addEventListener('keydown', onSkip);
   window.addEventListener('pointerdown', onSkip);
-  function cleanup() { window.removeEventListener('keydown', onSkip); window.removeEventListener('pointerdown', onSkip); clearTimeout(t1); clearTimeout(t2); }
+  function cleanup() { window.removeEventListener('keydown', onSkip); window.removeEventListener('pointerdown', onSkip); clearTimeout(dT); clearTimeout(t1); clearTimeout(t2); }
 
-  const t1 = setTimeout(finish, HOLD_MS);
-  const t2 = setTimeout(finish, SAFETY_MS);
+  const t2 = setTimeout(finish, SAFETY_MS);   // 전체 안전망(어떤 경우에도 멈추지 않게)
 }

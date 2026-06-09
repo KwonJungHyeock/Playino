@@ -22,6 +22,11 @@ const DIR_IMG = { down: new Image(), up: new Image(), left: new Image(), right: 
 for (const d in DIR_IMG) DIR_IMG[d].src = `/brand/eddie/dir/${d}.png`;
 const dirLoaded = (d) => DIR_IMG[d] && DIR_IMG[d].complete && DIR_IMG[d].naturalWidth > 0;
 
+// 4방향 스프라이트가 없을 때의 폴백: 우리가 디자인한 EDDIE 히어로 한 장(좌우 반전으로 방향 표현)
+const heroImg = new Image();
+heroImg.src = '/brand/eddie/eddie-hero.png';
+const heroLoaded = () => heroImg.complete && heroImg.naturalWidth > 0;
+
 const MOVE_KEYS = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'];
 
 export function createWorld(container, map, handlers = {}) {
@@ -155,6 +160,19 @@ export function createWorld(container, map, handlers = {}) {
       // 3D 맵 스프라이트(방향별 단일 프레임). 각 방향이 자체 이미지라 좌우 반전 안 함.
       const sw = 66, sh = 72;
       ctx.drawImage(DIR_IMG[p.dir], cx - sw / 2, feet - sh + 10 + bob, sw, sh);
+    } else if (heroLoaded()) {
+      // 우리가 디자인한 EDDIE 히어로(단일 이미지). 비율 유지 + 좌/우 이동 시 좌우 반전.
+      const sh = 76, sw = sh * (heroImg.naturalWidth / heroImg.naturalHeight);
+      const dx0 = cx - sw / 2, dy0 = feet - sh + 10 + bob;
+      ctx.save();
+      if (p.face < 0) { ctx.translate(cx, 0); ctx.scale(-1, 1); ctx.translate(-cx, 0); }
+      ctx.drawImage(heroImg, dx0, dy0, sw, sh);
+      if (state.tint) {
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = state.tint; ctx.fillRect(dx0, dy0, sw, sh);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      ctx.restore();
     } else if (eddieImg.complete && eddieImg.naturalWidth) {
       ctx.save();
       ctx.translate(cx, feet - dh + bob);
