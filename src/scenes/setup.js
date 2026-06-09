@@ -54,10 +54,10 @@ export function showSetup(root, { onDone }) {
   mountEddieRig(root.querySelector('#su-eddie'));
   mountMonitor(root.querySelector('#su-mon'));
 
-  // 배경 컨셉 통일(카니발 recede)
-  const bgProbe = new Image();
-  bgProbe.onload = () => { const b = root.querySelector('#su-bg'); b.style.backgroundImage = `url(${bgProbe.src})`; b.classList.add('has-img'); };
-  bgProbe.src = '/brand/main-bg.png';
+  // 배경: 전용(setup-bg) 우선, 없으면 카니발(main-bg)로 폴백 — recede 처리
+  const suBg = root.querySelector('#su-bg');
+  const tryBg = (src, next) => { const im = new Image(); im.onload = () => { suBg.style.backgroundImage = `url(${im.src})`; suBg.classList.add('has-img'); }; im.onerror = next; im.src = src; };
+  tryBg('/brand/setup-bg.png', () => tryBg('/brand/main-bg.png', null));
   goBtn.addEventListener('click', () => { sfx.start(); onDone?.(); });
   root.querySelector('#su-skip').addEventListener('click', () => { sfx.click(); onDone?.(); });
   const snd = root.querySelector('#snd-toggle');
