@@ -3,7 +3,7 @@
 import { mountEddieRig } from '../app/eddieRig.js';
 import { sfx } from '../app/sfx.js';
 
-const LINES = ['같이 입장하자! 🚀', '코드 입력하면 바로 출발!', '준비됐어? 입장하기 눌러줘!', '천국에서 만나자! 🎮'];
+const LINES = ['구매 후 받은 6자리 접속 코드를 입력해줘!', '코드를 모르면 고객센터로 문의해줘 📞', '코드 입력하면 바로 출발! 🚀', '천국에서 만나자! 🎮'];
 
 export function showLogin(root, { onDone } = {}) {
   root.innerHTML = `
@@ -22,7 +22,7 @@ export function showLogin(root, { onDone } = {}) {
             ${[0, 1, 2, 3, 4, 5].map((i) => `<input class="code-box" inputmode="numeric" maxlength="1" data-i="${i}" aria-label="코드 ${i + 1}번째" />`).join('')}
           </div>
           <button class="btn primary lg-go" id="lf-login">입장하기 ▶</button>
-          <button class="lg-help" id="lf-help">접속 코드가 없으신가요?</button>
+          <a class="lg-help" id="lf-help" href="https://eduino.kr/shopinfo/customer.html?board_no=3" target="_blank" rel="noopener">접속 코드가 없으신가요? · 고객센터 문의</a>
         </div>
         <div class="lg-hero" id="lg-hero">
           <div class="lg-speech" id="lg-speech" hidden></div>
@@ -70,7 +70,7 @@ export function showLogin(root, { onDone } = {}) {
   const login = root.querySelector('#lf-login');
   login.onclick = go;
   login.addEventListener('mouseenter', () => sfx.hover());
-  root.querySelector('#lf-help').onclick = () => { sfx.click(); alert('접속 코드는 구매 시 이메일로 발송돼요.\n(데모 버전은 코드 없이 바로 입장할 수 있어요!)'); };
+  root.querySelector('#lf-help').addEventListener('click', () => sfx.click());   // 링크는 새 탭으로 고객센터 이동
 
   // 정리
   const lg = root.querySelector('.lg');
