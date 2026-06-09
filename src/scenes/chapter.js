@@ -22,13 +22,19 @@ function drawCoverInto(ctx, img, x, y, w, h) {
   let dw, dh; if (ir > r) { dh = h; dw = h * ir; } else { dw = w; dh = w / ir; }
   ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
 }
+// 썸네일 전체가 보이도록(잘림 없이) 안에 맞춰 그림
+function drawContainInto(ctx, img, x, y, w, h) {
+  const ir = img.naturalWidth / img.naturalHeight, r = w / h;
+  let dw, dh; if (ir > r) { dw = w; dh = w / ir; } else { dh = h; dw = h * ir; }
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
 
 export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt } = {}) {
   const ch = getChapter(chapter);
   const rooms = chapterRooms(chapter);
   // 부스가 하나뿐이면 크게(휑함 방지). 여러 개면 표준 크기.
-  CARD_W = rooms.length <= 1 ? 320 : 184;
-  CARD_H = rooms.length <= 1 ? 210 : 128;
+  CARD_W = rooms.length <= 1 ? 320 : 188;
+  CARD_H = rooms.length <= 1 ? 210 : 154;
   const cols = rooms.length <= 3 ? rooms.length : rooms.length <= 8 ? 4 : 5;
   const rowsN = Math.ceil(rooms.length / cols);
 
@@ -240,28 +246,30 @@ function drawStall(ctx, c, t) {
   ctx.restore();
   ctx.strokeStyle = `rgba(${c1},0.95)`; ctx.lineWidth = 2.5; rr(ctx, fx, fy, fw, fh, 14); ctx.stroke();
 
-  // 상단 컬러 차양(awning)
-  ctx.fillStyle = `rgba(${c2},0.95)`; rr(ctx, fx + 6, fy + 6, fw - 12, 22, 8); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  for (let x = fx + 10; x < fx + fw - 12; x += 20) ctx.fillRect(x, fy + 6, 10, 22);
+  // 대표 썸네일(있으면) — 전체가 보이도록 contain / 없으면 차양+이모지
+  const cov = coverImg(c.id);
+  const hasCover = (ready || clr) && cov.complete && cov.naturalWidth;
+  if (hasCover) {
+    ctx.save();
+    rr(ctx, fx + 5, fy + 5, fw - 10, fh - 34, 11); ctx.clip();
+    ctx.fillStyle = 'rgba(18,14,26,0.06)'; ctx.fillRect(fx + 5, fy + 5, fw - 10, fh - 34);
+    drawContainInto(ctx, cov, fx + 7, fy + 7, fw - 14, fh - 40);
+    if (clr) { ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(fx + 5, fy + 5, fw - 10, fh - 34); }
+    ctx.restore();
+    ctx.fillStyle = `rgba(${c2},0.95)`; rr(ctx, fx + 6, fy + 6, fw - 12, 8, 4); ctx.fill();   // 상단 얇은 컬러 바
+  } else {
+    ctx.fillStyle = `rgba(${c2},0.95)`; rr(ctx, fx + 6, fy + 6, fw - 12, 22, 8); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (let x = fx + 10; x < fx + fw - 12; x += 20) ctx.fillRect(x, fy + 6, 10, 22);
+    ctx.font = '36px sans-serif'; ctx.fillStyle = ready || clr ? '#1a1f2e' : '#8a8f9c'; ctx.textAlign = 'center';
+    ctx.fillText(clr ? '✅' : ready ? c.icon : '🔒', cx, fy + fh / 2 + 8);
+  }
 
   // 센서 힌트 칩(좌상단) — 어떤 부품을 쓰는지 암시
   ctx.fillStyle = 'rgba(255,255,255,0.96)'; rr(ctx, fx + 8, fy + 8, 32, 28, 9); ctx.fill();
   ctx.strokeStyle = `rgba(${c2},0.9)`; ctx.lineWidth = 1.5; rr(ctx, fx + 8, fy + 8, 32, 28, 9); ctx.stroke();
   ctx.font = '17px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(c.icon, fx + 24, fy + 28);
-
-  // 대표 썸네일(있으면) 또는 이모지 아이콘
-  const cov = coverImg(c.id);
-  if ((ready || clr) && cov.complete && cov.naturalWidth) {
-    ctx.save();
-    rr(ctx, fx + 5, fy + 30, fw - 10, fh - 56, 9); ctx.clip();
-    drawCoverInto(ctx, cov, fx + 5, fy + 30, fw - 10, fh - 56);
-    if (clr) { ctx.fillStyle = 'rgba(255,255,255,0.34)'; ctx.fillRect(fx + 5, fy + 30, fw - 10, fh - 56); ctx.font = '30px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✅', cx, fy + 70); }
-    ctx.restore();
-  } else {
-    ctx.font = '30px sans-serif'; ctx.fillStyle = ready || clr ? '#1a1f2e' : '#8a8f9c';
-    ctx.fillText(clr ? '✅' : ready ? c.icon : '🔒', cx, fy + 64);
-  }
+  if (clr && hasCover) { ctx.font = '26px sans-serif'; ctx.fillText('✅', cx, fy + fh / 2 + 2); }
 
   // 이름 + 상태(하단 흰 바)
   ctx.fillStyle = 'rgba(255,255,255,0.94)'; rr(ctx, fx + 4, fy + fh - 34, fw - 8, 30, 8); ctx.fill();
