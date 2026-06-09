@@ -6,6 +6,8 @@ import { sfx } from '../app/sfx.js';
 import { progress } from '../app/progress.js';
 import { showLedGame } from './ledGame.js';
 
+const DOOR_W = 264, DOOR_H = 318;   // 입구(문) 크기
+
 const ROOMS_CFG = {
   led: {
     name: '반짝반짝 라이트쇼', sensor: 'LED · 발광 다이오드', icon: '💡', accent: '255,200,74',
@@ -24,12 +26,12 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   const cfg = ROOMS_CFG[id]; if (!cfg) { onExit?.(); return; }
 
   const VW = Math.max(900, window.innerWidth), VH = Math.max(440, window.innerHeight);
+  const DW = DOOR_W, DH = DOOR_H;
   const stations = [
-    { id: 'theory', icon: '📖', label: '이론대', sub: '센서 알아보기', cx: VW * 0.36, cy: VH * 0.40 },
-    { id: 'play', icon: '🎮', label: '체험 게임기', sub: '미니게임', cx: VW * 0.64, cy: VH * 0.40 },
+    { id: 'theory', icon: '📖', label: '이론관', sub: '센서 배우기 + 블록코딩', cx: VW * 0.32, cy: VH * 0.46 },
+    { id: 'play', icon: '🎮', label: '체험관', sub: '미니게임 플레이', cx: VW * 0.68, cy: VH * 0.46 },
   ];
-  const SW = 196, SH = 150;
-  const EXIT = { x: VW / 2 - 46, y: VH - 70, w: 92, h: 46 };
+  const EXIT = { x: VW / 2 - 46, y: VH - 72, w: 92, h: 46 };
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade escape-scene sroom2">
@@ -54,10 +56,10 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     walls: [
       { x: 0, y: 0, w: VW, h: VH * 0.16 }, { x: 0, y: VH - 16, w: VW, h: 16 },
       { x: 0, y: 0, w: 16, h: VH }, { x: VW - 16, y: 0, w: 16, h: VH },
-      ...stations.map((s) => ({ x: s.cx - SW / 2, y: s.cy - SH / 2, w: SW, h: SH })),
+      ...stations.map((s) => ({ x: s.cx - DW / 2, y: s.cy - DH / 2, w: DW, h: DH })),
     ],
     triggers: [
-      ...stations.map((s) => ({ id: s.id, x: s.cx - SW / 2, y: s.cy + SH / 2, w: SW, h: 46 })),
+      ...stations.map((s) => ({ id: s.id, x: s.cx - DW / 2, y: s.cy + DH / 2, w: DW, h: 56 })),
       { id: '__exit', ...EXIT },
     ],
     draw: (ctx, st) => drawRoom(ctx, st, stations, cfg, VW, VH, EXIT, id),
@@ -142,30 +144,59 @@ function drawRoom(ctx, st, stations, cfg, VW, VH, EXIT, id) {
   ctx.restore(); ctx.textAlign = 'start';
 }
 
+// 큰 '입구(문)' — 아치 + 커튼 + 빛나는 입구. EDDIE가 다가가 Space로 입장.
 function drawStation(ctx, s, active, t, cfg) {
-  const fx = s.cx - 98, fy = s.cy - 75, fw = 196, fh = 150, cx = s.cx;
+  const fw = DOOR_W, fh = DOOR_H, fx = s.cx - fw / 2, fy = s.cy - fh / 2, cx = s.cx, by = fy + fh;
   const acc = s.id === 'play' ? '255,158,60' : cfg.accent;
-  // 풋라이트
-  const fg = ctx.createRadialGradient(cx, fy + fh + 16, 4, cx, fy + fh + 16, 96);
+  const archR = fw / 2;
+
+  // 바닥 풋라이트 + 그림자
+  const fg = ctx.createRadialGradient(cx, by, 4, cx, by, 130);
   fg.addColorStop(0, `rgba(${acc},${active ? 0.5 : 0.3})`); fg.addColorStop(1, `rgba(${acc},0)`);
-  ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(cx, fy + fh + 16, active ? 96 : 80, active ? 26 : 20, 0, 0, 6.283); ctx.fill();
-  ctx.fillStyle = 'rgba(60,40,20,0.18)'; ctx.beginPath(); ctx.ellipse(cx, fy + fh + 12, 80, 11, 0, 0, 6.283); ctx.fill();
+  ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(cx, by + 6, active ? 130 : 108, active ? 32 : 24, 0, 0, 6.283); ctx.fill();
+  ctx.fillStyle = 'rgba(60,40,20,0.2)'; ctx.beginPath(); ctx.ellipse(cx, by + 4, 104, 13, 0, 0, 6.283); ctx.fill();
 
-  const lift = active ? Math.sin(t * 0.12) * 3 : 0;
-  ctx.save(); ctx.shadowColor = 'rgba(40,24,10,0.32)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 9;
-  const pf = ctx.createLinearGradient(fx, fy, fx, fy + fh); pf.addColorStop(0, 'rgba(255,255,255,0.98)'); pf.addColorStop(1, 'rgba(247,242,234,0.98)');
-  ctx.fillStyle = pf; rr(ctx, fx, fy - lift, fw, fh, 16); ctx.fill(); ctx.restore();
-  ctx.strokeStyle = `rgba(${acc},0.95)`; ctx.lineWidth = 3; rr(ctx, fx, fy - lift, fw, fh, 16); ctx.stroke();
-  // 차양
-  ctx.fillStyle = `rgba(${acc},0.95)`; rr(ctx, fx + 8, fy - lift + 8, fw - 16, 26, 9); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'; for (let x = fx + 14; x < fx + fw - 16; x += 22) ctx.fillRect(x, fy - lift + 8, 11, 26);
+  // 활성 글로우
+  if (active) { ctx.save(); ctx.shadowColor = `rgba(${acc},0.9)`; ctx.shadowBlur = 40; ctx.strokeStyle = `rgba(${acc},0.0)`; archPath(ctx, fx, fy, fw, fh, archR); ctx.stroke(); ctx.restore(); }
 
-  ctx.textAlign = 'center';
-  ctx.font = '54px sans-serif'; ctx.fillText(s.icon, cx, fy - lift + 96);
-  ctx.font = '800 18px "Space Grotesk", sans-serif'; ctx.fillStyle = '#1c2333'; ctx.fillText(s.label, cx, fy - lift + fh - 26);
-  ctx.font = '12px "Space Grotesk", sans-serif'; ctx.fillStyle = `rgba(${acc},1)`; ctx.fillText(s.sub, cx, fy - lift + fh - 9);
-  if (active) { ctx.font = '800 13px "Space Grotesk", sans-serif'; ctx.fillStyle = `rgb(${acc})`; ctx.fillText('▼ Space', cx, fy - lift - 12 + Math.sin(t * 0.12 + 1) * 2); }
+  // 문 프레임(아치)
+  ctx.save(); ctx.shadowColor = 'rgba(40,24,10,0.35)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 10;
+  const frame = ctx.createLinearGradient(fx, fy, fx, by); frame.addColorStop(0, `rgba(${acc},1)`); frame.addColorStop(1, `rgba(${acc},0.82)`);
+  ctx.fillStyle = frame; archPath(ctx, fx, fy, fw, fh, archR); ctx.fill(); ctx.restore();
+  // 프레임 줄무늬(차양 느낌)
+  ctx.save(); archPath(ctx, fx, fy, fw, fh, archR); ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,0.22)'; for (let x = fx - fh; x < fx + fw; x += 30) ctx.fillRect(x, fy, 15, fh);
+  ctx.restore();
+
+  // 안쪽 입구(어두운 통로 + 중앙 빛)
+  const iw = fw - 40, ih = fh - 34, ix = cx - iw / 2, iy = fy + 26;
+  ctx.save(); archPath(ctx, ix, iy, iw, ih, iw / 2); ctx.clip();
+  const inner = ctx.createRadialGradient(cx, iy + ih * 0.5, 10, cx, iy + ih * 0.5, ih * 0.8);
+  inner.addColorStop(0, `rgba(${acc},0.5)`); inner.addColorStop(0.5, 'rgba(40,26,40,0.95)'); inner.addColorStop(1, 'rgba(20,12,22,0.98)');
+  ctx.fillStyle = inner; ctx.fillRect(ix, iy, iw, ih);
+  // 큰 아이콘(둥실)
+  const bob = Math.sin(t * 0.08 + (s.id === 'play' ? 1 : 0)) * 5;
+  ctx.textAlign = 'center'; ctx.font = '88px sans-serif'; ctx.fillText(s.icon, cx, iy + ih * 0.5 + 18 + bob);
+  ctx.restore();
+
+  // 라벨 배너(문 위)
+  ctx.save(); ctx.textAlign = 'center';
+  const bw = Math.max(150, ctx.measureText(s.label).width + 60);
+  ctx.fillStyle = 'rgba(20,26,44,0.92)'; rr(ctx, cx - bw / 2, fy - 6, bw, 38, 12); ctx.fill();
+  ctx.strokeStyle = `rgba(${acc},0.95)`; ctx.lineWidth = 2; rr(ctx, cx - bw / 2, fy - 6, bw, 38, 12); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = '800 20px "Space Grotesk", sans-serif'; ctx.fillText(s.label, cx, fy + 14);
+  ctx.fillStyle = `rgb(${acc})`; ctx.font = '700 11px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, fy + 28);
+  ctx.restore();
+
+  // 입장 안내
+  if (active) { ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = `rgb(${acc})`; ctx.font = '800 15px "Space Grotesk", sans-serif'; ctx.fillText('들어가기 ▸ Space', cx, by + 40 + Math.sin(t * 0.14) * 2); ctx.restore(); }
   ctx.textAlign = 'start';
+}
+// 아치(위가 둥근 문) 경로
+function archPath(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + r);
+  ctx.arc(x + r, y + r, r, Math.PI, 0, false);
+  ctx.lineTo(x + w, y + h); ctx.closePath();
 }
 
 function bunting(ctx, W, t) {
