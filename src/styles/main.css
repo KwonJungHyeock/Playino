@@ -1698,3 +1698,11 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .sr-block { background: #eef2fb; border-left: 5px solid #ff9e3c; border-radius: 9px; padding: 11px 14px; font-weight: 700; color: #2a3040;
   text-align: left; opacity: 0; transform: translateX(-10px); animation: sr-blk .4s ease forwards; }
 @keyframes sr-blk { to { opacity: 1; transform: none; } }
+
+/* 전시관(탑다운) 상단 센서 타이틀 */
+.sr-top { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 6;
+  background: rgba(16,20,34,.82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.16); color: #fff; padding: 9px 18px; border-radius: 14px;
+  font-family: "Space Grotesk", sans-serif; font-weight: 800; font-size: 15px; }
+.sr-top .sr-chip { font-size: 18px; }
+.sr-top .sr-sensor { color: #c7d0e4; font-weight: 600; font-size: 13px; }
