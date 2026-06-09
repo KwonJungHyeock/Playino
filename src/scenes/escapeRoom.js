@@ -33,7 +33,7 @@ export function showEscapeRoom(root, { roomId, onExit } = {}) {
     <div class="scene game-scene scene-fade escape-stage">
       <div class="world-host" id="world-host"></div>
       <div class="hud-top">
-        <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong><span class="brand-sep">:</span><b class="brand-sub">${m.name}</b><span class="crumb">${m.escape}</span></div>
+        <div class="brand"><span class="brand-dot"></span><strong>Eduino AI</strong><span class="brand-sep">:</span><b class="brand-sub">${m.name}</b><span class="crumb">${m.mission}</span></div>
         <button class="btn btn-sm" id="er-exit">🚪 복도로</button>
       </div>
       <div class="hud-hint" id="hud-hint"></div>
@@ -84,7 +84,7 @@ export function showEscapeRoom(root, { roomId, onExit } = {}) {
   world.pause();
   {
     const md = document.createElement('div'); md.className = 'modal-backdrop';
-    md.innerHTML = `<div class="modal"><h3>${m.icon} ${m.name} · ${m.escape}</h3>
+    md.innerHTML = `<div class="modal"><h3>${m.icon} ${m.name} · ${m.mission}</h3>
       <p>어두운 방 안에 <b>${th.prompt.replace(' 작동', '')}</b>가 있어요.<br/>
       EDDIE를 움직여 <b>장치 앞에서 Space</b> 를 눌러 미션을 시작하세요.<br/>
       <span class="muted">개념: ${m.concept} · 성공 보상: ${m.reward}</span></p>
@@ -100,7 +100,7 @@ export function showEscapeRoom(root, { roomId, onExit } = {}) {
     panelOpen = true; world.pause();
     const bd = document.createElement('div'); bd.className = 'gm-backdrop';
     bd.innerHTML = `<div class="gm-panel">
-      <div class="gm-head"><b>${m.icon} ${m.name}</b><span>${m.escape}</span><button class="gm-x" id="gm-x">✕</button></div>
+      <div class="gm-head"><b>${m.icon} ${m.name}</b><span>${m.mission}</span><button class="gm-x" id="gm-x">✕</button></div>
       <div class="gm-stage" id="gm-stage"></div></div>`;
     document.body.appendChild(bd);
     const stage = bd.querySelector('#gm-stage');
@@ -115,11 +115,11 @@ export function showEscapeRoom(root, { roomId, onExit } = {}) {
       onComplete: () => {
         if (done) return; done = true;
         close(); lit = true; progress.mark(roomId);
-        narrate('장치 복구 완료! 방에 불이 들어온다 ✨');
+        narrate('미니게임 클리어! 무대에 불이 켜진다 ✨');
         setTimeout(() => celebrateRoom({
-          title: '봉인 해제!',
-          message: `${m.escape} 성공 — <b>${m.reward}</b> 획득!<br/>구역이 한 칸 복구됐어요.`,
-          exitLabel: '복도로 ▶',
+          title: '클리어! 🎉',
+          message: `${m.mission} 성공 — <b>${m.reward}</b> 획득!<br/>무대를 한 칸 더 밝혔어요.`,
+          exitLabel: '무대로 ▶',
           onExit: () => { cleanup(); onExit?.(); },
         }), 500);
       },
@@ -188,7 +188,7 @@ function drawRoom(ctx, st, th, m, lit) {
   ctx.fillText(lit ? 'RESTORED ✓' : 'LOCKED', cx, DEVICE.y + DEVICE.h - 10);
   // 명패
   ctx.fillStyle = 'rgba(10,14,22,0.8)'; roundRect(ctx, cx - 70, DEVICE.y + DEVICE.h + 8, 140, 22, 11); ctx.fill();
-  ctx.fillStyle = lit ? '#bfffd9' : '#dce8ff'; ctx.font = '600 12px "Space Grotesk", sans-serif'; ctx.fillText(`${m.escape}`, cx, DEVICE.y + DEVICE.h + 23);
+  ctx.fillStyle = lit ? '#bfffd9' : '#dce8ff'; ctx.font = '600 12px "Space Grotesk", sans-serif'; ctx.fillText(`${m.mission}`, cx, DEVICE.y + DEVICE.h + 23);
 
   // 나가기
   const eg = ctx.createLinearGradient(EXIT.x, MAP_H - 30, EXIT.x, MAP_H - 6); eg.addColorStop(0, '#2c3c68'); eg.addColorStop(1, '#1b2740');

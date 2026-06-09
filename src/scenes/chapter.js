@@ -75,7 +75,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     onDrawOverlay: drawDark,
   });
 
-  setTimeout(() => narrate(`${ch.short} 구역. ${ch.act} — 방마다의 미션을 풀어 복구하자!`), 500);
+  setTimeout(() => narrate(`${ch.short}에 입장! ${ch.act} — 부스마다 미니게임을 클리어해 메달을 모으자! 🎖️`), 500);
 
   function destroyAll() { try { world.destroy(); } catch (_) {} header.destroy(); }
 
@@ -100,7 +100,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   function soonModal(r) {
     world.pause();
     const m = document.createElement('div'); m.className = 'modal-backdrop';
-    m.innerHTML = `<div class="modal"><h3>${r.icon} ${r.name} · ${r.escape}</h3>
+    m.innerHTML = `<div class="modal"><h3>${r.icon} ${r.name} · ${r.mission}</h3>
       <p><b>준비중인 방</b>이에요. 곧 미니게임으로 만나요!<br/>
       <span class="muted">개념: ${r.concept} · 보상: ${r.reward}</span></p>
       <div class="modal-actions"><button class="btn primary" id="soon-ok">알겠어요 ▶</button></div></div>`;
@@ -115,7 +115,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     const r = cells.find((c) => c.id === tr.id); if (!r) { hintEl.classList.remove('show'); return; }
     const clr = isRoomCleared(r.id);
     hintEl.innerHTML = r.status === 'ready'
-      ? (clr ? `${r.icon} ${r.name} · 클리어됨 ✓ (다시 학습)` : `▶ Space · <b>${r.icon} ${r.name}</b> — ${r.escape}`)
+      ? (clr ? `${r.icon} ${r.name} · 클리어됨 ✓ (다시 학습)` : `▶ Space · <b>${r.icon} ${r.name}</b> — ${r.mission}`)
       : `🔒 ${r.icon} ${r.name} (준비중)`;
     hintEl.classList.add('show');
   }
@@ -172,7 +172,7 @@ function drawChapter(ctx, st, cells, MAP_W, MAP_H, EXIT, ch) {
     ctx.font = '700 12px "Space Grotesk", sans-serif'; ctx.fillStyle = clr ? '#bfffd9' : ready ? '#dce8ff' : '#9a8088';
     ctx.fillText(c.name, fx + fw / 2, fy + fh - 22);
     if (clr) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(120,230,170,0.7)'; ctx.fillText('복구 완료 ✓', fx + fw / 2, fy + fh - 8); }
-    else if (ready) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(180,200,255,0.6)'; ctx.fillText(`▶ ${c.escape}`, fx + fw / 2, fy + fh - 8); }
+    else if (ready) { ctx.font = '10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(180,200,255,0.6)'; ctx.fillText(`▶ ${c.mission}`, fx + fw / 2, fy + fh - 8); }
     else { ctx.font = '700 10px "Space Grotesk", sans-serif'; ctx.fillStyle = 'rgba(255,176,32,0.6)'; ctx.fillText('준비중 · 곧 공개', fx + fw / 2, fy + fh - 8); }
     // 플레이 가능 방엔 'PLAY' 핀(눈에 띄게)
     if (ready && !clr) { ctx.fillStyle = 'rgba(111,183,255,0.9)'; rr(ctx, fx + fw - 44, fy + 8, 36, 16, 8); ctx.fill(); ctx.fillStyle = '#06121f'; ctx.font = '700 9px "Space Grotesk", sans-serif'; ctx.fillText('PLAY', fx + fw - 26, fy + 19); }
