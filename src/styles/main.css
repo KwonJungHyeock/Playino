@@ -1590,3 +1590,16 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
   margin-top: 12px; border: none; border-radius: 14px; cursor: pointer; font-weight: 800; font-size: 16px; color: #2a1200;
   background: linear-gradient(92deg,#ff9e3c,#ff5a8a); box-shadow: 0 12px 28px rgba(255,90,120,.35); }
 .cel-go:hover { filter: brightness(1.05); }
+
+/* ===== 무대 메달 현황(보관함) ===== */
+.medal-shelf { position: absolute; top: 104px; right: 18px; z-index: 6;
+  background: rgba(16,20,34,.82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.16); border-radius: 14px; padding: 10px 14px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.4); max-width: 300px; }
+.ms-title { font-family: "Space Grotesk", sans-serif; font-weight: 800; font-size: 13px; color: #ffe6b0; margin-bottom: 8px; }
+.ms-title b { font-size: 17px; color: #ffd27a; }
+.ms-title span { color: #9aa0ac; font-weight: 600; }
+.ms-row { display: flex; flex-wrap: wrap; gap: 5px; max-width: 272px; }
+.ms-slot { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;
+  font-size: 15px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: #6b7180; }
+.ms-slot.got { background: linear-gradient(180deg,#fff2c2,#ffd87a); border-color: #ffce5a; box-shadow: 0 2px 8px rgba(255,200,80,.4); }

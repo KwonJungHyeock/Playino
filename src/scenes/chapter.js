@@ -3,6 +3,7 @@
 
 import { createWorld } from '../engine/topdown.js';
 import { eddieRandom } from '../app/eddieSay.js';
+import { sfx } from '../app/sfx.js';
 import { mountCurriculumHeader } from '../app/curriculumHeader.js';
 import { getChapter, chapterRooms, isRoomCleared } from '../content/curriculum.js';
 
@@ -42,18 +43,24 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     : { x: MAP_W / 2 - 14, y: MAP_H - 120 };
   if (spawnAt) { const c = cells.find((x) => x.id === spawnAt); if (c) spawnPt = { x: c.cx + CARD_W / 2 - 14, y: c.cy + CARD_H + 16 }; }
 
+  // ── 무대 소품(장식 + 장애물 + 인터랙션) — 빈 공간을 채우고 EDDIE가 피해다니게 ──
+  const props = buildProps(cells, EXIT, spawnPt, MAP_W, MAP_H, offY, ch);
+
   root.innerHTML = `
     <div class="scene game-scene scene-fade escape-scene">
       <div class="world-host" id="world-host"></div>
+      <div class="medal-shelf" id="medal-shelf"></div>
       <div class="hud-hint" id="hud-hint"></div>
       <div class="hud-toast" id="hud-toast"></div>
-      <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 입장 · 🎪 광장으로 · EDDIE 클릭</div>
+      <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 입장/조작 · 🎪 광장으로 · EDDIE 클릭</div>
     </div>`;
 
   const header = mountCurriculumHeader(root.querySelector('.escape-scene'), {
     active: chapter, crumb: `${ch.short} · ${ch.act}`,
     onChapter: (id) => { if (id !== chapter) { destroyAll(); (onChapter || (() => onExit?.()))(id); } },
   });
+
+  renderMedals(root.querySelector('#medal-shelf'), cells);
 
   const host = root.querySelector('#world-host');
   const hintEl = root.querySelector('#hud-hint');
@@ -70,12 +77,14 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
       { x: 0, y: 0, w: MAP_W, h: 24 }, { x: 0, y: MAP_H - 24, w: MAP_W, h: 24 },
       { x: 0, y: 0, w: 24, h: MAP_H }, { x: MAP_W - 24, y: 0, w: 24, h: MAP_H },
       ...cells.map((c) => ({ x: c.cx, y: c.cy, w: CARD_W, h: CARD_H })),
+      ...props.filter((p) => p.solid).map((p) => ({ x: p.x + 6, y: p.y + p.h * 0.4, w: p.w - 12, h: p.h * 0.55 })),
     ],
     triggers: [
       ...cells.map((c) => ({ id: c.id, x: c.cx, y: c.cy + CARD_H, w: CARD_W, h: 48 })),
+      ...props.filter((p) => p.act).map((p) => ({ id: 'prop_' + p.i, x: p.x - 8, y: p.y + p.h - 6, w: p.w + 16, h: 44 })),
       { id: '__exit', ...EXIT },
     ],
-    draw: (ctx, st) => drawChapter(ctx, st, cells, MAP_W, MAP_H, EXIT, ch),
+    draw: (ctx, st) => drawChapter(ctx, st, cells, props, MAP_W, MAP_H, EXIT, ch),
   };
 
   const world = createWorld(host, map, {
@@ -89,8 +98,16 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
 
   function destroyAll() { try { world.destroy(); } catch (_) {} header.destroy(); }
 
+  const POP_LINES = { balloon: ['펑! 🎈', '풍선 터졌다! 🎉', '하나 더 터뜨려봐!'], popcorn: ['팝콘 튀어나온다! 🍿', '고소해~ 🍿', '와그작 🍿'] };
   function handle(id) {
     if (id === '__exit') { destroyAll(); onExit?.(); return; }
+    if (id.startsWith('prop_')) {                 // 인터랙션 소품(Space로 변함)
+      const p = props.find((x) => 'prop_' + x.i === id); if (!p) return;
+      p.state = (p.state + 1) % 2; p.anim = 0;
+      sfx.pop(); const lines = POP_LINES[p.type] || ['짠! ✨']; guide(lines[Math.floor(Math.random() * lines.length)], 1800);
+      if (p.type === 'balloon') { setTimeout(() => { p.state = 0; }, 2600); }   // 풍선은 다시 차오름
+      return;
+    }
     const r = cells.find((c) => c.id === id); if (!r) return;
     if (r.status !== 'ready') { soonModal(r); return; }
     if (isRoomCleared(r.id)) { world.pause(); confirmReenter(r, () => { destroyAll(); onRoom?.(id); }, () => world.resume()); return; }
@@ -126,6 +143,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     const tr = state.activeTrigger;
     if (!tr) { hintEl.classList.remove('show'); return; }
     if (tr.id === '__exit') { hintEl.innerHTML = '🎪 Space · 광장으로 나가기'; hintEl.classList.add('show'); return; }
+    if (tr.id.startsWith('prop_')) { hintEl.innerHTML = '✨ Space · 만져보기'; hintEl.classList.add('show'); return; }
     const r = cells.find((c) => c.id === tr.id); if (!r) { hintEl.classList.remove('show'); return; }
     const clr = isRoomCleared(r.id);
     hintEl.innerHTML = r.status === 'ready'
@@ -151,7 +169,7 @@ function drawCover(ctx, img, W, H) {
   ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
 }
 
-function drawChapter(ctx, st, cells, MAP_W, MAP_H, EXIT, ch) {
+function drawChapter(ctx, st, cells, props, MAP_W, MAP_H, EXIT, ch) {
   const t = st?.t || 0;
   const img = stageImg(ch.id);
   if (img.complete && img.naturalWidth) {
@@ -168,9 +186,13 @@ function drawChapter(ctx, st, cells, MAP_W, MAP_H, EXIT, ch) {
     ctx.strokeStyle = 'rgba(120,90,50,0.18)'; ctx.lineWidth = 2;
     for (let y = 188; y < MAP_H; y += 46) { ctx.beginPath(); ctx.moveTo(24, y); ctx.lineTo(MAP_W - 24, y); ctx.stroke(); }
   }
+  bunting(ctx, MAP_W, t);
 
+  // 소품을 y 순으로(뒤→앞) 그려 겹침 자연스럽게
   ctx.textAlign = 'center';
-  for (const c of cells) drawStall(ctx, c, t);
+  const drawList = [...cells.map((c) => ({ y: c.cy, kind: 'cell', o: c })), ...props.map((p) => ({ y: p.y, kind: 'prop', o: p }))]
+    .sort((a, b) => a.y - b.y);
+  for (const d of drawList) { if (d.kind === 'cell') drawStall(ctx, d.o, t); else drawProp(ctx, d.o, t); }
 
   // 나가기(광장으로)
   ctx.save();
@@ -232,4 +254,105 @@ function rr(ctx, x, y, w, h, r) {
   ctx.beginPath(); ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+// ── 소품(장식/장애물/인터랙션) ──
+const PKIND = {
+  crate: { w: 58, h: 54, solid: true }, barrel: { w: 50, h: 60, solid: true },
+  hay: { w: 66, h: 46, solid: true }, speaker: { w: 50, h: 62, solid: true },
+  balloon: { w: 46, h: 66, act: true }, popcorn: { w: 54, h: 66, act: true },
+  flag: { w: 32, h: 72 }, lamp: { w: 30, h: 80 }, plant: { w: 50, h: 54 },
+};
+const PSEQ = ['crate', 'balloon', 'barrel', 'flag', 'hay', 'popcorn', 'lamp', 'speaker', 'plant', 'crate', 'barrel', 'balloon', 'hay', 'flag'];
+
+function rectsOverlap(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+
+function buildProps(cells, EXIT, spawnPt, MAP_W, MAP_H, offY) {
+  const avoid = [
+    ...cells.map((c) => ({ x: c.cx - 28, y: c.cy - 28, w: 184 + 56, h: 128 + 96 })),  // 부스 + 트리거 통로
+    { x: EXIT.x - 60, y: EXIT.y - 70, w: EXIT.w + 120, h: EXIT.h + 100 },
+    { x: spawnPt.x - 80, y: spawnPt.y - 80, w: 180, h: 190 },
+  ];
+  const out = []; let n = 0; const step = 156;
+  for (let gy = offY - 70; gy < MAP_H - 90 && n < 14; gy += step) {
+    for (let gx = 70; gx < MAP_W - 70 && n < 14; gx += step) {
+      const jx = ((gx * 13 + gy * 7) % 46) - 23, jy = ((gx * 5 + gy * 11) % 34) - 17;
+      const type = PSEQ[n % PSEQ.length], k = PKIND[type];
+      const x = gx + jx, y = gy + jy, box = { x, y, w: k.w, h: k.h };
+      if (x < 34 || x + k.w > MAP_W - 34 || y < offY - 80 || y + k.h > MAP_H - 72) continue;
+      if (avoid.some((a) => rectsOverlap(box, a))) continue;
+      if (out.some((p) => rectsOverlap({ x: x - 40, y: y - 40, w: k.w + 80, h: k.h + 80 }, p))) continue;
+      out.push({ i: n, type, x, y, w: k.w, h: k.h, solid: !!k.solid, act: !!k.act, state: 0 });
+      n++;
+    }
+  }
+  return out;
+}
+
+function renderMedals(el, cells) {
+  const total = cells.length, got = cells.filter((c) => isRoomCleared(c.id)).length;
+  el.innerHTML = `<div class="ms-title">🎖️ 메달 <b>${got}</b> <span>/ ${total}</span></div>
+    <div class="ms-row">${cells.map((c) => {
+      const clr = isRoomCleared(c.id); const em = (c.reward || '🏅').split(' ')[0];
+      return `<span class="ms-slot ${clr ? 'got' : ''}" title="${c.name}${clr ? ' · 획득' : ''}">${clr ? em : '·'}</span>`;
+    }).join('')}</div>`;
+}
+
+function drawProp(ctx, p, t) {
+  const x = p.x, y = p.y, w = p.w, h = p.h, cx = x + w / 2, by = y + h;
+  // 접지 그림자
+  ctx.fillStyle = 'rgba(50,32,16,0.2)'; ctx.beginPath(); ctx.ellipse(cx, by - 2, w * 0.46, 7, 0, 0, 6.283); ctx.fill();
+  ctx.textAlign = 'center'; ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(40,26,14,0.55)';
+  if (p.type === 'crate') {
+    ctx.fillStyle = '#c08a4e'; rr(ctx, x, y, w, h, 7); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(90,58,28,0.7)'; ctx.beginPath(); ctx.moveTo(x + 4, y + 4); ctx.lineTo(x + w - 4, y + h - 4); ctx.moveTo(x + w - 4, y + 4); ctx.lineTo(x + 4, y + h - 4); ctx.stroke();
+  } else if (p.type === 'barrel') {
+    ctx.fillStyle = '#b6803f'; rr(ctx, x + 3, y, w - 6, h, 12); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(80,50,22,0.7)'; for (const yy of [y + h * 0.28, y + h * 0.62]) { ctx.beginPath(); ctx.moveTo(x + 3, yy); ctx.lineTo(x + w - 3, yy); ctx.stroke(); }
+  } else if (p.type === 'hay') {
+    ctx.fillStyle = '#e3c466'; rr(ctx, x, y, w, h, 12); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(150,110,40,0.5)'; for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(x + 5, y + h * i / 5); ctx.lineTo(x + w - 5, y + h * i / 5); ctx.stroke(); }
+  } else if (p.type === 'speaker') {
+    ctx.fillStyle = '#2c3040'; rr(ctx, x, y, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#11141d'; ctx.beginPath(); ctx.arc(cx, y + h * 0.34, w * 0.28, 0, 6.283); ctx.arc(cx, y + h * 0.72, w * 0.18, 0, 6.283); ctx.fill();
+  } else if (p.type === 'flag') {
+    ctx.strokeStyle = '#8a6a44'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, by); ctx.stroke();
+    const wv = Math.sin(t * 0.12) * 5; ctx.fillStyle = ['#ff6b6b', '#ffd24a', '#6fb7ff'][p.i % 3];
+    ctx.beginPath(); ctx.moveTo(cx, y + 4); ctx.lineTo(cx + 30 + wv, y + 16); ctx.lineTo(cx, y + 30); ctx.closePath(); ctx.fill();
+  } else if (p.type === 'lamp') {
+    ctx.strokeStyle = '#6f5238'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx, y + 16); ctx.lineTo(cx, by); ctx.stroke();
+    const glow = 0.5 + 0.4 * Math.sin(t * 0.09 + p.i);
+    ctx.fillStyle = `rgba(255,220,120,${glow * 0.5})`; ctx.beginPath(); ctx.arc(cx, y + 14, 20, 0, 6.283); ctx.fill();
+    ctx.fillStyle = '#ffe07a'; ctx.beginPath(); ctx.arc(cx, y + 14, 10, 0, 6.283); ctx.fill(); ctx.strokeStyle = 'rgba(120,90,40,0.6)'; ctx.stroke();
+  } else if (p.type === 'plant') {
+    ctx.fillStyle = '#b9743f'; rr(ctx, x + w * 0.18, y + h * 0.5, w * 0.64, h * 0.5, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#5cae5a'; for (const dx of [-12, 0, 12]) { ctx.beginPath(); ctx.ellipse(cx + dx, y + h * 0.42, 9, 18, dx * 0.04, 0, 6.283); ctx.fill(); }
+  } else if (p.type === 'balloon') {
+    ctx.strokeStyle = 'rgba(120,120,140,0.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, by); ctx.lineTo(cx, y + h * 0.55); ctx.stroke();
+    if (p.state === 0) {
+      const fly = Math.sin(t * 0.1 + p.i) * 3;
+      ctx.fillStyle = ['#ff6b6b', '#6fb7ff', '#ffd24a', '#b18bff'][p.i % 4];
+      ctx.beginPath(); ctx.ellipse(cx, y + h * 0.32 + fly, w * 0.42, h * 0.34, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.ellipse(cx - 6, y + h * 0.24 + fly, 5, 8, -0.4, 0, 6.283); ctx.fill();
+    } else { ctx.fillStyle = '#ffd24a'; ctx.font = '20px sans-serif'; ctx.fillText('💥', cx, y + h * 0.4); }
+  } else if (p.type === 'popcorn') {
+    ctx.fillStyle = '#e85a5a'; rr(ctx, x, y + h * 0.4, w, h * 0.6, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'; for (let i = 0; i < 5; i++) ctx.fillRect(x + 4 + i * 10, y + h * 0.4, 5, h * 0.6);
+    ctx.font = '16px sans-serif'; const pop = p.state ? '🍿🍿🍿' : '🍿';
+    ctx.fillText(pop, cx, y + h * 0.34);
+  }
+  ctx.lineWidth = 1;
+}
+
+function bunting(ctx, W, t) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(90,60,40,0.45)'; ctx.lineWidth = 2;
+  ctx.beginPath(); for (let x = 0; x <= W; x += 8) ctx.lineTo(x, 16 + Math.sin(x / 90) * 10); ctx.stroke();
+  const cols = ['#ff6b6b', '#ffd24a', '#5ad17a', '#6fb7ff', '#b18bff'];
+  for (let i = 0, x = 34; x < W; x += 64, i++) {
+    const y = 24 + Math.sin(x / 90) * 10, tw = 0.45 + 0.35 * Math.sin(t * 0.1 + i);
+    ctx.fillStyle = `rgba(255,240,180,${tw})`; ctx.beginPath(); ctx.arc(x, y, 9, 0, 6.283); ctx.fill();
+    ctx.fillStyle = cols[i % cols.length]; ctx.beginPath(); ctx.arc(x, y, 5.5, 0, 6.283); ctx.fill();
+  }
+  ctx.restore();
 }
