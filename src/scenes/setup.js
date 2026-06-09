@@ -22,7 +22,7 @@ export function showSetup(root, { onDone }) {
 
   root.innerHTML = `
     <div class="setup2 scene-fade">
-      <div class="pm-bg"></div>
+      <div class="pm-bg" id="su-bg"></div>
       <div class="pm-blobs"><span></span><span></span><span></span><span></span></div>
       <button class="snd-toggle" id="snd-toggle" title="소리 켜기/끄기">${sfx.muted ? '🔇' : '🔊'}</button>
       <div class="brand-badge"><span class="brand-dot"></span>Eduino&nbsp;<b>AI</b></div>
@@ -53,6 +53,11 @@ export function showSetup(root, { onDone }) {
 
   mountEddieRig(root.querySelector('#su-eddie'));
   mountMonitor(root.querySelector('#su-mon'));
+
+  // 배경 컨셉 통일(카니발 recede)
+  const bgProbe = new Image();
+  bgProbe.onload = () => { const b = root.querySelector('#su-bg'); b.style.backgroundImage = `url(${bgProbe.src})`; b.classList.add('has-img'); };
+  bgProbe.src = '/brand/main-bg.png';
   goBtn.addEventListener('click', () => { sfx.start(); onDone?.(); });
   root.querySelector('#su-skip').addEventListener('click', () => { sfx.click(); onDone?.(); });
   const snd = root.querySelector('#snd-toggle');
@@ -142,20 +147,21 @@ export function showSetup(root, { onDone }) {
     try { onConnected(await board.connect()); }
     catch (e) {
       const c = board.classify(e); connectHint = c.note;
-      setStatus('connect', c.kind === 'cancel' ? 'todo' : 'fail'); speak(c.speak);
+      setStatus('connect', c.kind === 'cancel' ? 'todo' : 'fail');
+      speak(c.kind === 'cancel' ? '🔍 진단: 포트 선택이 취소됐어. [다시 연결 시도]를 눌러줘!' : `🔍 진단: ${c.note}`);
       board.log('sys', `연결 실패(${c.kind}): ` + (e?.message ?? e)); renderAction();
     }
   }
   async function doDiagnose() {
-    connectHint = ''; speak('자동 진단을 시작할게… 🔧'); board.log('sys', '── 자동 진단·복구 시작 ──');
-    if (!board.isSupported()) { setStatus('browser', 'fail'); speak('이 브라우저는 WebSerial 미지원이야. Chrome / Edge 에서 열어줘.'); return; }
+    connectHint = ''; speak('자동 진단 중… 🔍 원인을 찾고 있어!'); board.log('sys', '── 자동 진단·복구 시작 ──');
+    if (!board.isSupported()) { setStatus('browser', 'fail'); speak('🔍 진단: 이 브라우저는 WebSerial 미지원! Chrome / Edge 데스크톱에서 열어줘.'); return; }
     setStatus('connect', 'doing');
     const a = await board.connectAuto();
-    if (a.ok) { board.log('sys', '자동 재연결 성공'); onConnected({ ok: true }); return; }
-    if (a.reason === 'no_response') { setStatus('connect', 'done'); setStatus('firmware', 'doing'); speak('보드는 열렸는데 응답이 없어 — [펌웨어 굽기]로 해결돼!'); return; }
-    if (a.reason === 'no_known') { setStatus('connect', 'fail'); connectHint = '보안상 포트는 처음 한 번 직접 선택해야 해요. [보드 연결]로 고르면 다음부턴 자동으로 잡아요.'; speak('포트를 한 번만 골라줘! 다음부턴 자동으로 잡을게.'); }
-    else if (a.reason === 'open_fail') { setStatus('connect', 'fail'); connectHint = '포트가 다른 프로그램/탭에서 사용 중일 수 있어요. 닫고 [다시 연결 시도]를 눌러주세요.'; speak('포트가 사용 중인 것 같아. 다른 프로그램을 닫고 다시!'); }
-    else { setStatus('connect', 'fail'); connectHint = '케이블을 다시 꽂고 [다시 연결 시도]를 눌러주세요.'; speak('케이블을 다시 꽂고 시도해보자.'); }
+    if (a.ok) { board.log('sys', '자동 재연결 성공'); speak('🔍 진단: 이전 포트로 자동 재연결 성공! ✅'); onConnected({ ok: true }); return; }
+    if (a.reason === 'no_response') { setStatus('connect', 'done'); setStatus('firmware', 'doing'); speak('🔍 진단: 보드는 연결됐는데 펌웨어 응답이 없어. → [펌웨어 굽기]로 해결돼!'); return; }
+    if (a.reason === 'no_known') { setStatus('connect', 'fail'); connectHint = '보안상 포트는 처음 한 번 직접 선택해야 해요.'; speak('🔍 진단: 아직 허용된 포트가 없어. → [보드 연결]로 포트를 한 번 골라줘!'); }
+    else if (a.reason === 'open_fail') { setStatus('connect', 'fail'); connectHint = '포트가 다른 프로그램/탭에서 사용 중일 수 있어요.'; speak('🔍 진단: 포트가 다른 프로그램(아두이노 IDE 등)이나 탭에서 사용 중이야. → 그걸 닫고 [다시 연결 시도]!'); }
+    else { setStatus('connect', 'fail'); connectHint = '케이블/포트를 확인하세요.'; speak('🔍 진단: 원인을 특정 못 했어. → 케이블을 다시 꽂고 [다시 연결 시도]!'); }
     renderAction();
   }
   async function doFlash() {

@@ -1414,3 +1414,16 @@ html, body {
 
 .su-monitor { background: rgba(13,22,40,.55); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
 .su-monitor h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+/* ===== 사용환경 준비: 스텝퍼 확대 + 로그 축소 + 스크롤 최소화 ===== */
+.setup2 { padding: 40px 16px 28px; }
+.su-wrap { gap: 14px; }
+.su-step { width: 132px; gap: 10px; }
+.su-node { width: 56px; height: 56px; font-size: 22px; }
+.su-step.doing .su-node { box-shadow: 0 0 0 5px rgba(255,176,32,.22); }
+.su-step-label b { font-size: 14px; }
+.su-step-label small { font-size: 11px; }
+.su-link { height: 4px; margin-top: 26px; min-width: 16px; }
+.su-monitor { padding: 12px 16px; }
+.su-monitor h3 { margin: 0 0 6px; }
+.su-monitor .serial-monitor { height: 130px; }
