@@ -35,7 +35,8 @@ export function celebrateRoom({ title = '학습을 마쳤습니다', message = '
   function loop() {
     if (!running) return;
     ctx.clearRect(0, 0, cv.width, cv.height);
-    if (frame % 30 === 0) burst(cv.width * (0.2 + Math.random() * 0.6), cv.height * (0.18 + Math.random() * 0.28));
+    // 결과 박스 뒤(중앙)에서 터져 가장자리로 퍼지는 느낌
+    if (frame % 26 === 0) burst(cv.width / 2 + (Math.random() - 0.5) * 160, cv.height * 0.46 + (Math.random() - 0.5) * 70);
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i];
       p.x += p.vx; p.y += p.vy; p.vy += p.g; p.life--; p.rot += 0.2;
@@ -48,7 +49,7 @@ export function celebrateRoom({ title = '학습을 마쳤습니다', message = '
     frame++;
     raf = requestAnimationFrame(loop);
   }
-  burst(cv.width / 2, cv.height * 0.34);
+  burst(cv.width / 2, cv.height * 0.46);
   loop();
 
   el.querySelector('#cel-exit').onclick = () => {

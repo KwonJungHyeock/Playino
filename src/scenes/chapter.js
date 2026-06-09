@@ -297,7 +297,7 @@ function buildProps(cells, EXIT, spawn, MAP_W, MAP_H, offY) {
     { x: EXIT.x - 70, y: EXIT.y - 70, w: EXIT.w + 140, h: EXIT.h + 110 },
     { x: spawn.x - 80, y: spawn.y - 70, w: 170, h: 180 },
   ];
-  const TYPES = ['balloon', 'balloon', 'flag', 'balloon', 'lamp', 'hay', 'balloon', 'plant', 'flag', 'balloon', 'popcorn', 'lamp', 'balloon', 'crate'];
+  const TYPES = ['balloon', 'speaker', 'flag', 'balloon', 'lamp', 'hay', 'balloon', 'speaker', 'flag', 'balloon', 'popcorn', 'lamp', 'balloon', 'plant'];
   let seed = 9; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   const out = []; let tries = 0;
   while (out.length < 16 && tries < 600) {

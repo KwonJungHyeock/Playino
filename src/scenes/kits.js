@@ -1,12 +1,12 @@
 // kits.js — 호환 키트 안내 페이지.
-// 이 게임은 '스타터 키트 [종합편]' 기준으로 제작됐지만, 다른 키트들도 호환됨을 안내한다.
+// 이 게임은 '아두이노 스타터 키트 [이지 커넥트편]' 기준으로 제작됐지만, 다른 키트들도 호환됨을 안내한다.
 // 제품 사진은 public/brand/kits/<id>.png 자동 교체형(없으면 📦 플레이스홀더).
 import { sfx } from '../app/sfx.js';
 
 const KITS = [
-  { id: 'comprehensive', name: '스타터 키트 [종합편]', note: '이 게임의 기준 키트', base: true },
+  { id: 'easy', name: '스타터 키트 [이지 커넥트편] · 50종', note: '이 게임의 기준 키트 · 납땜 없이 케이블만 꽂으면 끝!', base: true },
   { id: 'intro', name: '스타터 키트 [입문편]', note: '핵심 부품으로 입문' },
-  { id: 'easy', name: '이지 커넥트편 · 50종', note: '납땜 없이 쉽게 연결' },
+  { id: 'comprehensive', name: '스타터 키트 [종합편]', note: '부품 풀세트' },
   { id: 'sensor', name: '센서 마스터편 · 45종', note: '다양한 센서 집중' },
 ];
 
@@ -20,7 +20,7 @@ export function showKits(root, { onDone } = {}) {
         <div class="kits-head">
           <div class="kits-kicker"><span class="brand-dot"></span>호환 키트 안내</div>
           <h1 class="kits-title"><span class="grad">미니게임천국</span>은 이런 제품과 호환됩니다!</h1>
-          <p class="kits-sub">이 게임은 <b>[종합편]</b> 기준으로 만들었어요.<br/>다른 키트를 갖고 있어도 <b>그대로 즐길 수 있어요</b> 👍</p>
+          <p class="kits-sub">이 게임은 <b>[이지 커넥트편]</b> 기준으로 만들었어요.<br/>초·중등도 <b>납땜·저항 없이 케이블만 쏙</b> 꽂으면 끝! 다른 키트도 <b>그대로 즐길 수 있어요</b> 👍</p>
         </div>
         <div class="kits-grid">
           ${KITS.map((k) => `
