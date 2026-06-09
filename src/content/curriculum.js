@@ -13,8 +13,11 @@ const R = (id, chapter, name, icon, concept, mission, reward, scene = null) =>
   ({ id, chapter, name, icon, concept, mission, reward, scene, status: scene ? 'ready' : 'soon' });
 
 export const ROOMS = {
-  // 🎪 시작의 천막 (입장 준비)
-  setup: R('setup', 'ch1', '보드 준비', '🔌', '사용환경 준비', '천국 입장 준비 — 보드 연결하고 첫 신호 켜기', '🎟️ 입장 티켓', 'setup'),
+  // (사전 준비) 보드 연결 — 광장 입장 전 온보딩. 어느 무대에도 속하지 않음.
+  setup: R('setup', null, '보드 연결', '🔌', '사용환경 준비', '천국 입장 준비 — 보드 연결하고 첫 신호 켜기', '🎟️ 입장 티켓', 'setup'),
+
+  // 🎪 시작의 천막 (피지컬 코딩 기초)
+  basics: R('basics', 'ch1', '피지컬 코딩 기초', '📘', '피지컬 컴퓨팅 개념', '기초 이론 + 퀴즈 + 분류 미션', '🎓 기초 수료증', 'basics'),
 
   // 🏛️ 기초의 전당 (센서 첫 무대 · 기초)
   led:   R('led', 'ch2', 'LED', '💡', '디지털 출력 · PWM', '무대 조명 켜기 한 판', '💡 조명 메달', 'house'),
@@ -45,8 +48,8 @@ export const ROOMS = {
 };
 
 export const CHAPTERS = [
-  { id: 'ch1', no: 1, label: '시작의 천막', short: '시작의 천막', act: '천국 입장', icon: '🎪',
-    rooms: ['setup'] },
+  { id: 'ch1', no: 1, label: '시작의 천막', short: '시작의 천막', act: '피지컬 코딩 기초', icon: '🎪',
+    rooms: ['basics'] },
   { id: 'ch2', no: 2, label: '기초의 전당', short: '기초의 전당', act: '센서 첫 무대', icon: '🏛️',
     rooms: ['led', 'dht11', 'rgb', 'buzzer', 'seg', 'seg4', 'matrix', 'step', 'relay', 'pot', 'cds', 'sound', 'water', 'flame', 'keypad'] },
   { id: 'ch3', no: 3, label: '응용 대극장', short: '응용 대극장', act: '쇼타임', icon: '🎭',

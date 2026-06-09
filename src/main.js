@@ -7,6 +7,7 @@ import { showProductMain } from './scenes/productMain.js';
 import { showKits } from './scenes/kits.js';
 import { showLogin } from './scenes/login.js';
 import { showSetup } from './scenes/setup.js';
+import { showBasics } from './scenes/basics.js';
 import { showHub } from './scenes/hub.js';
 import { showChapter } from './scenes/chapter.js';
 import { showHouse } from './scenes/house.js';
@@ -49,12 +50,13 @@ function enterRoom(roomId) {
   lastRoom = roomId;
   const back = () => backToChapter(roomId);
   switch (roomId) {
+    case 'basics': showBasics(app(), { onExit: back }); break;
     case 'led': showHouse(app(), { onExit: back }); break;
     case 'dht11': dhtCoding(back); break;
     case 'relay': showRelay(app(), { onExit: back }); break;
     case 'setup': showSetup(app(), { onDone: () => { progress.mark('setup'); back(); } }); break;
     default:
-      // 탈출 미니게임 방(rgb·buzzer·keypad·seg …)은 탑다운 환경 → 장치 작동 → 미션
+      // 미니게임 부스(rgb·buzzer·keypad·seg …)은 탑다운 환경 → 장치 작동 → 미션
       if (getRoom(roomId)?.scene === 'game') showEscapeRoom(app(), { roomId, onExit: back });
       else back();   // 준비중 방은 챕터에서 막으므로 안전망
   }
