@@ -13,7 +13,7 @@ export function celebrateRoom({ title = '학습을 마쳤습니다', message = '
       <div class="fm-emoji">🎉</div>
       <h1>${title}</h1>
       ${message ? `<p>${message}</p>` : ''}
-      <button class="btn primary lg" id="cel-exit">${exitLabel}</button>
+      <button class="cel-go" id="cel-exit">${exitLabel}</button>
     </div>`;
   document.body.appendChild(el);
 

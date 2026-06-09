@@ -1528,3 +1528,65 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
   .bx-hero { order: -1; flex-basis: auto; width: min(220px, 56vw); }
   .bx-rows { grid-template-columns: 1fr; }
 }
+
+/* ===== EDDIE 머리 위 따라다니는 말풍선(광장·무대 공용) ===== */
+.eddie-bubble {
+  position: absolute; z-index: 7; transform: translate(-50%, -100%);
+  max-width: 300px; padding: 10px 15px; border-radius: 15px;
+  background: #fff; color: #1c2333; font-weight: 700; font-size: 14px; line-height: 1.45;
+  box-shadow: 0 12px 28px rgba(0,0,0,.34); text-align: center; white-space: normal;
+  opacity: 0; pointer-events: none; transition: opacity .22s ease;
+}
+.eddie-bubble.show { opacity: 1; }
+.eddie-bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
+  border: 8px solid transparent; border-top-color: #fff; border-bottom: 0; }
+
+/* ===== 기초 이론 애니메이션 비주얼 ===== */
+.bx-ic-sm { font-size: 22px; }
+.bx-theory h3 { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.bx-viz { height: 92px; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 2px 0 12px; }
+.viz-node { display: flex; flex-direction: column; align-items: center; gap: 2px; font-weight: 800; font-size: 11.5px; color: #4b5163; }
+.viz-node .ic { font-size: 30px; line-height: 1; }
+.viz-node.beat { animation: viz-beat 1.8s ease-in-out infinite; }
+@keyframes viz-beat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.16); } }
+.viz-arrow { font-size: 22px; color: #ff9e3c; animation: viz-arrow 1.8s ease-in-out infinite; }
+@keyframes viz-arrow { 0%,100% { opacity: .25; transform: translateX(-2px); } 50% { opacity: 1; transform: translateX(3px); } }
+.viz-wire .viz-track { position: relative; width: 54px; height: 4px; background: #e3e7f0; border-radius: 3px; }
+.viz-wire .viz-dot { position: absolute; top: 50%; left: 0; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: #ff7ab8; box-shadow: 0 0 8px #ff7ab8; animation: viz-run 1.8s linear infinite; }
+@keyframes viz-run { 0% { left: 0; } 100% { left: 44px; } }
+.viz-io { display: flex; gap: 28px; }
+.viz-io .io-col { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 22px; }
+.viz-io .io-h { font-size: 12px; font-weight: 800; }
+.viz-io .in .io-h { color: #3aa0e0; } .viz-io .out .io-h { color: #e85a8a; }
+.viz-io .out span:not(.io-h) { animation: viz-bob 1.6s ease-in-out infinite; }
+.viz-io .in span:not(.io-h) { animation: viz-bob-dn 1.6s ease-in-out infinite; }
+@keyframes viz-bob { 0%,100% { transform: translateY(3px); } 50% { transform: translateY(-3px); } }
+@keyframes viz-bob-dn { 0%,100% { transform: translateY(-3px); } 50% { transform: translateY(3px); } }
+.viz-line { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 340; stroke-dashoffset: 340; animation: viz-draw 2.6s ease-in-out infinite alternate; }
+.viz-line.dig { stroke: #ff7ab8; } .viz-line.ana { stroke: #5ac9ff; animation-delay: .3s; }
+@keyframes viz-draw { to { stroke-dashoffset: 0; } }
+.viz-pins { gap: 8px; }
+.viz-pins .pin { font-family: monospace; font-weight: 800; font-size: 13px; color: #2a3040; background: #eef1f8; border: 1.5px solid #d6dae6; border-radius: 8px; padding: 8px 10px; animation: viz-pin 1.6s ease-in-out infinite; }
+@keyframes viz-pin { 0%,100% { background: #eef1f8; transform: translateY(0); } 50% { background: #fff0c2; transform: translateY(-4px); } }
+.viz-code { gap: 12px; }
+.viz-code code { font-family: monospace; font-size: 15px; font-weight: 700; color: #1c2333; background: #f1f3f9; padding: 10px 14px; border-radius: 10px; }
+.viz-code code b { color: #e85a8a; }
+.viz-code .cur { animation: viz-blink 1s steps(1) infinite; }
+@keyframes viz-blink { 50% { opacity: 0; } }
+.viz-code .viz-led { font-size: 26px; animation: viz-led 1.6s ease-in-out infinite; }
+@keyframes viz-led { 0%,45% { filter: grayscale(1); opacity: .4; } 55%,100% { filter: none; opacity: 1; } }
+
+/* 기초 씬: EDDIE 키우고 말풍선 머리 위로 */
+.bx-hero { flex-basis: clamp(280px, 32vw, 400px) !important; padding-top: 52px; }
+.bx-speech { top: 0 !important; z-index: 6; }
+
+/* ===== 완료 모달(밝게) + 깨지지 않는 버튼 ===== */
+.finale.celebrate { background: rgba(24,14,32,.5); }
+.celebrate-msg { background: #fff !important; color: #1c2333 !important; border: 1px solid rgba(255,255,255,.7) !important;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 320px; max-width: 470px; }
+.celebrate-msg h1 { color: #1c2333; }
+.celebrate-msg p { color: #4b5163; }
+.cel-go { display: inline-flex; align-items: center; justify-content: center; width: auto; height: 52px; padding: 0 34px;
+  margin-top: 12px; border: none; border-radius: 14px; cursor: pointer; font-weight: 800; font-size: 16px; color: #2a1200;
+  background: linear-gradient(92deg,#ff9e3c,#ff5a8a); box-shadow: 0 12px 28px rgba(255,90,120,.35); }
+.cel-go:hover { filter: brightness(1.05); }

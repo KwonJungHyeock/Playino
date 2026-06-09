@@ -147,41 +147,49 @@ export function createWorld(container, map, handlers = {}) {
 
   function drawPlayer() {
     const p = state.player;
-    const bob = p.moving ? Math.abs(Math.sin(state.t * 0.25)) * 4 : Math.sin(state.t * 0.05) * 1.5;
+    const ps = map.playerScale || 1;                       // 씬별 EDDIE 크기 배율
+    const t = state.t;
+    const bob = p.moving ? Math.abs(Math.sin(t * 0.25)) * 5 * ps : Math.sin(t * 0.06) * 2.2 * ps;
+    const breathe = 1 + Math.sin(t * 0.05) * 0.025;        // 숨쉬기(가만히 있어도 살아있게)
+    const sway = p.moving ? Math.sin(t * 0.25) * 0.05 : Math.sin(t * 0.045) * 0.03;   // 살짝 갸웃
+    const squash = p.moving ? 1 - Math.abs(Math.sin(t * 0.25)) * 0.05 : 1;            // 걸을 때 탱탱
     const dw = 44, dh = 58;
     const cx = p.x + p.w / 2, feet = p.y + p.h;
+    // 접지 그림자(둥실 뜬 만큼 작아짐)
+    const shScale = 1 - Math.min(0.35, bob / (60 * ps));
     ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.fillStyle = 'rgba(0,0,0,0.26)';
     ctx.beginPath();
-    ctx.ellipse(cx, feet - 2, 17, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, feet - 2, 17 * ps * shScale, 6 * ps * shScale, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
     if (dirLoaded(p.dir)) {
-      // 3D 맵 스프라이트(방향별 단일 프레임). 각 방향이 자체 이미지라 좌우 반전 안 함.
-      const sw = 66, sh = 72;
-      ctx.drawImage(DIR_IMG[p.dir], cx - sw / 2, feet - sh + 10 + bob, sw, sh);
+      const sw = 66 * ps, sh = 72 * ps;
+      ctx.save(); ctx.translate(cx, feet - bob); ctx.rotate(sway); ctx.scale(breathe, breathe * squash);
+      ctx.drawImage(DIR_IMG[p.dir], -sw / 2, -sh + 10, sw, sh); ctx.restore();
     } else if (heroLoaded()) {
-      // 우리가 디자인한 EDDIE 히어로(단일 이미지). 비율 유지 + 좌/우 이동 시 좌우 반전.
-      const sh = 76, sw = sh * (heroImg.naturalWidth / heroImg.naturalHeight);
-      const dx0 = cx - sw / 2, dy0 = feet - sh + 10 + bob;
+      // 우리가 디자인한 EDDIE 히어로. 비율 유지 + 좌/우 반전 + 숨쉬기/갸웃으로 생동감.
+      const sh = 84 * ps, sw = sh * (heroImg.naturalWidth / heroImg.naturalHeight);
       ctx.save();
-      if (p.face < 0) { ctx.translate(cx, 0); ctx.scale(-1, 1); ctx.translate(-cx, 0); }
-      ctx.drawImage(heroImg, dx0, dy0, sw, sh);
+      ctx.translate(cx, feet - bob);
+      ctx.rotate(sway);
+      ctx.scale((p.face < 0 ? -1 : 1) * breathe, breathe * squash);
+      ctx.drawImage(heroImg, -sw / 2, -sh + 12, sw, sh);
       if (state.tint) {
         ctx.globalCompositeOperation = 'source-atop';
-        ctx.fillStyle = state.tint; ctx.fillRect(dx0, dy0, sw, sh);
+        ctx.fillStyle = state.tint; ctx.fillRect(-sw / 2, -sh + 12, sw, sh);
         ctx.globalCompositeOperation = 'source-over';
       }
       ctx.restore();
     } else if (eddieImg.complete && eddieImg.naturalWidth) {
       ctx.save();
-      ctx.translate(cx, feet - dh + bob);
+      ctx.translate(cx, feet - dh * ps + bob);
       if (p.face < 0) ctx.scale(-1, 1);
-      ctx.drawImage(eddieImg, -dw / 2, 0, dw, dh);
+      ctx.drawImage(eddieImg, -dw * ps / 2, 0, dw * ps, dh * ps);
       if (state.tint) {
         ctx.globalCompositeOperation = 'source-atop';
         ctx.fillStyle = state.tint;
-        ctx.fillRect(-dw / 2, 0, dw, dh);
+        ctx.fillRect(-dw * ps / 2, 0, dw * ps, dh * ps);
         ctx.globalCompositeOperation = 'source-over';
       }
       ctx.restore();

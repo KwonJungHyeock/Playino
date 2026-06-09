@@ -2,11 +2,11 @@
 // 밝은 미니게임천국 톤: 따뜻한 부스 내부(스테이지별 배경 슬롯) + 글로시 스톨 카드(메달 컬러).
 
 import { createWorld } from '../engine/topdown.js';
-import { mountSay, eddieRandom } from '../app/eddieSay.js';
+import { eddieRandom } from '../app/eddieSay.js';
 import { mountCurriculumHeader } from '../app/curriculumHeader.js';
 import { getChapter, chapterRooms, isRoomCleared } from '../content/curriculum.js';
 
-const CARD_W = 152, CARD_H = 104, COL_W = 210, ROW_H = 196, MARGIN = 90, TOP = 150;
+const CARD_W = 184, CARD_H = 128, COL_W = 248, ROW_H = 224, MARGIN = 80;
 const PAL = [['255,200,74', '255,170,40'], ['255,122,184', '233,80,150'], ['90,201,255', '40,160,235'], ['155,140,255', '120,100,235'], ['120,220,150', '60,185,110']];
 
 // 스테이지별 배경(있으면 사용): /brand/stage-{chapterId}-bg.png
@@ -18,29 +18,35 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   const rooms = chapterRooms(chapter);
   const cols = rooms.length <= 3 ? rooms.length : rooms.length <= 8 ? 4 : 5;
   const rowsN = Math.ceil(rooms.length / cols);
-  const MAP_W = Math.max(560, MARGIN * 2 + cols * COL_W);
-  const MAP_H = TOP + rowsN * ROW_H + 150;
+
+  // 뷰포트에 맞춰 월드를 채우고(작아 보이던 문제), 부스 격자를 '가운데' 정렬
+  const VW = Math.max(900, window.innerWidth);
+  const VH = Math.max(420, window.innerHeight - 96);
+  const gridW = cols * COL_W, gridH = rowsN * ROW_H;
+  const MAP_W = Math.max(VW, gridW + MARGIN * 2);
+  const MAP_H = Math.max(VH, gridH + 220);
+  const offX = (MAP_W - gridW) / 2;
+  const offY = Math.max(96, (MAP_H - gridH - 90) / 2);
 
   const cells = rooms.map((r, i) => {
     const col = i % cols, row = (i / cols) | 0;
-    const x = MARGIN + col * COL_W + (COL_W - CARD_W) / 2;
-    const y = TOP + row * ROW_H;
+    const x = offX + col * COL_W + (COL_W - CARD_W) / 2;
+    const y = offY + row * ROW_H;
     return { ...r, idx: i, cx: x, cy: y };
   });
-  const EXIT = { x: MAP_W / 2 - 34, y: MAP_H - 58, w: 68, h: 40 };
+  const EXIT = { x: MAP_W / 2 - 40, y: MAP_H - 60, w: 80, h: 42 };
 
   const firstReady = cells.find((c) => c.status === 'ready') || cells[0];
   let spawnPt = firstReady
-    ? { x: firstReady.cx + CARD_W / 2 - 14, y: firstReady.cy + CARD_H + 12 }
-    : { x: MAP_W / 2 - 14, y: MAP_H - 100 };
-  if (spawnAt) { const c = cells.find((x) => x.id === spawnAt); if (c) spawnPt = { x: c.cx + CARD_W / 2 - 14, y: c.cy + CARD_H + 12 }; }
+    ? { x: firstReady.cx + CARD_W / 2 - 14, y: firstReady.cy + CARD_H + 16 }
+    : { x: MAP_W / 2 - 14, y: MAP_H - 120 };
+  if (spawnAt) { const c = cells.find((x) => x.id === spawnAt); if (c) spawnPt = { x: c.cx + CARD_W / 2 - 14, y: c.cy + CARD_H + 16 }; }
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade escape-scene">
       <div class="world-host" id="world-host"></div>
       <div class="hud-hint" id="hud-hint"></div>
       <div class="hud-toast" id="hud-toast"></div>
-      <div class="hud-narrate" id="hud-narrate"></div>
       <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 입장 · 🎪 광장으로 · EDDIE 클릭</div>
     </div>`;
 
@@ -49,13 +55,16 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     onChapter: (id) => { if (id !== chapter) { destroyAll(); (onChapter || (() => onExit?.()))(id); } },
   });
 
+  const host = root.querySelector('#world-host');
   const hintEl = root.querySelector('#hud-hint');
   const toastEl = root.querySelector('#hud-toast');
-  const narrateEl = root.querySelector('#hud-narrate');
-  const say = mountSay(root.querySelector('.game-scene'));
+  // EDDIE 머리 위 말풍선(가이드)
+  const bubble = document.createElement('div'); bubble.className = 'eddie-bubble'; host.appendChild(bubble);
+  let bubbleT = null;
+  function guide(text, ms = 5000) { bubble.innerHTML = `🤖 ${text}`; bubble.classList.add('show'); clearTimeout(bubbleT); if (ms) bubbleT = setTimeout(() => bubble.classList.remove('show'), ms); }
 
   const map = {
-    width: MAP_W, height: MAP_H, bg: '#e7dcc4',
+    width: MAP_W, height: MAP_H, bg: '#e7dcc4', playerScale: 1.3,
     spawn: spawnPt,
     walls: [
       { x: 0, y: 0, w: MAP_W, h: 24 }, { x: 0, y: MAP_H - 24, w: MAP_W, h: 24 },
@@ -69,14 +78,14 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     draw: (ctx, st) => drawChapter(ctx, st, cells, MAP_W, MAP_H, EXIT, ch),
   };
 
-  const world = createWorld(root.querySelector('#world-host'), map, {
+  const world = createWorld(host, map, {
     onInteract: handle,
     onFrame: updateHint,
-    onEddieClick: (x, y) => say(eddieRandom(), x, y),
+    onEddieClick: () => guide(eddieRandom(), 3200),
     onDrawOverlay: drawVignette,
   });
 
-  setTimeout(() => narrate(`${ch.short}에 입장! ${ch.act} — 부스마다 미니게임을 클리어해 메달을 모으자! 🎖️`), 500);
+  setTimeout(() => guide(`${ch.short}에 입장! ${ch.act} — 부스로 걸어가 Space로 입장해 메달을 모으자! 🎖️`), 500);
 
   function destroyAll() { try { world.destroy(); } catch (_) {} header.destroy(); }
 
@@ -110,6 +119,10 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   }
 
   function updateHint(state) {
+    const p = state.player, cam = state.cam;
+    bubble.style.left = ((p.x + p.w / 2) - cam.x) + 'px';
+    bubble.style.top = (p.y - cam.y - 92) + 'px';
+
     const tr = state.activeTrigger;
     if (!tr) { hintEl.classList.remove('show'); return; }
     if (tr.id === '__exit') { hintEl.innerHTML = '🎪 Space · 광장으로 나가기'; hintEl.classList.add('show'); return; }
@@ -121,9 +134,8 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     hintEl.classList.add('show');
   }
 
-  let tT = null, nT = null;
+  let tT = null;
   function toast(m) { toastEl.textContent = m; toastEl.classList.add('show'); clearTimeout(tT); tT = setTimeout(() => toastEl.classList.remove('show'), 2400); }
-  function narrate(t) { narrateEl.innerHTML = `<span>🤖 ${t}</span>`; narrateEl.classList.add('show'); clearTimeout(nT); nT = setTimeout(() => narrateEl.classList.remove('show'), 5000); }
 
   // 밝은 톤: 은은한 따뜻한 비네트만
   function drawVignette(ctx, st, canvas) {
@@ -144,6 +156,7 @@ function drawChapter(ctx, st, cells, MAP_W, MAP_H, EXIT, ch) {
   const img = stageImg(ch.id);
   if (img.complete && img.naturalWidth) {
     drawCover(ctx, img, MAP_W, MAP_H);
+    ctx.fillStyle = 'rgba(30,18,40,0.22)'; ctx.fillRect(0, 0, MAP_W, MAP_H);   // 카드가 뜨도록 살짝 가라앉힘
   } else {
     // 따뜻한 부스 내부(폴백): 위쪽 천막 줄무늬 띠 + 나무 바닥
     const top = ctx.createLinearGradient(0, 0, 0, 150); top.addColorStop(0, '#f3e6d2'); top.addColorStop(1, '#e9d2bf');

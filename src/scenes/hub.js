@@ -4,7 +4,7 @@
 // 월드 크기를 뷰포트에 맞춰(=풀스크린) 채우고, 노드/배경 모두 같은 좌표계라 항상 정렬된다.
 
 import { createWorld } from '../engine/topdown.js';
-import { mountSay, eddieRandom } from '../app/eddieSay.js';
+import { eddieRandom } from '../app/eddieSay.js';
 import { mountCurriculumHeader } from '../app/curriculumHeader.js';
 import { CHAPTERS, getChapter, chapterDone, chapterUnlocked, chapterClearedCount, chapterTotal } from '../content/curriculum.js';
 
@@ -20,7 +20,6 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
       <div class="hud-hint" id="hud-hint"></div>
       <div class="hud-toast" id="hud-toast"></div>
       <div class="hub-banner" id="hub-banner"></div>
-      <div class="hud-narrate" id="hud-narrate"></div>
       <div class="hud-controls">⬅➡⬆⬇ 이동 · Space 입장 · EDDIE 클릭 · 상단에서 챕터 이동</div>
     </div>`;
 
@@ -33,8 +32,10 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   const hintEl = root.querySelector('#hud-hint');
   const toastEl = root.querySelector('#hud-toast');
   const bannerEl = root.querySelector('#hub-banner');
-  const narrateEl = root.querySelector('#hud-narrate');
-  const say = mountSay(root.querySelector('.game-scene'));
+  // EDDIE 머리 위를 따라다니는 말풍선(가이드) — 하단 자막이 캐릭터를 가리던 문제 해결
+  const bubble = document.createElement('div'); bubble.className = 'eddie-bubble'; host.appendChild(bubble);
+  let bubbleT = null;
+  function guide(text, ms = 5200) { bubble.innerHTML = `🤖 ${text}`; bubble.classList.add('show'); clearTimeout(bubbleT); if (ms) bubbleT = setTimeout(() => bubble.classList.remove('show'), ms); }
 
   // ----- 뷰포트 기반 레이아웃(풀스크린 채움) -----
   let VW = 1280, VH = 560, gates = [];
@@ -55,7 +56,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   if (spawnAt) { const g = gates.find((x) => x.id === spawnAt); if (g) spawnPt = { x: g.gx - 14, y: g.gy + 80 }; }
 
   const map = {
-    width: VW, height: VH, bg: '#e7dcc4',
+    width: VW, height: VH, bg: '#e7dcc4', playerScale: 1.5,
     spawn: spawnPt,
     walls: buildWalls(),
     triggers: buildTriggers(),
@@ -65,7 +66,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   const world = createWorld(host, map, {
     onInteract: tryEnter,
     onFrame: updateHint,
-    onEddieClick: (x, y) => say(eddieRandom(), x, y),
+    onEddieClick: () => guide(eddieRandom(), 3200),
     onDrawOverlay: drawVignette,
   });
 
@@ -73,7 +74,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   const onResize = () => { measure(); buildGates(); map.width = VW; map.height = VH; map.walls = buildWalls(); map.triggers = buildTriggers(); };
   window.addEventListener('resize', onResize);
 
-  setTimeout(() => narrate('미니게임천국에 온 걸 환영해! 🎉 길을 따라 무대로 걸어가 Space로 입장하자!'), 500);
+  setTimeout(() => guide('미니게임천국에 온 걸 환영해! 🎉 길을 따라 무대로 걸어가 Space로 입장하자!'), 500);
 
   function destroyAll() { window.removeEventListener('resize', onResize); world.destroy(); header.destroy(); }
 
@@ -84,6 +85,11 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   }
 
   function updateHint(state) {
+    // EDDIE 머리 위로 말풍선 따라가기(캔버스 좌표 = host 기준)
+    const p = state.player, cam = state.cam;
+    bubble.style.left = ((p.x + p.w / 2) - cam.x) + 'px';
+    bubble.style.top = (p.y - cam.y - 92) + 'px';
+
     const tr = state.activeTrigger;
     if (!tr) { bannerEl.classList.remove('show'); return; }
     const c = getChapter(tr.id); if (!c) { bannerEl.classList.remove('show'); return; }
@@ -100,9 +106,8 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
     bannerEl.classList.add('show');
   }
 
-  let tT = null, nT = null;
+  let tT = null;
   function toast(m) { toastEl.textContent = m; toastEl.classList.add('show'); clearTimeout(tT); tT = setTimeout(() => toastEl.classList.remove('show'), 2400); }
-  function narrate(t) { narrateEl.innerHTML = `<span>🤖 ${t}</span>`; narrateEl.classList.add('show'); clearTimeout(nT); nT = setTimeout(() => narrateEl.classList.remove('show'), 5200); }
 
   function drawVignette(ctx, st, canvas) {
     const g = ctx.createRadialGradient(canvas.width / 2, canvas.height * 0.46, canvas.height * 0.42, canvas.width / 2, canvas.height / 2, canvas.height * 1.02);
