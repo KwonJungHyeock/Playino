@@ -81,8 +81,9 @@ export function showPlatformIntro(root, { onDone } = {}) {
   const finish = () => {
     if (done) return; done = true;
     cleanup();
-    el.classList.add('out');
-    setTimeout(() => { el.remove(); onDone?.(); }, OUT_MS);
+    // 다음 장면으로 '즉시' 교체(같은 #app을 덮어쓰므로 페이드아웃 동안의 빈 화면 갭이 없다).
+    // 인트로가 사라지며 생기던 '남색+물방울' 비침 방지 — 다음 장면이 자기 진입 애니메이션으로 등장.
+    el.remove(); onDone?.();
   };
   const onSkip = () => finish();
   window.addEventListener('keydown', onSkip);
