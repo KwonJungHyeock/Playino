@@ -7,7 +7,8 @@ import { sfx } from '../app/sfx.js';
 import { mountCurriculumHeader } from '../app/curriculumHeader.js';
 import { getChapter, chapterRooms, isRoomCleared } from '../content/curriculum.js';
 
-const CARD_W = 184, CARD_H = 128, COL_W = 248, ROW_H = 224, MARGIN = 80;
+let CARD_W = 184, CARD_H = 128;          // 단일 부스면 더 크게(showChapter에서 조정)
+const COL_W = 248, ROW_H = 224, MARGIN = 80;
 const PAL = [['255,200,74', '255,170,40'], ['255,122,184', '233,80,150'], ['90,201,255', '40,160,235'], ['155,140,255', '120,100,235'], ['120,220,150', '60,185,110']];
 
 // 스테이지별 배경(있으면 사용): /brand/stage-{chapterId}-bg.png
@@ -25,6 +26,9 @@ function drawCoverInto(ctx, img, x, y, w, h) {
 export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt } = {}) {
   const ch = getChapter(chapter);
   const rooms = chapterRooms(chapter);
+  // 부스가 하나뿐이면 크게(휑함 방지). 여러 개면 표준 크기.
+  CARD_W = rooms.length <= 1 ? 320 : 184;
+  CARD_H = rooms.length <= 1 ? 210 : 128;
   const cols = rooms.length <= 3 ? rooms.length : rooms.length <= 8 ? 4 : 5;
   const rowsN = Math.ceil(rooms.length / cols);
 
@@ -281,28 +285,32 @@ const PKIND = {
   balloon: { w: 46, h: 66, act: true }, popcorn: { w: 54, h: 66, act: true },
   flag: { w: 32, h: 72 }, lamp: { w: 30, h: 80 }, plant: { w: 50, h: 54 },
 };
-const PSEQ = ['crate', 'balloon', 'barrel', 'flag', 'hay', 'popcorn', 'lamp', 'speaker', 'plant', 'crate', 'barrel', 'balloon', 'hay', 'flag'];
 
 function rectsOverlap(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
 
-function buildProps(cells, EXIT, spawnPt, MAP_W, MAP_H, offY) {
+// 유기적 배치: 부스 영역 밖에 풍선 위주로 자연스럽게 흩뿌리고, 아래일수록 크게(공간감).
+function buildProps(cells, EXIT, spawn, MAP_W, MAP_H, offY) {
+  let minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9;
+  for (const c of cells) { minx = Math.min(minx, c.cx); miny = Math.min(miny, c.cy); maxx = Math.max(maxx, c.cx + CARD_W); maxy = Math.max(maxy, c.cy + CARD_H); }
   const avoid = [
-    ...cells.map((c) => ({ x: c.cx - 28, y: c.cy - 28, w: 184 + 56, h: 128 + 96 })),  // 부스 + 트리거 통로
-    { x: EXIT.x - 60, y: EXIT.y - 70, w: EXIT.w + 120, h: EXIT.h + 100 },
-    { x: spawnPt.x - 80, y: spawnPt.y - 80, w: 180, h: 190 },
+    { x: minx - 60, y: miny - 44, w: (maxx - minx) + 120, h: (maxy - miny) + 150 },   // 부스 영역
+    { x: EXIT.x - 70, y: EXIT.y - 70, w: EXIT.w + 140, h: EXIT.h + 110 },
+    { x: spawn.x - 80, y: spawn.y - 70, w: 170, h: 180 },
   ];
-  const out = []; let n = 0; const step = 156;
-  for (let gy = offY - 70; gy < MAP_H - 90 && n < 14; gy += step) {
-    for (let gx = 70; gx < MAP_W - 70 && n < 14; gx += step) {
-      const jx = ((gx * 13 + gy * 7) % 46) - 23, jy = ((gx * 5 + gy * 11) % 34) - 17;
-      const type = PSEQ[n % PSEQ.length], k = PKIND[type];
-      const x = gx + jx, y = gy + jy, box = { x, y, w: k.w, h: k.h };
-      if (x < 34 || x + k.w > MAP_W - 34 || y < offY - 80 || y + k.h > MAP_H - 72) continue;
-      if (avoid.some((a) => rectsOverlap(box, a))) continue;
-      if (out.some((p) => rectsOverlap({ x: x - 40, y: y - 40, w: k.w + 80, h: k.h + 80 }, p))) continue;
-      out.push({ i: n, type, x, y, w: k.w, h: k.h, solid: !!k.solid, act: !!k.act, state: 0 });
-      n++;
-    }
+  const TYPES = ['balloon', 'balloon', 'flag', 'balloon', 'lamp', 'hay', 'balloon', 'plant', 'flag', 'balloon', 'popcorn', 'lamp', 'balloon', 'crate'];
+  let seed = 9; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const out = []; let tries = 0;
+  while (out.length < 16 && tries < 600) {
+    tries++;
+    const type = TYPES[(out.length * 5 + tries) % TYPES.length], base = PKIND[type];
+    const x = 36 + rnd() * (MAP_W - 72);
+    const y = (offY - 76) + rnd() * (MAP_H - 70 - (offY - 76));
+    const scale = 0.78 + (y / MAP_H) * 0.7;                  // 아래일수록 큼 = 원근감
+    const w = base.w * scale, h = base.h * scale, box = { x, y, w, h };
+    if (x < 32 || x + w > MAP_W - 32 || y + h > MAP_H - 58) continue;
+    if (avoid.some((a) => rectsOverlap(box, a))) continue;
+    if (out.some((p) => rectsOverlap({ x: x - 36, y: y - 36, w: w + 72, h: h + 72 }, p))) continue;
+    out.push({ i: out.length, type, x, y, w, h, solid: !!base.solid, act: !!base.act, state: 0 });
   }
   return out;
 }

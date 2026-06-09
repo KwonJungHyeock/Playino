@@ -23,4 +23,8 @@ export const sfx = {
   click() { blip(680, 80, 'triangle', 0.12); },
   start() { blip(523, 90, 'triangle', 0.13); setTimeout(() => blip(784, 150, 'triangle', 0.13), 95); },
   pop() { blip(360, 60, 'triangle', 0.08); },
+  // 리듬 게임 판정음 — 맞을 때(밝은 딩-딩) / 틀릴 때(낮은 버즈)
+  ok() { blip(880, 70, 'triangle', 0.16); setTimeout(() => blip(1320, 95, 'triangle', 0.14), 55); },
+  perfect() { blip(988, 60, 'triangle', 0.16); setTimeout(() => blip(1480, 110, 'triangle', 0.15), 50); },
+  no() { blip(150, 200, 'sawtooth', 0.16); },
 };

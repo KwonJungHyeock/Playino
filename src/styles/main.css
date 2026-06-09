@@ -1289,7 +1289,7 @@ html, body {
 .pm-bg    { transition: transform .25s ease-out; }
 
 /* 사운드 토글 */
-.snd-toggle { position: absolute; top: 18px; right: 22px; z-index: 5; width: 42px; height: 42px; border-radius: 12px;
+.snd-toggle { position: fixed; bottom: 20px; right: 22px; z-index: 9; width: 44px; height: 44px; border-radius: 12px;
   background: rgba(10,14,24,.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,.16); color: #fff; font-size: 18px; cursor: pointer;
   display: grid; place-items: center; transition: transform .15s, background .15s; }
@@ -1619,3 +1619,31 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .ls-card h2 { margin: 0 0 12px; font-size: 26px; }
 .ls-card p { margin: 0 0 20px; line-height: 1.6; color: #3a4154; font-size: 15px; }
 .ls-card p b { color: #e85a8a; }
+
+/* ===== LED 게임: HUD(좌상단 솔리드) + 결선 준비 단계 ===== */
+.led-hud { top: 16px !important; left: 16px !important; transform: none !important; background: rgba(10,14,24,.86) !important; }
+.led .bx-exit { z-index: 10; }
+.led-prep { position: absolute; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center;
+  background: rgba(10,6,18,.62); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); transition: opacity .4s ease; padding: 22px; }
+.led-prep.hide { opacity: 0; pointer-events: none; }
+.prep-card { background: #fff; color: #1c2333; border-radius: 22px; padding: 26px 30px; max-width: 880px; width: 100%; box-shadow: 0 26px 70px rgba(0,0,0,.5); }
+.prep-card h2 { margin: 0 0 6px; font-size: 24px; }
+.prep-sub { margin: 0 0 18px; color: #4b5163; font-size: 15px; }
+.prep-grid { display: flex; gap: 20px; align-items: stretch; }
+.prep-img { flex: 1 1 56%; min-height: 250px; border-radius: 14px; background: #eef1f8 center / contain no-repeat; border: 1px solid #e0e4ee; }
+.prep-img.has-img { background-size: cover; }
+.prep-side { flex: 1 1 44%; display: flex; flex-direction: column; gap: 12px; }
+.prep-table { width: 100%; border-collapse: collapse; font-size: 14px; overflow: hidden; border-radius: 10px; }
+.prep-table th { background: #ff6b6b; color: #fff; padding: 9px; }
+.prep-table td { border: 1px solid #e3e7f0; padding: 10px; text-align: center; font-weight: 700; color: #2a3040; }
+.prep-table td:first-child { background: #f7f9fc; }
+.prep-status { margin-top: auto; padding: 10px 12px; border-radius: 10px; background: #f1f3f9; color: #4b5163; font-weight: 700; font-size: 13px; line-height: 1.4; }
+.prep-status.ok { background: #e9f9f0; color: #168a55; }
+.prep-status.warn { background: #fdeef0; color: #c23052; }
+.prep-actions { display: flex; gap: 10px; margin-top: 18px; align-items: center; }
+.prep-btn { height: 48px; padding: 0 18px; border-radius: 12px; border: 2px solid #dfe3ec; background: #fff; color: #2a3040; font-weight: 800; font-size: 14px; cursor: pointer; }
+.prep-btn:hover:not(:disabled) { border-color: #ff9e3c; }
+.prep-btn:disabled { opacity: .5; cursor: not-allowed; }
+.prep-actions .cel-go { margin-left: auto; height: 48px; }
+.prep-skip { display: block; margin: 14px auto 0; background: none; border: none; color: #8a90a0; font-size: 13px; text-decoration: underline; cursor: pointer; }
+@media (max-width: 760px) { .prep-grid { flex-direction: column; } }
