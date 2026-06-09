@@ -5,6 +5,7 @@
 // 각 단계 A등급(정확도 85%↑) 이상이어야 통과. 두 단계 모두 통과해야 💡 조명 메달.
 // LED 3개 ↔ D2(초록)/D3(주황)/D4(빨강), 보드 연결 시 실제 점등.
 import { sfx } from '../app/sfx.js';
+import { bgm } from '../app/bgm.js';
 import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
@@ -26,11 +27,23 @@ const eddieImg = new Image(); eddieImg.src = '/brand/eddie-conductor.png';
 const ready = (im) => im.complete && im.naturalWidth > 0;
 
 function buildBeats(game) {
-  const a = []; let t = 1000, gap = game.key === 'timing' ? 700 : 760;
+  if (game.key === 'timing') {
+    // 속도 패턴 변화: 느림→빠름→폭주→숨고르기→…(구간마다 다른 간격)
+    const segs = [{ gap: 640, n: 5 }, { gap: 440, n: 6 }, { gap: 300, n: 6 }, { gap: 560, n: 4 }, { gap: 250, n: 7 }, { gap: 470, n: 5 }, { gap: 340, n: 8 }];
+    const a = []; let t = 1000;
+    for (let si = 0; si < segs.length; si++) {
+      const s = segs[si];
+      for (let i = 0; i < s.n; i++) { a.push({ target: t, color: -1 }); t += s.gap; }
+      t += 200;                                  // 구간 사이 살짝 숨
+    }
+    return a;
+  }
+  // 라이트 연주: 색 노트 + 점점 빠르게 + 가끔 더블
+  const a = []; let t = 1000, gap = 720;
   for (let i = 0; i < game.n; i++) {
-    a.push({ target: t, color: game.key === 'play' ? (i * 7 + 3) % 3 : -1 });
-    gap = Math.max(game.key === 'timing' ? 300 : 360, gap - 9);
-    t += gap;
+    a.push({ target: t, color: (i * 7 + 3) % 3 });
+    if (i >= 10 && i % 4 === 0) a.push({ target: t + gap * 0.5, color: (i * 3 + 1) % 3 });
+    gap = Math.max(360, gap - 10); t += gap;
   }
   return a;
 }
@@ -42,6 +55,7 @@ export function showLedGame(root, { onExit } = {}) {
       <div class="brand-badge"><span class="brand-dot"></span>Eduino&nbsp;<b>AI</b></div>
       <button class="snd-toggle" id="snd-toggle" title="소리 켜기/끄기">${sfx.muted ? '🔇' : '🔊'}</button>
       <button class="bx-exit" id="led-exit">✕ 나가기</button>
+      <button class="bx-exit led-skip" id="led-skip" hidden>⏭ 건너뛰기(테스트)</button>
       <div class="world-host" id="led-host"></div>
       <div class="led-hud" id="led-hud" hidden>
         <span class="lh-item" id="lh-stage">1단계</span>
@@ -115,13 +129,20 @@ export function showLedGame(root, { onExit } = {}) {
   let gi = 0, game = GAMES[0], beats = [], pops = [];
   const state = { phase: 'prep', t0: 0, countT: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, seen: 0, ended: false };
 
-  function startFlow() { gi = 0; nextGame(); }
+  const skipBtn = root.querySelector('#led-skip');
+  skipBtn.onclick = () => {                       // 테스트용: 현재 단계 통과 처리하고 다음으로
+    document.querySelectorAll('.led-panel').forEach((e) => e.remove());
+    cleared[game.key] = true; state.ended = true; state.phase = 'result';
+    bgm.setDuck(1); gi++; nextGame();
+  };
+  function startFlow() { gi = 0; skipBtn.hidden = false; nextGame(); }
   function nextGame() {
     if (gi >= GAMES.length) { finishAll(); return; }
     game = GAMES[gi]; showIntro();
   }
   function panel(html) { const el = document.createElement('div'); el.className = 'led-panel'; el.innerHTML = `<div class="prep-card led-pcard">${html}</div>`; scene.appendChild(el); return el; }
   function showIntro() {
+    bgm.setDuck(1);
     root.querySelector('#led-hud').hidden = true;
     const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div>
       <h2>${game.icon} ${game.name}</h2><p class="prep-sub">${game.desc}</p>
@@ -130,6 +151,7 @@ export function showLedGame(root, { onExit } = {}) {
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
   }
   function beginPlay() {
+    bgm.setDuck(0);                               // 연주 중엔 배경음악 끄고 게임 소리만
     beats = buildBeats(game).map((b, i) => ({ ...b, i, judged: false }));
     pops = []; LEDS.forEach((l) => l.flash = 0);
     Object.assign(state, { phase: 'count', countT: performance.now(), t0: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, seen: 0, ended: false });
@@ -137,6 +159,7 @@ export function showLedGame(root, { onExit } = {}) {
     root.querySelector('#led-hud').hidden = false; sync();
   }
   function showResult(grade, pass) {
+    bgm.setDuck(1);
     const acc = Math.round((state.hits / beats.length) * 100);
     const last = gi === GAMES.length - 1;
     const el = panel(`<div class="lp-grade lp-${grade}">${grade}<span>등급</span></div>
@@ -265,7 +288,7 @@ export function showLedGame(root, { onExit } = {}) {
   }
   function loop() { draw(); raf = requestAnimationFrame(loop); }
   let raf = requestAnimationFrame(loop);
-  function cleanup() { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); window.removeEventListener('resize', resize); }
+  function cleanup() { bgm.setDuck(1); cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); window.removeEventListener('resize', resize); }
 }
 
 function drawLed(ctx, x, y, r, color, on, label, key) {

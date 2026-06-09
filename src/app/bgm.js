@@ -37,9 +37,12 @@ function startProcedural() {
   if (a.state === 'suspended') a.resume();
   seqTimer = setInterval(step, STEP_MS); step();
 }
-function applyVol() { if (el) el.volume = sfx.muted ? 0 : FILE_VOL; else if (master) master.gain.value = sfx.muted ? 0 : 1; }
+let duckFactor = 1;   // 게임 연주 중 BGM을 줄이거나(0=무음) 복원(1)
+function applyVol() { const m = sfx.muted ? 0 : duckFactor; if (el) el.volume = FILE_VOL * m; else if (master) master.gain.value = m; }
 
 export const bgm = {
+  // 게임(연주) 중 배경음악 덕킹: setDuck(0)=무음, setDuck(1)=복원
+  setDuck(f) { duckFactor = f; applyVol(); },
   start() {
     if (started) return; started = true;
     const a = new Audio(FILE); a.loop = true; a.preload = 'auto';

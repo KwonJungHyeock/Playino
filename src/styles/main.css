@@ -1658,3 +1658,6 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .lp-grade { font-family: "Space Grotesk", sans-serif; font-weight: 900; font-size: 66px; line-height: 1; margin-bottom: 4px; }
 .lp-grade span { font-size: 18px; margin-left: 4px; color: #6b7280; }
 .lp-S { color: #ffb800; } .lp-A { color: #2ec27e; } .lp-B { color: #3aa0e0; } .lp-C { color: #ff9e3c; } .lp-D { color: #ef5470; }
+
+/* LED 테스트용 건너뛰기 버튼(나가기 왼쪽) */
+.led-skip { right: 132px !important; background: rgba(50,38,70,.6); }
