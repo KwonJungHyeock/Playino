@@ -102,10 +102,10 @@ export function createWorld(container, map, handlers = {}) {
     p.y = Math.max(0, Math.min((map.height || canvas.height) - p.h, p.y));
   }
 
-  function update() {
+  function update(fs) {
     const p = state.player;
     if (!state.paused) {
-      const sp = 2.6;
+      const sp = 2.6 * fs;                      // 60fps 기준 속도 × 경과배율 → 어떤 주사율/FPS 에서도 동일 속도
       let dx = 0, dy = 0;
       if (state.keys.has('arrowleft') || state.keys.has('a')) dx -= sp;
       if (state.keys.has('arrowright') || state.keys.has('d')) dx += sp;
@@ -132,7 +132,7 @@ export function createWorld(container, map, handlers = {}) {
         }
       }
       state.activeTrigger = active;
-      state.t += 1;
+      state.t += fs;                            // 애니메이션 시계도 경과배율로 진행 → 숨쉬기/걷기 속도 일정
     }
   }
 
@@ -214,8 +214,15 @@ export function createWorld(container, map, handlers = {}) {
     handlers.onFrame?.(state);
   }
 
-  function loop() {
-    update();
+  // 프레임 기반(주사율 의존) → 시간 기반으로. 60fps 를 1.0 으로 정규화한 경과배율(fs)을 곱한다.
+  let last = performance.now();
+  function loop(now) {
+    if (now == null) now = performance.now();
+    let fs = (now - last) / (1000 / 60);
+    last = now;
+    if (!isFinite(fs) || fs <= 0) fs = 1;       // 첫 프레임/이상값 보호
+    fs = Math.min(fs, 3);                        // 탭 복귀 등 긴 공백에 순간이동 방지(최대 3프레임치)
+    update(fs);
     camera();
     draw();
     state.raf = requestAnimationFrame(loop);
