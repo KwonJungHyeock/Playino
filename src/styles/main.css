@@ -1246,10 +1246,10 @@ html, body {
   filter: drop-shadow(0 16px 30px rgba(0,0,0,.4)); }
 
 /* 부위별 움직임 (리깅 모드에서만) */
-.eddie-rig.rigged .er-head    { transform-origin: 50% 64%; animation: er-head 4.2s ease-in-out infinite; }
-.eddie-rig.rigged .er-arm-r   { transform-origin: 40% 42%; animation: er-arm-r 3s ease-in-out infinite; }
-.eddie-rig.rigged .er-arm-l   { transform-origin: 60% 42%; animation: er-arm-l 3.6s ease-in-out infinite; }
-.eddie-rig.rigged .er-antenna { transform-origin: 50% 82%; animation: er-antenna 2.2s ease-in-out infinite; }
+.eddie-rig.rigged .er-head    { transform-origin: 50% 46%; animation: er-head 4.2s ease-in-out infinite; }
+.eddie-rig.rigged .er-arm-r   { transform-origin: 40% 44%; animation: er-arm-r 3s ease-in-out infinite; }
+.eddie-rig.rigged .er-arm-l   { transform-origin: 60% 44%; animation: er-arm-l 3.6s ease-in-out infinite; }
+.eddie-rig.rigged .er-antenna { transform-origin: 50% 22%; animation: er-antenna 2.2s ease-in-out infinite; }
 .eddie-rig.rigged .er-body    { filter: drop-shadow(0 16px 28px rgba(0,0,0,.4)); }
 
 @keyframes er-head    { 0%,100%{ transform: rotate(-2.5deg) } 50%{ transform: rotate(2.5deg) } }
