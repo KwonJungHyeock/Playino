@@ -1849,3 +1849,53 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 @keyframes ba-swing { 0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(12deg)} }
 @keyframes ba-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 @keyframes ba-beep { 0%,49%{opacity:1} 50%,100%{opacity:.3} }
+
+/* 자료 애니메이션 영역 — LED 슬라이드와 동일하게 크게 */
+.tv-anim { flex: 1; }
+.ba { gap: 22px; }
+.ba1 .ba-stage { gap: 30px; }
+.ba-batt, .ba-ear { font-size: 56px; }
+.ba-batt em, .ba-ear em { font-size: 14px; }
+.ba-wire { width: 120px; height: 8px; }
+.ba-wire i { height: 8px; width: 14px; }
+.ba-piezo { width: 130px; height: 130px; }
+.ba-disc { width: 76px; height: 76px; } .ba-ring { width: 76px; height: 76px; }
+.ba-flow { font-size: 18px; }
+.ba-freqrow { font-size: 22px; } .ba-note { width: 34px; height: 34px; font-size: 16px; }
+.ba2 canvas { width: 90%; }
+.ba-use span { font-size: 64px; } .ba-use { font-size: 15px; }
+.ba3 .ba-uses { gap: 34px; }
+.dl-pin { font-size: 12.5px; color: #6b7280; font-weight: 700; text-align: center; line-height: 1.5; }
+.dl-pin b { color: #e85a8a; } .dl-pin span { color: #9aa0ac; font-weight: 600; font-size: 11px; }
+.kb-pin { display: inline-block; margin-left: 4px; background: #eafaf0; color: #1f9d63; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 800; } .kb-pin b { color: #128a4f; }
+
+/* ===== LED 이론 애니메이션 ===== */
+.la-field { display: flex; align-items: center; justify-content: center; gap: 4px; height: 150px; position: relative; }
+.la-p { display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 900; font-size: 22px; color: #fff; }
+.la-p em { font-size: 13px; font-style: normal; color: #5a6072; }
+.la-p.e { color: #fff; } .la-p.e::before { content: ''; width: 54px; height: 54px; border-radius: 50%; background: radial-gradient(circle at 36% 32%, #bfe0ff, #4a90e2); box-shadow: 0 0 16px rgba(74,144,226,.5); }
+.la-p.h::before { content: ''; width: 54px; height: 54px; border-radius: 50%; background: radial-gradient(circle at 36% 32%, #ffd9a8, #ff9e3c); box-shadow: 0 0 16px rgba(255,158,60,.5); }
+.la-p.e { animation: la-mv-l 2.4s ease-in-out infinite; } .la-p.h { animation: la-mv-r 2.4s ease-in-out infinite; }
+.la-center { position: relative; width: 90px; display: grid; place-items: center; }
+.la-bulb { width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #fff7c0, #cfc9a0); border: 3px solid #b9b48c; }
+.la-bulb.on { animation: la-onflash 2.4s ease-in-out infinite; }
+.la-flash { position: absolute; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle, rgba(255,235,120,.9), transparent 70%); opacity: 0; animation: la-flash 2.4s ease-in-out infinite; }
+@keyframes la-mv-l { 0%,100%{transform:translateX(0)} 45%,55%{transform:translateX(46px)} }
+@keyframes la-mv-r { 0%,100%{transform:translateX(0)} 45%,55%{transform:translateX(-46px)} }
+@keyframes la-flash { 0%,40%{opacity:0;transform:scale(.6)} 50%{opacity:1;transform:scale(1.5)} 65%,100%{opacity:0;transform:scale(1.8)} }
+@keyframes la-onflash { 0%,42%{background:radial-gradient(circle at 38% 34%,#fff7c0,#cfc9a0);box-shadow:none} 52%,62%{background:radial-gradient(circle at 38% 34%,#fffff0,#ffd23a);box-shadow:0 0 30px 8px rgba(255,200,40,.8)} 80%,100%{background:radial-gradient(circle at 38% 34%,#fff7c0,#cfc9a0);box-shadow:none} }
+.la2 .la-sig { display: flex; gap: 14px; font-weight: 900; }
+.la-high, .la-low { padding: 6px 14px; border-radius: 10px; font-size: 14px; }
+.la-high { background: #e9f9f0; color: #168a55; } .la-low { background: #f1f3f9; color: #8a90a0; }
+.la2 .la-high { animation: la-hi 1.6s steps(1) infinite; } .la2 .la-low { animation: la-lo 1.6s steps(1) infinite; }
+.la-blink { animation: la-blink 1.6s steps(1) infinite; }
+@keyframes la-blink { 0%,49%{background:radial-gradient(circle at 38% 34%,#fffff0,#ffd23a);box-shadow:0 0 30px 8px rgba(255,200,40,.8);border-color:#ffae00} 50%,100%{background:radial-gradient(circle at 38% 34%,#fff7c0,#cfc9a0);box-shadow:none;border-color:#b9b48c} }
+@keyframes la-hi { 0%,49%{transform:scale(1.12);filter:none} 50%,100%{transform:scale(1);filter:grayscale(.6) opacity(.5)} }
+@keyframes la-lo { 0%,49%{transform:scale(1);filter:grayscale(.6) opacity(.5)} 50%,100%{transform:scale(1.12);filter:none} }
+.la3 .la-bulbs { display: flex; gap: 30px; } .la3 .la-names { display: flex; gap: 30px; margin-top: 4px; }
+.la3 .la-names i { width: 64px; text-align: center; font-style: normal; font-weight: 800; color: #3a4154; font-size: 13px; }
+.la-cb { width: 64px; height: 64px; border-radius: 50%; border: 3px solid rgba(0,0,0,.1); }
+.la-cb.g { background: radial-gradient(circle at 38% 34%, #c8ffd8, #2ec27e); animation: la-glow 2.1s ease-in-out infinite; }
+.la-cb.y { background: radial-gradient(circle at 38% 34%, #fff6c0, #ffd23a); animation: la-glow 2.1s ease-in-out infinite .7s; }
+.la-cb.r { background: radial-gradient(circle at 38% 34%, #ffd0d0, #ef4d4d); animation: la-glow 2.1s ease-in-out infinite 1.4s; }
+@keyframes la-glow { 0%,100%{box-shadow:none;transform:scale(1)} 50%{box-shadow:0 0 26px 7px currentColor;transform:scale(1.08)} }

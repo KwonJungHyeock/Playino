@@ -16,11 +16,11 @@ const ROOMS_CFG = {
     name: '반짝반짝 라이트쇼', sensor: 'LED · 발광 다이오드', icon: '💡', accent: '255,200,74',
     room: 'room-bg', eddie: null, signL: '120,225,255', signR: '255,158,90', control: 'led', blockPin: 13,
     intro: '이론관에서 LED를 배우고, 체험관에서 직접 연주해보자! 🎶',
-    info: ['led-info-1', 'led-info-2', 'led-info-3'],
+    animTheory: 'led',
     captions: [
-      'LED는 색마다 빛 에너지(파장)가 달라요 — 노랑·초록·빨강! 🌈',
-      '전자와 정공이 ‘딱’ 만나면 빛이 짠! 하고 나와요 ✨',
-      '신호등·시계·자전거 후미등… LED는 생활 곳곳에 있어요! 🚦',
+      '전자(−)와 정공(+)이 ‘딱’ 만나면 빛이 짠! 하고 나와요 ✨',
+      '디지털 출력 — 1(HIGH)이면 켜짐, 0(LOW)이면 꺼짐! 🔆',
+      '색마다 빛 에너지(파장)가 달라요 — 초록·노랑·빨강! 🌈',
     ],
     play: (root, opt) => showLedGame(root, opt),
   },
@@ -148,7 +148,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
     function renderAnim() {
       ew.hidden = false;
-      const ANIM = buzzerTheory();
+      const ANIM = cfg.animTheory === 'led' ? ledTheory() : buzzerTheory();
       bodyEl.innerHTML = `
         <div class="tv-slider">
           <button class="tv-arrow" id="tv-prev">◀</button>
@@ -178,7 +178,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       const NOTES = [['도', 262], ['레', 294], ['미', 330], ['파', 349], ['솔', 392], ['라', 440], ['시', 494], ['도↑', 523]];
       bodyEl.innerHTML = `
         <div class="kb">
-          <p class="kb-info">🎹 계이름 버튼을 누르면 부저가 그 음을 연주해! 음이 <b>높을수록 주파수(Hz)</b>가 커져.</p>
+          <p class="kb-info">🎹 계이름 버튼을 누르면 부저가 그 음을 연주해! 음이 <b>높을수록 주파수(Hz)</b>가 커져. <span class="kb-pin">🔊 테스트: 부저를 <b>D5</b>에 연결</span></p>
           <div class="kb-keys">${NOTES.map((n, i) => `<button class="kb-key" data-i="${i}"><b>${n[0]}</b><span>${n[1]}Hz</span></button>`).join('')}</div>
           <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 부저)'}</button>
           <div class="dc-status" id="dc-status">${board.connected ? '누르면 실제 부저가 소리나! 🔊' : '연결하면 실제 부저음이 나요. (안 해도 화면 소리로 체험)'}</div>
@@ -232,7 +232,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
           <div class="dash-led">
             <div class="dl-bulb" id="dl-bulb"><span>LED</span></div>
             <div class="dl-state" id="dl-state">상태 · OFF (LOW)</div>
-            <div class="dl-pin">13번 핀 · 디지털 출력</div>
+            <div class="dl-pin">💡 테스트: <b>13번 핀</b>에 LED 연결<br><span>(보드에도 13번 LED 내장 — 결선 없이 바로!)</span></div>
           </div>
           <div class="dash-cards">
             <div class="dcard">
@@ -287,6 +287,33 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   }
 }
 
+// ───────── LED 이론 애니메이션(코드로 직접) ─────────
+function ledTheory() {
+  return [
+    { // ① 원리: 전자(−)+정공(+) 만나 빛
+      html: `<div class="ba la1">
+        <div class="la-field">
+          <div class="la-p e">e⁻<em>전자</em></div>
+          <div class="la-center"><div class="la-flash"></div><div class="la-bulb on"></div></div>
+          <div class="la-p h">h⁺<em>정공</em></div>
+        </div>
+        <div class="ba-flow">전자(−)와 정공(+)이 <b>만나면</b> → 빛이 ‘짠!’ 하고 나와요 ✨</div>
+      </div>` },
+    { // ② 디지털 출력 HIGH/LOW
+      html: `<div class="ba la2">
+        <div class="la-sig"><span class="la-high">1 · HIGH</span><span class="la-low">0 · LOW</span></div>
+        <div class="la-bulb la-blink"></div>
+        <div class="ba-flow"><b>디지털 출력</b> — 1(HIGH)이면 켜지고, 0(LOW)이면 꺼져요!</div>
+      </div>` },
+    { // ③ 색 = 빛 에너지(파장)
+      html: `<div class="ba la3">
+        <div class="la-bulbs"><span class="la-cb g"></span><span class="la-cb y"></span><span class="la-cb r"></span></div>
+        <div class="la-names"><i>초록</i><i>노랑</i><i>빨강</i></div>
+        <div class="ba-flow">색마다 <b>빛 에너지(파장)</b>가 달라서 다른 색으로 빛나요! 🌈</div>
+      </div>` },
+  ];
+}
+
 // ───────── 부저 이론 애니메이션(코드로 직접) ─────────
 function buzzerTheory() {
   return [
@@ -303,7 +330,7 @@ function buzzerTheory() {
     },
     { // ② 주파수 = 음 높이 (인터랙티브 파형 + 소리)
       html: `<div class="ba ba2">
-        <canvas id="bw" width="460" height="150"></canvas>
+        <canvas id="bw" width="680" height="210"></canvas>
         <div class="ba-freqrow"><span class="ba-note" id="bn">미</span> · <b id="bf">330</b> Hz</div>
         <div class="ba-ctrl"><span class="ba-lo">낮은 음</span><input type="range" id="bfreq" min="200" max="780" value="330"><span class="ba-hi">높은 음</span><button class="dbtn ghost" id="bplay">▶ 들어보기</button></div>
       </div>`,
