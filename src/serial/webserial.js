@@ -9,7 +9,12 @@ import { BAUD, LINE_TERMINATOR } from './protocol.js';
 export const KNOWN_VENDORS = [
   { usbVendorId: 0x2341 }, // Arduino
   { usbVendorId: 0x2a03 }, // Arduino (구 VID)
-  { usbVendorId: 0x1a86 }, // CH340 (호환 보드)
+  { usbVendorId: 0x1a86 }, // CH340 / CH9102 (호환 보드)
+  { usbVendorId: 0x10c4 }, // CP210x (Silicon Labs)
+  { usbVendorId: 0x0403 }, // FTDI
+  { usbVendorId: 0x067b }, // Prolific PL2303
+  { usbVendorId: 0x1b4f }, // SparkFun
+  { usbVendorId: 0x239a }, // Adafruit
 ];
 
 export function isSupported() {
