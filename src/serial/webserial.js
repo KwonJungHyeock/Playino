@@ -32,6 +32,18 @@ export class SerialConnection {
     this._lineHandlers = new Set();
     this._stateHandlers = new Set();
     this._closing = false;
+    // 케이블을 뽑으면(물리적 제거) 즉시 감지 — isOpen 이 멈춰있지 않도록.
+    if (isSupported()) {
+      this._onDisconnect = (e) => { const p = e?.target || e?.port; if (p && p === this.port) this._lost(); };
+      try { navigator.serial.addEventListener('disconnect', this._onDisconnect); } catch (_) {}
+    }
+  }
+
+  // 물리적 분리: 더 이상 닫기를 await 하지 않고 상태만 정리 후 'closed' 통지
+  _lost() {
+    if (!this.port) return;
+    this.reader = null; this.writer = null; this.port = null; this._textBuffer = ''; this._closing = false;
+    this._emitState('closed', 'disconnect');
   }
 
   get isOpen() {

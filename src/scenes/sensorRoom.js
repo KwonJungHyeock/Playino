@@ -97,7 +97,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   function openTheory() {
     world.pause();
     const v = root.querySelector('#sr-tview'); v.hidden = false;
-    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false;
+    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null;
     const INFO = (cfg.info || []).map((n) => `/brand/${n}.png`), CAPS = cfg.captions || [];
 
     v.innerHTML = `
@@ -117,11 +117,12 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     mountEddieRig(v.querySelector('#tv-eddie'));
     v.querySelectorAll('.tv-tab').forEach((b) => b.onclick = () => { if (tab === b.dataset.t) return; tab = b.dataset.t; if (tab !== 'code') stopBlink(); v.querySelectorAll('.tv-tab').forEach((x) => x.classList.toggle('on', x === b)); renderTab(); });
     v.querySelector('#tv-x').onclick = close;
-    function close() { stopBlink(); if (board.connected) board.digital(cfg.blockPin, false).catch(() => {}); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
+    function close() { stopBlink(); if (stateUnsub) { stateUnsub(); stateUnsub = null; } if (board.connected) board.digital(cfg.blockPin, false).catch(() => {}); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
     function renderTab() { tab === 'info' ? renderInfo() : renderControl(); }
 
     // 자료: 큰 슬라이드 + 흰 박스 밖(여백)의 EDDIE가 설명
     function renderInfo() {
+      if (stateUnsub) { stateUnsub(); stateUnsub = null; }
       ew.hidden = false;
       if (!INFO.length) { ew.hidden = true; bodyEl.innerHTML = `<p class="sr-tbody" style="text-align:center;padding:50px">자료 이미지를 준비 중이에요.</p>`; return; }
       bodyEl.innerHTML = `
@@ -186,11 +187,19 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         blink = setInterval(() => { o = !o; paint(o); send(o); }, +bRange.value);
         status.textContent = '깜빡이는 중! 속도 슬라이더를 바꿔봐 🎚️';
       }
-      bodyEl.querySelector('#dc-conn').onclick = async () => {
+      const connBtn = bodyEl.querySelector('#dc-conn');
+      connBtn.onclick = async () => {
         if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌';
-        try { await board.connect(); bodyEl.querySelector('#dc-conn').textContent = '🔌 보드 연결됨 ✓'; status.textContent = '버튼으로 실제 13번 LED를 제어해봐!'; }
+        try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '버튼으로 실제 13번 LED를 제어해봐!'; }
         catch (e) { status.textContent = board.classify(e).note; }
       };
+      // 보드 상태 실시간 반영(케이블 분리 등) — 통일된 board 상태 구독
+      if (stateUnsub) stateUnsub();
+      stateUnsub = board.onState(() => {
+        const c = board.connected;
+        connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 LED)';
+        if (!c) { stopBlink(); setLed(false, false); status.textContent = '보드 연결이 끊겼어요 — 다시 [보드 연결]을 눌러줘'; }
+      });
     }
 
     function stopBlink() { if (blink) { clearInterval(blink); blink = null; } blinkOn = false; const tg = bodyEl.querySelector('#b-toggle'); if (tg) tg.textContent = '▶ 깜빡이기'; }
