@@ -172,23 +172,27 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       bodyEl.querySelectorAll('.tv-dots i').forEach((d) => d.onclick = () => { ci = +d.dataset.i; show(); });
     }
 
-    // 부저 연주판: 계이름 버튼(음 재생) — 보드 연결 시 실제 부저음(tone)
+    // 화면 어느 탭이든 EDDIE가 설명
+    function showEddie(text) { ew.hidden = false; bub.innerHTML = `🤖 ${text}`; bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop'); }
+
+    // 부저 연주판: 계이름 버튼(음 재생) — 3×3 정사각 패드. 보드 연결 시 실제 부저음(tone)
     function renderKeys() {
-      ew.hidden = true;
-      const NOTES = [['도', 262], ['레', 294], ['미', 330], ['파', 349], ['솔', 392], ['라', 440], ['시', 494], ['도↑', 523]];
+      showEddie('계이름 버튼을 눌러 음을 들어봐! 위로 갈수록 높은 음이야 🎵');
+      const NOTES = [['도', 262], ['레', 294], ['미', 330], ['파', 349], ['솔', 392], ['라', 440], ['시', 494], ['도↑', 523], ['레↑', 587]];
       bodyEl.innerHTML = `
         <div class="kb">
-          <p class="kb-info">🎹 계이름 버튼을 누르면 부저가 그 음을 연주해! 음이 <b>높을수록 주파수(Hz)</b>가 커져. <span class="kb-pin">🔊 테스트: 부저를 <b>D5</b>에 연결</span></p>
-          <div class="kb-keys">${NOTES.map((n, i) => `<button class="kb-key" data-i="${i}"><b>${n[0]}</b><span>${n[1]}Hz</span></button>`).join('')}</div>
+          <p class="kb-info">🎹 계이름을 눌러 연주! 음이 <b>높을수록 주파수(Hz)</b>가 커져. <span class="kb-pin">🔊 테스트: 부저를 <b>D5</b>에 연결</span></p>
+          <div class="kb-keys sq">${NOTES.map((n, i) => `<button class="kb-key" data-i="${i}"><b>${n[0]}</b><span>${n[1]}Hz</span></button>`).join('')}</div>
           <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 부저)'}</button>
           <div class="dc-status" id="dc-status">${board.connected ? '누르면 실제 부저가 소리나! 🔊' : '연결하면 실제 부저음이 나요. (안 해도 화면 소리로 체험)'}</div>
         </div>`;
       const status = bodyEl.querySelector('#dc-status'), connBtn = bodyEl.querySelector('#dc-conn');
-      bodyEl.querySelectorAll('.kb-key').forEach((b) => b.onclick = () => {
-        const [, freq] = NOTES[+b.dataset.i]; sfx.note(freq, 320);
-        if (board.connected) board.tone(cfg.blockPin, freq, 320).catch(() => {});
-        b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 170);
-      });
+      const play = (b) => {                                  // pointerdown 으로 즉시 반응(지연 최소화)
+        const [, freq] = NOTES[+b.dataset.i]; sfx.note(freq, 300);
+        if (board.connected) board.tone(cfg.blockPin, freq, 300).catch(() => {});
+        b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 150);
+      };
+      bodyEl.querySelectorAll('.kb-key').forEach((b) => b.addEventListener('pointerdown', (e) => { e.preventDefault(); play(b); }));
       connBtn.onclick = async () => {
         if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌';
         try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '누르면 실제 부저가 소리나! 🔊'; }
@@ -226,7 +230,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
 
     // LED 제어 대시보드: 디지털(ON/OFF) + 깜빡임 (D13은 디지털 전용 — 아날로그 없음)
     function renderControl() {
-      ew.hidden = true;
+      showEddie('버튼으로 LED를 켜고 꺼봐! 빠르게 깜빡이게도 할 수 있어 💡');
       bodyEl.innerHTML = `
         <div class="dash">
           <div class="dash-led">

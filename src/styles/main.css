@@ -1899,3 +1899,11 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .la-cb.y { background: radial-gradient(circle at 38% 34%, #fff6c0, #ffd23a); animation: la-glow 2.1s ease-in-out infinite .7s; }
 .la-cb.r { background: radial-gradient(circle at 38% 34%, #ffd0d0, #ef4d4d); animation: la-glow 2.1s ease-in-out infinite 1.4s; }
 @keyframes la-glow { 0%,100%{box-shadow:none;transform:scale(1)} 50%{box-shadow:0 0 26px 7px currentColor;transform:scale(1.08)} }
+
+/* 연주판 3×3 정사각 패드(볼륨감) */
+.kb-keys.sq { grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 420px; margin: 4px auto 0; }
+.kb-keys.sq .kb-key { aspect-ratio: 1 / 1; border-radius: 16px; border: 2px solid #dfe3ec; border-bottom: 6px solid #cdd5e3;
+  box-shadow: 0 6px 14px rgba(20,12,40,.1); justify-content: center; transition: transform .06s, box-shadow .06s, border-bottom-width .06s; touch-action: none; }
+.kb-keys.sq .kb-key b { font-size: 28px; } .kb-keys.sq .kb-key span { font-size: 12px; margin-top: 2px; }
+.kb-keys.sq .kb-key:hover { border-color: #62c98a; }
+.kb-keys.sq .kb-key.hit { transform: translateY(5px); border-bottom-width: 2px; background: linear-gradient(180deg,#d6f7e2,#9be7c0); border-color: #2ec27e; box-shadow: 0 0 22px rgba(80,210,140,.55); }
