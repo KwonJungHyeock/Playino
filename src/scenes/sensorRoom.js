@@ -7,6 +7,7 @@ import { progress } from '../app/progress.js';
 import { board } from '../app/board.js';
 import { mountEddieRig } from '../app/eddieRig.js';
 import { showLedGame } from './ledGame.js';
+import { showBuzzerGame } from './buzzerGame.js';
 
 const roomCache = {};
 function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.png`; roomCache[key] = im; } return roomCache[key]; }
@@ -34,7 +35,7 @@ const ROOMS_CFG = {
       '음 높이 = 주파수(Hz)! 빠르게 떨릴수록(높은 Hz) 높은 음 — 슬라이더로 바꿔 들어봐 🎵',
       '알람·초인종·멜로디… 부저는 소리로 우리에게 알려줘요 🔔',
     ],
-    play: (root, opt) => soonPlay(root, opt, '멜로디 연주단', 'stage-buzzer-bg'),
+    play: (root, opt) => showBuzzerGame(root, opt),
   },
 };
 

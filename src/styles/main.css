@@ -1907,3 +1907,12 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .kb-keys.sq .kb-key b { font-size: 28px; } .kb-keys.sq .kb-key span { font-size: 12px; margin-top: 2px; }
 .kb-keys.sq .kb-key:hover { border-color: #62c98a; }
 .kb-keys.sq .kb-key.hit { transform: translateY(5px); border-bottom-width: 2px; background: linear-gradient(180deg,#d6f7e2,#9be7c0); border-color: #2ec27e; box-shadow: 0 0 22px rgba(80,210,140,.55); }
+
+/* 이론관 여백 축소 + EDDIE 크게(박스 옆) */
+.tv-card { padding: 18px 24px !important; }
+.tv-body { min-height: 0; }
+.kb { gap: 10px; } .kb-keys.sq { max-width: 540px; gap: 14px; }
+.tv-eddie-wrap { left: 2%; bottom: auto; top: 50%; transform: translateY(-50%); width: 330px; }
+.tv-eddie { width: 330px; height: 370px; }
+.tv-eddie-wrap .tv-bubble { font-size: 15px; }
+@media (max-width: 1280px) { .tv-eddie-wrap { display: none; } }
