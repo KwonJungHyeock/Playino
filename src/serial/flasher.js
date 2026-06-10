@@ -118,7 +118,17 @@ export async function flashUno(port, hexText, cbs = {}) {
   if (!size) throw new Error('빈 .hex — 펌웨어 파일을 확인하세요.');
   onLog?.(`펌웨어 ${size} 바이트 / 페이지 ${Math.ceil(size / PAGE_SIZE)}개`);
 
-  await port.open({ baudRate: BAUD });
+  // 직전 연결이 완전히 닫히지 않아 "already open" 이 나면, 한 번 닫고 다시 연다.
+  try {
+    await port.open({ baudRate: BAUD });
+  } catch (e) {
+    if (/already open|open on 'serialport'/i.test(e?.message || '')) {
+      onLog?.('포트가 아직 열려 있어 닫고 다시 여는 중…');
+      try { await port.close(); } catch (_) {}
+      await delay(350);
+      await port.open({ baudRate: BAUD });
+    } else { throw e; }
+  }
   let rdr = null;
   let writer = null;
   try {

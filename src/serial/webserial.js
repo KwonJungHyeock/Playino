@@ -144,7 +144,8 @@ export class SerialConnection {
 
   _setupWriter() {
     const encoder = new TextEncoderStream();
-    encoder.readable.pipeTo(this.port.writable).catch((e) => {
+    // 파이프 완료 Promise 를 보관 — disconnect 시 이걸 await 해야 port.writable 잠금이 풀린다.
+    this._writableClosed = encoder.readable.pipeTo(this.port.writable).catch((e) => {
       if (!this._closing) console.error('writer pipe error', e);
     });
     this._encoderStream = encoder;
@@ -197,20 +198,30 @@ export class SerialConnection {
 
   async disconnect() {
     this._closing = true;
+    // 어떤 단계가 백프레셔 등으로 멈춰도 닫기가 영원히 막히지 않도록 타임아웃 보호.
+    const guard = (p, ms) => Promise.race([Promise.resolve(p).catch(() => {}), new Promise((r) => setTimeout(r, ms))]);
     try {
+      // 1) 읽기 스트림 해제: 리더 취소 → port.readable 잠금이 풀릴 때까지 대기
       if (this.reader) {
-        await this.reader.cancel().catch(() => {});
-        this.reader.releaseLock?.();
+        await guard(this.reader.cancel(), 800);
+        try { this.reader.releaseLock?.(); } catch (_) {}
       }
+      if (this._readableClosed) await guard(this._readableClosed, 800);
+      // 2) 쓰기 스트림 해제: 라이터 닫기 → encoder→port.writable 파이프 완료까지 대기
+      //    (이걸 await 하지 않으면 port.writable 이 잠긴 채 남아 port.close() 가 실패하고,
+      //     이후 플래싱의 port.open() 이 "The port is already open" 으로 터진다.)
       if (this.writer) {
-        await this.writer.close().catch(() => {});
-        this.writer.releaseLock?.();
+        await guard(this.writer.close(), 800);
+        try { this.writer.releaseLock?.(); } catch (_) {}
       }
-      if (this._readableClosed) await this._readableClosed.catch(() => {});
-      if (this.port) await this.port.close().catch(() => {});
+      if (this._writableClosed) await guard(this._writableClosed, 800);
+      // 3) 양쪽 스트림 잠금이 모두 풀린 뒤에야 포트를 닫는다.
+      if (this.port) await guard(this.port.close(), 1500);
     } finally {
       this.reader = null;
       this.writer = null;
+      this._readableClosed = null;
+      this._writableClosed = null;
       this.port = null;
       this._textBuffer = '';
       this._emitState('closed');
