@@ -7,61 +7,65 @@
 
 ---
 
-## 1. 디자인 DNA (기존 SVG에서 추출 — 절대 변경 금지)
+## 1. 디자인 DNA (확정 스타일 — 절대 변경 금지)
 
-EDDIE = **둥근 러버호스 카툰톤의 노란 로봇**, **TV/브라운관 머리**에 어두운 스크린,
-그 위에 **시안색으로 빛나는 눈**.
+EDDIE = **치비(super-deformed) 비율의 귀여운 노란 로봇**. 큰 TV 머리 + 짤뚱한 몸(약
+2.5등신). 노란 패널 사이사이 **검은 주름(아코디언) 관절**, TV 머리에 **시안 발광 눈 +
+점선 미소**, 안테나 끝에 **반짝이는 시안 별**.
 
-| 부위 | 색 (HEX) |
+| 부위 | 색 (HEX) / 특징 |
 |---|---|
-| 보디 옐로우(메인) | `#fbb724` / 음영 `#e0a800` `#cf8f12` / 하이라이트 `#ffe680` `#ffdf66` |
-| 머리 스크린(얼굴) | 짙은 남청 `#0e1d2c` `#0b1620` + 글로스 `#9fd6ff` |
-| 눈(발광) | 시안·민트 `#46e8ce` `#7fffd4` 코어 `#c2fff2` |
-| 베젤·관절(메탈) | 회색 `#6b6c78` `#7f8a96` `#646570` |
-| 포인트 악센트 | 살구·레드 `#ff7a7a` (입/볼 등 소량) |
+| 보디 옐로우(메인) | `#fbb724` / 음영 `#e0a800` `#cf8f12` / 하이라이트 `#ffe680` |
+| 관절(주름) | **짙은 차콜/블랙 아코디언 조인트** (목·어깨·팔꿈치·허리·무릎), 손=어두운 3손가락 |
+| 머리 스크린(얼굴) | 짙은 남청 `#0e1d2c` `#0b1620` |
+| 눈(발광) | 큰 타원 시안 `#46e8ce` 코어 `#c2fff2` |
+| 입 | **점선(작은 시안 닷)으로 만든 미소** |
+| 안테나 | 얇은 대(stem) + 끝에 **빛나는 시안 별/스파크** |
+| 베젤·볼트귀 | 두꺼운 노란 베젤 + 머리 양옆 작은 볼트 |
 
-구성 요소: 안테나(머리 위) · 볼트형 "귀"(머리 양옆) · TV 베젤 + 스크린 얼굴 ·
-시안 눈 · (작은 입) · 목 볼관절 · 가슴 패널 · 볼관절 어깨/팔꿈치 · 둥근 팔다리 · 발.
+비율: **치비 2.5등신**(머리 큼). 렌더: 소프트 3D(Pixar/Blender 톤), 둥글둥글, 부드러운
+스튜디오 라이트, 투명 배경.
+
+> 기준 레퍼런스: `EDDIE MASCOT POSE SHEET`(사용자 제공). 모든 신규 에셋은 이 시트를
+> 레퍼런스로 첨부해 같은 캐릭터를 유지한다.
 
 ---
 
-## 2. 생성 프롬프트 (리그 슬라이스 최적화)
+## 2. 생성 프롬프트 (확정 스타일)
 
-**중요 — 포즈/배경 조건**(이래야 5조각으로 깔끔히 잘림):
-- **정면·완전 대칭·차렷에 가까운 자세**
-- **양팔을 몸통에서 살짝 띄움**(겨드랑이에 빈 공간 — 팔을 따로 떼어낼 수 있게)
-- **안테나는 머리 위로 또렷이, 주변 여백**
-- **그림자/광선이 부위끼리 안 뭉치게**(균일한 소프트 조명, 바닥 그림자 없음)
-- **평평한 단색 배경**(잘라내기 쉽게 — 순수 마젠타 `#FF00FF` 또는 순수 그린 권장)
-- **전신, 발끝까지, 정사각, 여백 충분**
-
-### ▶ 붙여넣기용 프롬프트 (영문 권장 — 이미지 모델 정확도↑)
+### ▶ 마스터 프롬프트 (붙여넣기용, 영문)
 
 ```
-A friendly mascot robot named EDDIE, full body, front view, perfectly symmetrical,
-standing straight in a neutral A-pose with both arms held slightly away from the
-torso (clear gap under the armpits), hands relaxed at hip level.
+A cute chibi mascot robot named EDDIE, soft 3D render (Pixar/Blender style), smooth
+rounded glossy forms, soft studio lighting, fully transparent background.
 
-Design: 1930s rubber-hose cartoon style with smooth 3D rendered shading (Pixar-like
-soft clay look). A rounded YELLOW robot (#fbb724, shadows #e0a800, highlights #ffe680).
-Head is a rounded vintage TV / CRT with a dark navy screen face (#0e1d2c) showing two
-big glowing CYAN eyes (#46e8ce, bright core #c2fff2) and a small friendly mouth. A
-short antenna with a round tip stands straight up on top of the head, with empty space
-around it. Small bolt-like "ears" on both sides of the head. Gray metal bezel and ball
-joints (#6b6c78) at neck, shoulders and elbows. A small chest panel on the torso.
-Rounded rubber-hose arms and legs, simple feet.
+Proportions: chibi / super-deformed — oversized head, short stubby body, about 2.5
+heads tall.
 
-Lighting: even soft studio light, no harsh shadows, NO cast shadow on the ground.
-Background: completely flat solid magenta (#FF00FF), no gradient, no floor, no props.
-Centered, full body with margin, feet fully visible. Square 1:1 composition. High
-resolution, crisp clean edges.
+Design: matte YELLOW body panels (#fbb724) connected by dark charcoal segmented
+accordion rubber joints (ribbed black joints at neck, shoulders, elbows, waist and
+knees), dark three-finger hands. Head is a rounded vintage TV/CRT with a thick yellow
+bezel and a dark screen face showing two large glowing CYAN oval eyes (#46e8ce, bright
+core #c2fff2) and a cute smile drawn as a dotted line of small cyan dots. A thin
+antenna on top with a glowing cyan sparkle/star tip. Small bolt ears on the sides.
+
+Front view, symmetrical, standing relaxed. Soft contact shadow only. Clean crisp
+edges, high resolution, centered, full body with margin, transparent PNG.
 ```
 
-### ▶ 네거티브(피할 것)
+### ▶ 포즈별 추가 문구 (각 1장씩, 풀해상도로)
+- **idle / 기본** : `relaxed idle, arms at sides, front view`
+- **wave**       : `smiling, one hand raised waving hello, front view`
+- **cheer**      : `both arms raised up celebrating, happy curved eyes, front view`
+- **dir/up(뒤)** : `seen from behind, back of the TV head and antenna visible, mid-walk`
+- **dir/left**   : `side profile facing left, mid-walk stride`
+- **dir/right**  : `side profile facing right, mid-walk stride`
+- **리그용(T)**  : `T-pose, both arms straight out to the sides, clear gap from body`
+
+### ▶ 네거티브
 ```
-no dynamic pose, no twisting, arms not crossing or touching the body, no hands on hips,
-no ground shadow, no background scenery, no text, no watermark, not cut off, no
-extra limbs, no asymmetry, no motion blur, no busy background.
+no extra limbs, no asymmetry, not cut off, no text, no watermark, no busy background,
+no harsh shadow.
 ```
 
 ---
