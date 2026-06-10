@@ -1707,3 +1707,35 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
   font-family: "Space Grotesk", sans-serif; font-weight: 800; font-size: 15px; }
 .sr-top .sr-chip { font-size: 18px; }
 .sr-top .sr-sensor { color: #c7d0e4; font-weight: 600; font-size: 13px; }
+
+/* ===== 이론관: 자료 슬라이드 + 블록코딩 ===== */
+.tv-card { max-width: min(960px, 94vw); width: 100%; text-align: left; }
+.tv-tabs { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+.tv-tab { padding: 9px 16px; border-radius: 10px; border: none; background: #eef0f6; color: #6b7280; font-weight: 800; font-size: 14px; cursor: pointer; }
+.tv-tab.on { background: linear-gradient(92deg,#ff9e3c,#ff5a8a); color: #fff; }
+.tv-x { margin-left: auto; background: #f1f3f9; border: none; border-radius: 10px; padding: 9px 14px; font-weight: 800; color: #4b5163; cursor: pointer; }
+.tv-slider { display: flex; align-items: center; gap: 10px; }
+.tv-stage { flex: 1; aspect-ratio: 16 / 9; background: #0e0a16 center / contain no-repeat; border-radius: 14px; border: 1px solid #e0e4ee; }
+.tv-arrow { width: 46px; height: 46px; border-radius: 50%; border: none; background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.18); font-size: 18px; cursor: pointer; color: #2a3040; flex: 0 0 auto; }
+.tv-arrow:hover { background: #ff9e3c; color: #fff; }
+.tv-dots { display: flex; gap: 7px; justify-content: center; margin-top: 12px; }
+.tv-dots i { width: 9px; height: 9px; border-radius: 50%; background: #d6dae6; cursor: pointer; }
+.tv-dots i.on { background: #ff7ab8; width: 24px; border-radius: 5px; }
+.tv-cap { text-align: center; color: #5a6072; font-size: 13.5px; margin: 12px 0 0; }
+.tv-cap b { color: #e85a8a; }
+.bc { display: flex; gap: 22px; align-items: stretch; }
+.bc-prog { flex: 1 1 56%; display: flex; flex-direction: column; gap: 9px; background: #f4f6fb; border-radius: 14px; padding: 16px; }
+.bc-h { font-weight: 800; color: #3a4154; font-size: 13px; margin-bottom: 2px; }
+.bc-block { padding: 13px 16px; border-radius: 10px; font-weight: 800; color: #23283a; font-size: 15px; border-left: 6px solid; box-shadow: 0 2px 6px rgba(0,0,0,.06); background: #fff; }
+.bc-block.on { border-color: #2ec27e; } .bc-block.off { border-color: #9aa0ac; }
+.bc-block.wait { border-color: #6fb7ff; } .bc-block.loop { border-color: #ff9e3c; background: #fff7ec; }
+.bc-side { flex: 1 1 44%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.bc-led { width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #fff7c0, #cfc9a0); border: 3px solid #b9b48c; display: grid; place-items: center; color: #8a8560; font-weight: 900; transition: .08s; }
+.bc-led.on { background: radial-gradient(circle at 38% 34%, #fffff0, #ffd23a); border-color: #ffae00; box-shadow: 0 0 28px 8px rgba(255,200,40,.7); color: #7a5b00; }
+.bc-lab { font-weight: 800; color: #3a4154; font-size: 14px; } .bc-lab b { color: #e85a8a; }
+.bc-side input[type=range] { width: 100%; accent-color: #ff7a1a; }
+.bc-actions { display: flex; gap: 8px; }
+.bc-actions .cel-go, .bc-actions .prep-btn { height: 44px; }
+.bc-conn { width: 100%; }
+.bc-status { font-size: 12.5px; color: #5a6072; text-align: center; min-height: 18px; }
+@media (max-width: 760px) { .bc { flex-direction: column; } }
