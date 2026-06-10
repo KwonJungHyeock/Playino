@@ -173,9 +173,11 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       function send(o) { if (board.connected) board.digital(cfg.blockPin, o).catch(() => {}); }
       function paint(o) { bulb.classList.toggle('on', o); stateEl.textContent = o ? '상태 · ON (HIGH)' : '상태 · OFF (LOW)'; }
       const delayLabel = () => bSpd.textContent = (+bRange.value / 1000).toFixed(1) + '초';
-      paint(ledOn); delayLabel();
-      bodyEl.querySelector('#d-on').onclick = () => { sfx.ok(); stopBlink(); ledOn = true; paint(true); send(true); };
-      bodyEl.querySelector('#d-off').onclick = () => { sfx.pop(); stopBlink(); ledOn = false; paint(false); send(false); };
+      const dOn = bodyEl.querySelector('#d-on'), dOff = bodyEl.querySelector('#d-off');
+      function setLed(o, doSend) { ledOn = o; paint(o); dOn.classList.toggle('active', o); dOff.classList.toggle('active', !o); if (doSend) send(o); }
+      setLed(ledOn, false); delayLabel();
+      dOn.onclick = () => { sfx.ok(); stopBlink(); setLed(true, true); };
+      dOff.onclick = () => { sfx.pop(); stopBlink(); setLed(false, true); };
       bRange.oninput = () => { delayLabel(); if (blinkOn) startBlink(); };
       bTog.onclick = () => { if (blinkOn) { sfx.pop(); stopBlink(); paint(ledOn); send(ledOn); } else { sfx.click(); startBlink(); } };
       function startBlink() {

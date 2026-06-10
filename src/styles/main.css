@@ -1790,3 +1790,8 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .dc-conn { width: 100%; }
 .dl-bulb.on { background: radial-gradient(circle at 38% 34%, #fffff0, #ffd23a) !important; border-color: #ffae00 !important; box-shadow: 0 0 30px 9px rgba(255,200,40,.7); color: #7a5b00; }
 .dl-pin { font-size: 12px; color: #8a90a0; font-weight: 700; }
+
+/* 디지털 버튼 선택(활성) 상태 + LED 강조 */
+.dbtn.on { opacity: .5; }
+.dbtn.on.active { opacity: 1; box-shadow: 0 8px 20px rgba(255,90,120,.4); }
+.dbtn.off.active { background: #2a3040; color: #fff; box-shadow: 0 8px 18px rgba(0,0,0,.25); }
