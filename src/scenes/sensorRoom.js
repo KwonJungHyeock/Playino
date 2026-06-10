@@ -22,66 +22,64 @@ const ROOMS_CFG = {
 export function showSensorRoom(root, { id, onExit } = {}) {
   const cfg = ROOMS_CFG[id]; if (!cfg) { onExit?.(); return; }
   const VW = Math.max(900, window.innerWidth), VH = Math.max(440, window.innerHeight);
-  // 배경 좌/우 알코브에 맞춰 양쪽 입구(네온사인) 배치
+  const FLOOR_Y = VH * 0.74;                       // EDDIE가 걷는 바닥 라인(좌우 전용)
+  // 화살표 푯말 — 각 문을 가리킴(왼쪽=이론관/오른쪽=체험관)
   const stations = [
-    { id: 'theory', icon: '📖', label: '이론관', sub: '자료 + 블록코딩', cx: VW * 0.13, signY: VH * 0.40, floorY: VH * 0.66 },
-    { id: 'play', icon: '🎮', label: '체험관', sub: '미니게임', cx: VW * 0.87, signY: VH * 0.40, floorY: VH * 0.66 },
+    { id: 'theory', icon: '📖', label: '이론관', sub: '자료 + 블록코딩', dir: -1, cx: VW * 0.27, signY: VH * 0.50, postY: FLOOR_Y },
+    { id: 'play', icon: '🎮', label: '체험관', sub: '미니게임', dir: 1, cx: VW * 0.73, signY: VH * 0.50, postY: FLOOR_Y },
   ];
-  const EXIT = { x: VW / 2 - 46, y: VH - 70, w: 92, h: 46 };
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade escape-scene sroom2">
       <div class="world-host" id="world-host"></div>
       <div class="sr-top"><span class="sr-chip">${cfg.icon}</span> <b>${cfg.name}</b> <span class="sr-sensor">· ${cfg.sensor}</span></div>
-      <div class="hud-hint" id="hud-hint"></div>
+      <button class="bx-exit" id="sr-exit">✕ 무대로</button>
       <button class="snd-toggle" id="snd-toggle">${sfx.muted ? '🔇' : '🔊'}</button>
-      <div class="hud-controls">⬆⬇⬅➡ 이동 · Space 입장 · 🎪 무대로</div>
+      <div class="hud-controls">⬅➡ 좌우 이동 · 문 끝까지 가면 입장 · ✕ 무대로</div>
+      <div class="sr-fade" id="sr-fade"></div>
       <div class="sr-theory-view" id="sr-tview" hidden></div>
     </div>`;
 
   const host = root.querySelector('#world-host');
-  const hintEl = root.querySelector('#hud-hint');
+  const fade = root.querySelector('#sr-fade');
   const snd = root.querySelector('#snd-toggle'); snd.onclick = () => { const m = sfx.toggle(); snd.textContent = m ? '🔇' : '🔊'; };
+  root.querySelector('#sr-exit').onclick = () => { sfx.pop(); destroyAll(); onExit?.(); };
   const bubble = document.createElement('div'); bubble.className = 'eddie-bubble'; host.appendChild(bubble);
   let bubbleT = null;
   function guide(t, ms = 4200) { bubble.innerHTML = `🤖 ${t}`; bubble.classList.add('show'); clearTimeout(bubbleT); if (ms) bubbleT = setTimeout(() => bubble.classList.remove('show'), ms); }
 
   const map = {
-    width: VW, height: VH, bg: '#efe2c8', playerScale: 1.35,
-    spawn: { x: VW / 2 - 14, y: VH * 0.74 },
-    walls: [
-      { x: 0, y: 0, w: VW, h: VH * 0.30 },                  // 위쪽 벽(무대 벽화) — 못 올라감
-      { x: 0, y: VH - 16, w: VW, h: 16 },
-      { x: 0, y: 0, w: 16, h: VH }, { x: VW - 16, y: 0, w: 16, h: VH },
-    ],
+    width: VW, height: VH, bg: '#efe2c8', playerScale: 1.75, lockVertical: true,
+    spawn: { x: VW / 2 - 14, y: FLOOR_Y - 30 },
+    walls: [{ x: 0, y: 0, w: 14, h: VH }, { x: VW - 14, y: 0, w: 14, h: VH }],
+    // 문 끝(좌/우 가장자리)에 닿으면 자동 입장(페이드)
     triggers: [
-      { id: 'theory', x: 16, y: VH * 0.42, w: VW * 0.26, h: VH * 0.5 },     // 왼쪽 알코브 앞 바닥
-      { id: 'play', x: VW * 0.74, y: VH * 0.42, w: VW * 0.26 - 16, h: VH * 0.5 },
-      { id: '__exit', ...EXIT },
+      { id: 'theory', auto: true, x: 0, y: 0, w: VW * 0.13, h: VH },
+      { id: 'play', auto: true, x: VW * 0.87, y: 0, w: VW * 0.13, h: VH },
     ],
-    draw: (ctx, st) => drawRoom(ctx, st, stations, cfg, VW, VH, EXIT),
+    draw: (ctx, st) => drawRoom(ctx, st, stations, cfg, VW, VH),
   };
 
   const world = createWorld(host, map, {
-    onInteract: handle, onFrame: updateHint,
-    onEddieClick: () => guide('이론관 먼저? 체험관 먼저? 골라봐! 😎', 2600),
+    onAuto: enterDoor, onFrame: onFrame,
+    onEddieClick: () => guide('왼쪽=이론관 📖 · 오른쪽=체험관 🎮 — 문 끝까지 걸어가!', 2800),
     onDrawOverlay: drawVignette,
   });
   setTimeout(() => guide(cfg.intro), 500);
 
   function destroyAll() { try { world.destroy(); } catch (_) {} }
-  function handle(idTrig) {
-    if (idTrig === '__exit') { sfx.pop(); destroyAll(); onExit?.(); return; }
-    if (idTrig === 'theory') { sfx.click(); openTheory(); return; }
-    if (idTrig === 'play') { sfx.click(); destroyAll(); cfg.play(root, { onExit: () => showSensorRoom(root, { id, onExit }) }); return; }
+  let entering = false;
+  function enterDoor(idTrig) {
+    if (entering) return; entering = true;
+    sfx.start(); world.pause(); fade.classList.add('on');
+    setTimeout(() => {
+      if (idTrig === 'theory') { openTheory(); fade.classList.remove('on'); entering = false; }
+      else { destroyAll(); cfg.play(root, { onExit: () => showSensorRoom(root, { id, onExit }) }); }
+    }, 480);
   }
-  function updateHint(state) {
+  function onFrame(state) {
     const p = state.player, cam = state.cam;
-    bubble.style.left = ((p.x + p.w / 2) - cam.x) + 'px'; bubble.style.top = (p.y - cam.y - 96) + 'px';
-    const tr = state.activeTrigger;
-    if (!tr) { hintEl.classList.remove('show'); return; }
-    hintEl.innerHTML = tr.id === '__exit' ? '🎪 Space · 무대로' : tr.id === 'theory' ? '📖 Space · 이론관 입장' : '🎮 Space · 체험관 입장';
-    hintEl.classList.add('show');
+    bubble.style.left = ((p.x + p.w / 2) - cam.x) + 'px'; bubble.style.top = (p.y - cam.y - 110) + 'px';
   }
   function drawVignette(ctx, st, canvas) {
     const g = ctx.createRadialGradient(canvas.width / 2, canvas.height * 0.46, canvas.height * 0.42, canvas.width / 2, canvas.height / 2, canvas.height * 1.02);
@@ -107,7 +105,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     const bodyEl = v.querySelector('#tv-body');
     v.querySelectorAll('.tv-tab').forEach((b) => b.onclick = () => { if (tab === b.dataset.t) return; tab = b.dataset.t; if (tab !== 'code') stopBlink(); v.querySelectorAll('.tv-tab').forEach((x) => x.classList.toggle('on', x === b)); renderTab(); });
     v.querySelector('#tv-x').onclick = close;
-    function close() { stopBlink(); v.hidden = true; v.innerHTML = ''; world.resume(); }
+    function close() { stopBlink(); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
 
     function renderTab() { tab === 'info' ? renderInfo() : renderCode(); }
 
@@ -186,7 +184,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
 }
 
 // ───────── 그리기 ─────────
-function drawRoom(ctx, st, stations, cfg, VW, VH, EXIT) {
+function drawRoom(ctx, st, stations, cfg, VW, VH) {
   const t = st?.t || 0, activeId = st?.activeTrigger?.id;
   if (roomImg.complete && roomImg.naturalWidth) {
     drawCover(ctx, roomImg, VW, VH);
@@ -200,51 +198,58 @@ function drawRoom(ctx, st, stations, cfg, VW, VH, EXIT) {
     for (let y = VH * 0.45; y < VH; y += 48) { ctx.beginPath(); ctx.moveTo(16, y); ctx.lineTo(VW - 16, y); ctx.stroke(); }
     bunting(ctx, VW, t);
   }
-  for (const s of stations) drawEntrance(ctx, s, s.id === activeId, t, cfg);
-  ctx.save(); ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(20,26,44,0.9)'; rr(ctx, EXIT.x - 10, EXIT.y, EXIT.w + 20, 30, 9); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,210,120,0.85)'; ctx.lineWidth = 2; rr(ctx, EXIT.x - 10, EXIT.y, EXIT.w + 20, 30, 9); ctx.stroke();
-  ctx.fillStyle = '#ffe6b0'; ctx.font = '800 13px "Space Grotesk", sans-serif'; ctx.fillText('🎪 무대로', EXIT.x + EXIT.w / 2, EXIT.y + 19);
-  ctx.restore(); ctx.textAlign = 'start';
+  // 문 쪽 빛 기둥(좌/우 끝) — 가까이 갈수록 환해지는 입구 연출
+  const px = st?.player ? st.player.x : VW / 2;
+  doorGlow(ctx, VW * 0.05, VH, '120,225,255', 1 - Math.min(1, px / (VW * 0.32)));
+  doorGlow(ctx, VW * 0.95, VH, '255,140,90', 1 - Math.min(1, (VW - px) / (VW * 0.32)));
+  for (const s of stations) drawSign(ctx, s, s.id === activeId, t);
 }
 
-// 좌/우 알코브 위 네온사인 입구 + 바닥 풋라이트 + 화살표
-function drawEntrance(ctx, s, active, t, cfg) {
-  const cx = s.cx, sy = s.signY, fyFloor = s.floorY;
-  const acc = s.id === 'play' ? '255,140,90' : '120,225,255';   // 체험=주황네온 / 이론=시안네온
-  const pulse = 0.55 + 0.45 * Math.sin(t * 0.12 + (s.id === 'play' ? 1 : 0));
+function doorGlow(ctx, x, VH, acc, k) {
+  if (k <= 0.02) return;
+  const g = ctx.createLinearGradient(x, 0, x, VH); g.addColorStop(0, `rgba(${acc},${0.35 * k})`); g.addColorStop(1, `rgba(${acc},0)`);
+  ctx.fillStyle = g; ctx.fillRect(x - 90, 0, 180, VH);
+}
 
-  // 바닥 네온 풋라이트
-  const fg = ctx.createRadialGradient(cx, fyFloor, 4, cx, fyFloor, 120);
-  fg.addColorStop(0, `rgba(${acc},${active ? 0.55 : 0.34})`); fg.addColorStop(1, `rgba(${acc},0)`);
-  ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(cx, fyFloor, active ? 110 : 88, active ? 30 : 22, 0, 0, 6.283); ctx.fill();
+// 화살표 푯말(문을 가리킴) — 기둥 + 화살표 보드 + 큰 방향 화살표
+function drawSign(ctx, s, active, t) {
+  const dir = s.dir, cx = s.cx, boardY = s.signY, baseY = s.postY;
+  const acc = s.id === 'play' ? '255,140,90' : '120,225,255';
+  const pulse = 0.55 + 0.45 * Math.sin(t * 0.12 + (dir > 0 ? 1 : 0));
+  const bob = active ? Math.sin(t * 0.12) * 3 : 0, by = boardY + bob;
 
-  // 알코브 입구 빛(은은하게 — 배경 아치 위로)
-  const portal = ctx.createRadialGradient(cx, sy + 40, 8, cx, sy + 40, 130);
-  portal.addColorStop(0, `rgba(${acc},${active ? 0.3 : 0.16})`); portal.addColorStop(1, `rgba(${acc},0)`);
-  ctx.fillStyle = portal; ctx.beginPath(); ctx.ellipse(cx, sy + 40, 95, 150, 0, 0, 6.283); ctx.fill();
+  // 바닥 풋라이트
+  const fg = ctx.createRadialGradient(cx, baseY, 4, cx, baseY, 110);
+  fg.addColorStop(0, `rgba(${acc},${active ? 0.5 : 0.3})`); fg.addColorStop(1, `rgba(${acc},0)`);
+  ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(cx, baseY, active ? 96 : 76, active ? 26 : 20, 0, 0, 6.283); ctx.fill();
+  // 기둥
+  const post = ctx.createLinearGradient(cx - 7, 0, cx + 7, 0); post.addColorStop(0, '#6f4a2c'); post.addColorStop(.5, '#8a5e38'); post.addColorStop(1, '#6f4a2c');
+  ctx.fillStyle = post; ctx.fillRect(cx - 7, by + 26, 14, baseY - (by + 26));
 
-  // 네온 사인 패널
-  const w = 210, h = 64, x = cx - w / 2, y = sy - h / 2;
+  // 화살표 보드
+  const bw = 232, bh = 78;
   ctx.save();
-  ctx.fillStyle = 'rgba(16,12,24,0.86)'; rr(ctx, x, y, w, h, 16); ctx.fill();
-  ctx.shadowColor = `rgba(${acc},${pulse})`; ctx.shadowBlur = 26 * pulse;
-  ctx.strokeStyle = `rgba(${acc},1)`; ctx.lineWidth = 3.5; rr(ctx, x + 4, y + 4, w - 8, h - 8, 13); ctx.stroke();
-  ctx.shadowBlur = 16;
-  ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
-  ctx.font = '900 22px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, sy - 1);
-  ctx.shadowBlur = 8; ctx.fillStyle = `rgb(${acc})`; ctx.font = '700 11px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, sy + 18);
+  ctx.fillStyle = 'rgba(16,12,24,0.88)'; arrowBoard(ctx, cx, by, bw, bh, dir); ctx.fill();
+  ctx.shadowColor = `rgba(${acc},${pulse})`; ctx.shadowBlur = 28 * pulse;
+  ctx.strokeStyle = `rgba(${acc},1)`; ctx.lineWidth = 4; arrowBoard(ctx, cx, by, bw - 8, bh - 8, dir); ctx.stroke();
+  ctx.shadowBlur = 14; ctx.textAlign = 'center';
+  const tShift = -dir * 12;
+  ctx.fillStyle = '#fff'; ctx.font = '900 24px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx + tShift, by + 1);
+  ctx.shadowBlur = 8; ctx.fillStyle = `rgb(${acc})`; ctx.font = '700 12px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx + tShift, by + 21);
   ctx.restore();
 
-  // 사인 → 바닥 화살표(입장 유도)
-  if (active) {
-    ctx.save(); ctx.fillStyle = `rgb(${acc})`; ctx.textAlign = 'center';
-    ctx.font = '800 16px "Space Grotesk", sans-serif';
-    ctx.fillText('▼', cx, fyFloor - 40 + Math.sin(t * 0.16) * 3);
-    ctx.fillText('들어가기 · Space', cx, fyFloor + 4);
-    ctx.restore();
-  }
-  ctx.textAlign = 'start';
+  // 큰 방향 화살표(문 쪽으로 깜빡)
+  ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = `rgba(${acc},${0.6 + 0.4 * Math.sin(t * 0.18)})`;
+  ctx.font = '900 34px "Space Grotesk", sans-serif';
+  ctx.fillText(dir > 0 ? '▶' : '◀', cx + dir * (bw / 2 + 26) + dir * Math.abs(Math.sin(t * 0.16)) * 8, by + 10);
+  ctx.restore(); ctx.textAlign = 'start';
+}
+function arrowBoard(ctx, cx, cy, w, h, dir) {
+  const x = cx - w / 2, y = cy - h / 2, n = 26;
+  ctx.beginPath();
+  if (dir > 0) { ctx.moveTo(x, y); ctx.lineTo(x + w - n, y); ctx.lineTo(x + w, cy); ctx.lineTo(x + w - n, y + h); ctx.lineTo(x, y + h); }
+  else { ctx.moveTo(x + w, y); ctx.lineTo(x + n, y); ctx.lineTo(x, cy); ctx.lineTo(x + n, y + h); ctx.lineTo(x + w, y + h); }
+  ctx.closePath();
 }
 function drawCover(ctx, img, W, H) { const ir = img.naturalWidth / img.naturalHeight, r = W / H; let dw, dh; if (ir > r) { dh = H; dw = H * ir; } else { dw = W; dh = W / ir; } ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh); }
 function bunting(ctx, W, t) {

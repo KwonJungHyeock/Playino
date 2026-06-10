@@ -111,6 +111,7 @@ export function createWorld(container, map, handlers = {}) {
       if (state.keys.has('arrowright') || state.keys.has('d')) dx += sp;
       if (state.keys.has('arrowup') || state.keys.has('w')) dy -= sp;
       if (state.keys.has('arrowdown') || state.keys.has('s')) dy += sp;
+      if (map.lockVertical) dy = 0;             // 좌우 전용 씬(전시관 복도 등)
       if (dx && dy) { dx *= 0.707; dy *= 0.707; }
       p.moving = !!(dx || dy);
       if (dx < 0) p.face = -1; else if (dx > 0) p.face = 1;
