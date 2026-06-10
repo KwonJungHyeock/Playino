@@ -26,7 +26,7 @@
 ```
 art/                          # 저장소에 함께 두는 작업 원본(빌드에는 미포함)
   eddie-master.blend          # 3D 모델 + 리그 + 렌더 씬(카메라/조명 저장)
-  eddie-style-guide.png       # 턴어라운드 + 색/발광 스펙 (이미 turnaround.png 있음)
+  eddie-style-guide.png        # 턴어라운드 + 색/발광 스펙 (작업 원본, 빌드 미포함)
   costumes/                   # 코스튬별 .blend 또는 링크드 라이브러리
     buzzer.blend
     ...
@@ -40,9 +40,11 @@ art/                          # 저장소에 함께 두는 작업 원본(빌드�
 
 ---
 
-## 2. 에셋 계약 (코드가 자동으로 찾는 경로 — 이대로 export)
+## 2. 에셋 계약 (코드가 자동으로 찾는 경로)
 
-전부 **투명 배경 PNG**. 출력 폴더는 `public/brand/eddie/`.
+Blender 에서는 **투명 PNG 로 렌더**하고, `public/brand/` 에 떨군 뒤 **`npm run assets`**
+를 돌리면 알맞은 해상도의 **`.webp`** 로 자동 변환된다(원본 PNG 는 교체됨). 코드는 아래
+`.webp` 경로를 참조한다. 출력 폴더는 `public/brand/eddie/`.
 
 ### A. UI 가이드 — 퍼펫 리그 (최우선, 가장 생동감)
 `src/app/eddieRig.js` 가 5부위가 다 있으면 **퍼펫 리깅**으로 움직인다(머리 갸웃·팔
@@ -51,11 +53,11 @@ art/                          # 저장소에 함께 두는 작업 원본(빌드�
 
 | 파일 | 내용 | 프레임 |
 |---|---|---|
-| `rig/body.png`    | 몸통(+다리, 머리·팔·안테나 제외) | 1024×1024, 정사각, 발끝 하단 |
-| `rig/head.png`    | 머리(TV+눈)만 | 동일 캔버스, 제자리 |
-| `rig/arm-l.png`   | 왼팔만 | 동일 캔버스, 제자리 |
-| `rig/arm-r.png`   | 오른팔만 | 동일 캔버스, 제자리 |
-| `rig/antenna.png` | 안테나만 | 동일 캔버스, 제자리 |
+| `rig/body.webp`    | 몸통(+다리, 머리·팔·안테나 제외) | 1024×1024, 정사각, 발끝 하단 |
+| `rig/head.webp`    | 머리(TV+눈)만 | 동일 캔버스, 제자리 |
+| `rig/arm-l.webp`   | 왼팔만 | 동일 캔버스, 제자리 |
+| `rig/arm-r.webp`   | 오른팔만 | 동일 캔버스, 제자리 |
+| `rig/antenna.webp` | 안테나만 | 동일 캔버스, 제자리 |
 
 CSS 회전 피벗(이미 정의됨): head `50% 64%`, arm-r `40% 42%`, arm-l `60% 42%`,
 antenna `50% 82%`. 부위 분리 시 이 피벗 근처에 관절이 오도록 포즈.
@@ -68,9 +70,9 @@ antenna `50% 82%`. 부위 분리 시 이 피벗 근처에 관절이 오도록 �
 
 | 파일 | 내용 |
 |---|---|
-| `idle.png`  | 기본 둥실 정면(약간 3/4) |
-| `wave.png`  | 손 흔들기 |
-| `cheer.png` | 만세/응원 |
+| `idle.webp`  | 기본 둥실 정면(약간 3/4) |
+| `wave.webp`  | 손 흔들기 |
+| `cheer.webp` | 만세/응원 |
 
 ### C. 탑다운 4방향 워크 (지금 비어 있음 — 채우면 맵 이동이 진짜 스프라이트로)
 `src/engine/topdown.js` 가 4장 다 있으면 hero 좌우반전 대신 **방향별 스프라이트** 사용.
@@ -78,10 +80,10 @@ antenna `50% 82%`. 부위 분리 시 이 피벗 근처에 관절이 오도록 �
 
 | 파일 | 시점 |
 |---|---|
-| `dir/down.png`  | 정면(아래로 걷는 모습) |
-| `dir/up.png`    | 뒷모습 |
-| `dir/left.png`  | 좌측 |
-| `dir/right.png` | 우측 |
+| `dir/down.webp`  | 정면(아래로 걷는 모습) |
+| `dir/up.webp`    | 뒷모습 |
+| `dir/left.webp`  | 좌측 |
+| `dir/right.webp` | 우측 |
 
 권장 프레임: 약 132×144(=코드의 66×72 의 2배), 발끝이 하단. 걷기 1프레임이라도
 무방(엔진이 bob/squash 로 보행감을 더함). 추후 2프레임 원하면 알려주세요.
@@ -89,7 +91,7 @@ antenna `50% 82%`. 부위 분리 시 이 피벗 근처에 관절이 오도록 �
 ### D. 탑다운 기본 히어로 (dir 없을 때 폴백)
 | 파일 | 내용 |
 |---|---|
-| `eddie-hero.png` | 전신 정지 정면. 좌우반전으로 좌/우 방향 표현. 발끝 하단 |
+| `eddie-hero.webp` | 전신 정지 정면. 좌우반전으로 좌/우 방향 표현. 발끝 하단 |
 
 ### E. 방별 코스튬 (1장, `map.eddieSrc` 로 교체)
 방마다 에디가 분장한다. **코스튬은 D 의 히어로 포즈/프레임을 그대로 두고 악세서리만
@@ -97,28 +99,29 @@ antenna `50% 82%`. 부위 분리 시 이 피벗 근처에 관절이 오도록 �
 
 | 파일 | 방 |
 |---|---|
-| `/brand/eddie-buzzer.png`      | 부저 전시관(지휘자 모자 등) |
-| `/brand/eddie-buzzer-sing.png` | 부저 게임 콤보 연출 |
-| `/brand/eddie-conductor.png`   | 지휘 포즈 |
-| `/brand/eddie-<sensor>.png`    | 신규 센서 방 추가 시 동일 규칙 |
+| `/brand/eddie-buzzer.webp`      | 부저 전시관(지휘자 모자 등) |
+| `/brand/eddie-buzzer-sing.webp` | 부저 게임 콤보 연출 |
+| `/brand/eddie-conductor.webp`   | 지휘 포즈 |
+| `/brand/eddie-<sensor>.webp`    | 신규 센서 방 추가 시 동일 규칙 |
 
-> 코스튬 추가는 코드 1줄: 해당 방 config 의 `eddie: '/brand/eddie-<sensor>.png'`.
+> 코스튬 추가는 코드 1줄: 해당 방 config 의 `eddie: '/brand/eddie-<sensor>.webp'`.
 
 ---
 
 ## 3. 렌더 export 스펙 (모든 에셋 공통)
 
-- 포맷: **PNG, 알파(투명) 켜기**, 16bit 불필요(8bit)
+- 렌더 포맷: **PNG, 알파(투명) 켜기**, 16bit 불필요(8bit) — 이후 `npm run assets` 가 WebP 로 변환
 - 배경: 투명(Film > Transparent)
-- 해상도: 위 표 기준. 리그/포즈는 **정사각 1024**, 탑다운은 132×144 권장
+- 해상도: 표보다 크게 렌더해도 됨(스크립트가 캐릭터 1024 / 배경 2048 로 자동 축소)
 - 컬러: sRGB. 발광은 Bloom 과하지 않게(웹에서 번지면 일관성 깨짐)
 - 앵커: **발끝을 캔버스 하단 가까이**(엔진이 발 기준으로 접지 그림자/배치)
 - 파일명: 위 계약 그대로(소문자, 하이픈). 오타 1글자면 폴백으로 빠지니 주의
 
-### 용량(성능과 직결)
-- 배경 PNG 가 20~30MB 면 FPS 저하 → 캐릭터 느려짐(1번 이슈와 연결).
-- 캐릭터 PNG 는 export 후 **무손실 압축**(pngquant/oxipng) 또는 **WebP** 권장.
-  추후 `dir/` 워크는 스프라이트시트 1장으로 합치면 요청 수도 줄어든다.
+### 용량(성능과 직결) — 자동화됨
+- `scripts/optimize-assets.mjs`(=`npm run assets`)가 PNG 를 리사이즈 + WebP 로 변환한다.
+  규칙: `*-bg`→2048px, `eddie` 캐릭터→1024px, 그 외→1280px / WebP q82(캐릭터 q86).
+- 실제 효과: 초기 배경들이 5.5K·30MB → 2048px·0.2MB 수준으로 **brand 총 182MB→2.3MB**.
+- 추후 `dir/` 워크는 스프라이트시트 1장으로 합치면 요청 수도 줄어든다.
 
 ---
 
@@ -128,9 +131,9 @@ antenna `50% 82%`. 부위 분리 시 이 피벗 근처에 관절이 오도록 �
 
 1. `eddie-master.blend` 열기 — **카메라/조명 건드리지 않음**
 2. 필요한 포즈/악세서리만 변경
-3. 해당 슬롯 프레임으로 렌더 → `public/brand/eddie/...` 경로에 정확한 이름으로 저장
-4. (코스튬이면) 방 config 에 `eddie:` 경로 1줄 추가
-5. `pngquant` 등으로 압축
+3. 해당 슬롯 이름의 **PNG 로 렌더** → `public/brand/eddie/...` 경로에 저장
+4. **`npm run assets`** 실행 → 리사이즈 + WebP 변환(원본 PNG 자동 교체)
+5. (코스튬이면) 방 config 에 `eddie:` 경로 1줄 추가
 6. `git add public/brand && git commit && git push` → Vercel 자동 배포
 7. 브라우저에서 **Ctrl+Shift+R** 로 확인
 

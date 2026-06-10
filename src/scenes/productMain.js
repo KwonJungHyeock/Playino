@@ -36,7 +36,7 @@ export function showProductMain(root, { onDone } = {}) {
   // 배경 이미지
   const bgProbe = new Image();
   bgProbe.onload = () => { const bg = root.querySelector('#pm-bg'); bg.style.backgroundImage = `url(${bgProbe.src})`; bg.classList.add('has-img'); pm.classList.add('has-bg'); };
-  bgProbe.src = '/brand/main-bg.png';
+  bgProbe.src = '/brand/main-bg.webp';
 
   // 움직이는 EDDIE
   const hero = root.querySelector('#pm-hero');

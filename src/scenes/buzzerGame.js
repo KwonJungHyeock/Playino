@@ -20,10 +20,10 @@ const GAMES = [
   { key: 'hard', no: 2, name: '어려운 곡 · 환희의 송가', melody: HARD, gap: 420 },
 ];
 
-const bgImg = new Image(); bgImg.src = '/brand/stage-buzzer-bg.png';
-const noteImg = new Image(); noteImg.src = '/brand/note-leaf.png';
-const eddieImg = new Image(); eddieImg.src = '/brand/eddie-buzzer.png';
-const singImg = new Image(); singImg.src = '/brand/eddie-buzzer-sing.png';
+const bgImg = new Image(); bgImg.src = '/brand/stage-buzzer-bg.webp';
+const noteImg = new Image(); noteImg.src = '/brand/note-leaf.webp';
+const eddieImg = new Image(); eddieImg.src = '/brand/eddie-buzzer.webp';
+const singImg = new Image(); singImg.src = '/brand/eddie-buzzer-sing.webp';
 const ready = (im) => im.complete && im.naturalWidth > 0;
 
 function gradeOf(a) { return a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >= 0.5 ? 'C' : 'D'; }

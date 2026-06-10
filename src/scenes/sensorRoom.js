@@ -10,7 +10,7 @@ import { showLedGame } from './ledGame.js';
 import { showBuzzerGame } from './buzzerGame.js';
 
 const roomCache = {};
-function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.png`; roomCache[key] = im; } return roomCache[key]; }
+function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.webp`; roomCache[key] = im; } return roomCache[key]; }
 
 const ROOMS_CFG = {
   led: {
@@ -27,7 +27,7 @@ const ROOMS_CFG = {
   },
   buzzer: {
     name: '멜로디 연주단', sensor: '수동 부저 · Passive Buzzer', icon: '🔊', accent: '150,210,120',
-    room: 'room-buzzer-bg', eddie: '/brand/eddie-buzzer.png', signL: '140,210,150', signR: '255,200,110', control: 'keys', blockPin: 5,
+    room: 'room-buzzer-bg', eddie: '/brand/eddie-buzzer.webp', signL: '140,210,150', signR: '255,200,110', control: 'keys', blockPin: 5,
     intro: '이론관에서 부저를 배우고, 체험관에서 멜로디를 연주하자! 🎶',
     animTheory: 'buzzer',                                 // 정적 이미지 대신 코드 애니메이션 이론
     captions: [
@@ -46,7 +46,7 @@ function soonPlay(root, { onExit } = {}, name, bg) {
     <p>이 체험관 미니게임은 준비 중이에요. 이론관에서 먼저 배워볼까요?</p>
     <button class="cel-go" id="soon-back">전시관으로 ▶</button></div></div>`;
   const im = new Image(); im.onload = () => { const e = root.querySelector('#soon-bg'); if (e) { e.style.backgroundImage = `url(${im.src})`; } };
-  im.src = `/brand/${bg}.png`;
+  im.src = `/brand/${bg}.webp`;
   root.querySelector('#soon-back').onclick = () => onExit?.();
 }
 
@@ -123,7 +123,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     world.pause();
     const v = root.querySelector('#sr-tview'); v.hidden = false;
     let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null, theoryRaf = null;
-    const INFO = (cfg.info || []).map((n) => `/brand/${n}.png`), CAPS = cfg.captions || [];
+    const INFO = (cfg.info || []).map((n) => `/brand/${n}.webp`), CAPS = cfg.captions || [];
 
     v.innerHTML = `
       <div class="prep-card tv-card">

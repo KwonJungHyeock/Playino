@@ -33,7 +33,7 @@ export function showLogin(root, { onDone } = {}) {
   // 배경(있으면 컨셉 배경 recede 적용)
   const bgProbe = new Image();
   bgProbe.onload = () => { const b = root.querySelector('#lg-bg'); b.style.backgroundImage = `url(${bgProbe.src})`; b.classList.add('has-img'); };
-  bgProbe.src = '/brand/login-bg.png';
+  bgProbe.src = '/brand/login-bg.webp';
 
   const rig = mountEddieRig(root.querySelector('#lg-hero'));
 

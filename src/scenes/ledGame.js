@@ -22,8 +22,8 @@ const GAMES = [
 ];
 const PASS_ACC = 0.85;   // A등급 이상
 
-const bgImg = new Image(); bgImg.src = '/brand/stage-led-bg.png';
-const eddieImg = new Image(); eddieImg.src = '/brand/eddie-conductor.png';
+const bgImg = new Image(); bgImg.src = '/brand/stage-led-bg.webp';
+const eddieImg = new Image(); eddieImg.src = '/brand/eddie-conductor.webp';
 const ready = (im) => im.complete && im.naturalWidth > 0;
 
 function buildBeats(game) {
@@ -110,7 +110,7 @@ export function showLedGame(root, { onExit } = {}) {
 
   const wImg = new Image();
   wImg.onload = () => { const e = root.querySelector('#prep-img'); e.style.backgroundImage = `url(${wImg.src})`; e.classList.add('has-img'); };
-  wImg.src = '/brand/wiring-led.png';
+  wImg.src = '/brand/wiring-led.webp';
 
   let W = 0, H = 0;
   function resize() { W = canvas.width = host.clientWidth || window.innerWidth; H = canvas.height = host.clientHeight || 600; }

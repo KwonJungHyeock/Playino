@@ -17,13 +17,13 @@ import eddieSvg from '../assets/eddie.svg?raw';
 const eddieImg = new Image();
 eddieImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(eddieSvg);
 
-// EDDIE 탑다운 4방향 스프라이트(있으면 사용): /brand/eddie/dir/{down,up,left,right}.png
+// EDDIE 탑다운 4방향 스프라이트(있으면 사용): /brand/eddie/dir/{down,up,left,right}.webp
 const DIR_IMG = { down: new Image(), up: new Image(), left: new Image(), right: new Image() };
-for (const d in DIR_IMG) DIR_IMG[d].src = `/brand/eddie/dir/${d}.png`;
+for (const d in DIR_IMG) DIR_IMG[d].src = `/brand/eddie/dir/${d}.webp`;
 const dirLoaded = (d) => DIR_IMG[d] && DIR_IMG[d].complete && DIR_IMG[d].naturalWidth > 0;
 
 // EDDIE 히어로 한 장(좌우 반전으로 방향 표현). map.eddieSrc 로 방별 코스튬 교체 가능.
-const DEFAULT_HERO = '/brand/eddie/eddie-hero.png';
+const DEFAULT_HERO = '/brand/eddie/eddie-hero.webp';
 const heroCache = {};
 function heroFor(src) { const key = src || DEFAULT_HERO; if (!heroCache[key]) { const im = new Image(); im.src = key; heroCache[key] = im; } return heroCache[key]; }
 
