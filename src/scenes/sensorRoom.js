@@ -97,40 +97,41 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   function openTheory() {
     world.pause();
     const v = root.querySelector('#sr-tview'); v.hidden = false;
-    let tab = 'info', ci = 0, blink = null, level = 0, blinkOn = false;
+    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false;
     const INFO = (cfg.info || []).map((n) => `/brand/${n}.png`), CAPS = cfg.captions || [];
 
-    v.innerHTML = `<div class="prep-card tv-card">
-      <div class="tv-tabs">
-        <button class="tv-tab on" data-t="info">📚 자료</button>
-        <button class="tv-tab" data-t="code">🎛️ LED 제어</button>
-        <button class="tv-x" id="tv-x">✕ 나가기</button>
+    v.innerHTML = `
+      <div class="prep-card tv-card">
+        <div class="tv-tabs">
+          <button class="tv-tab on" data-t="info">📚 자료</button>
+          <button class="tv-tab" data-t="code">🎛️ LED 제어</button>
+          <button class="tv-x" id="tv-x">✕ 나가기</button>
+        </div>
+        <div class="tv-body" id="tv-body"></div>
       </div>
-      <div class="tv-body" id="tv-body"></div>
-    </div>`;
-    const bodyEl = v.querySelector('#tv-body');
+      <div class="tv-eddie-wrap" id="tv-ew" hidden>
+        <div class="tv-bubble" id="tv-bubble"></div>
+        <div class="tv-eddie" id="tv-eddie"></div>
+      </div>`;
+    const bodyEl = v.querySelector('#tv-body'), ew = v.querySelector('#tv-ew'), bub = v.querySelector('#tv-bubble');
+    mountEddieRig(v.querySelector('#tv-eddie'));
     v.querySelectorAll('.tv-tab').forEach((b) => b.onclick = () => { if (tab === b.dataset.t) return; tab = b.dataset.t; if (tab !== 'code') stopBlink(); v.querySelectorAll('.tv-tab').forEach((x) => x.classList.toggle('on', x === b)); renderTab(); });
     v.querySelector('#tv-x').onclick = close;
     function close() { stopBlink(); if (board.connected) board.digital(cfg.blockPin, false).catch(() => {}); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
     function renderTab() { tab === 'info' ? renderInfo() : renderControl(); }
 
-    // 자료: 왼쪽 EDDIE 설명 + 큰 슬라이드
+    // 자료: 큰 슬라이드 + 흰 박스 밖(여백)의 EDDIE가 설명
     function renderInfo() {
-      if (!INFO.length) { bodyEl.innerHTML = `<p class="sr-tbody" style="text-align:center;padding:50px">자료 이미지를 준비 중이에요.</p>`; return; }
+      ew.hidden = false;
+      if (!INFO.length) { ew.hidden = true; bodyEl.innerHTML = `<p class="sr-tbody" style="text-align:center;padding:50px">자료 이미지를 준비 중이에요.</p>`; return; }
       bodyEl.innerHTML = `
-        <div class="tv-info">
-          <div class="tv-guide"><div class="tv-bubble" id="tv-bubble"></div><div class="tv-eddie" id="tv-eddie"></div></div>
-          <div class="tv-main">
-            <div class="tv-slider">
-              <button class="tv-arrow" id="tv-prev">◀</button>
-              <div class="tv-stage" id="tv-stage"></div>
-              <button class="tv-arrow" id="tv-next">▶</button>
-            </div>
-            <div class="tv-dots">${INFO.map((_, i) => `<i class="${i === ci ? 'on' : ''}" data-i="${i}"></i>`).join('')}</div>
-          </div>
-        </div>`;
-      mountEddieRig(bodyEl.querySelector('#tv-eddie'));
-      const stage = bodyEl.querySelector('#tv-stage'), bub = bodyEl.querySelector('#tv-bubble');
+        <div class="tv-slider">
+          <button class="tv-arrow" id="tv-prev">◀</button>
+          <div class="tv-stage" id="tv-stage"></div>
+          <button class="tv-arrow" id="tv-next">▶</button>
+        </div>
+        <div class="tv-dots">${INFO.map((_, i) => `<i class="${i === ci ? 'on' : ''}" data-i="${i}"></i>`).join('')}</div>`;
+      const stage = bodyEl.querySelector('#tv-stage');
       const show = () => {
         stage.style.backgroundImage = `url(${INFO[ci]})`;
         bodyEl.querySelectorAll('.tv-dots i').forEach((d, i) => d.classList.toggle('on', i === ci));
@@ -143,60 +144,49 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       bodyEl.querySelectorAll('.tv-dots i').forEach((d) => d.onclick = () => { ci = +d.dataset.i; show(); });
     }
 
-    // LED 제어 대시보드: 디지털(ON/OFF) + 아날로그(밝기) + 깜빡임
+    // LED 제어 대시보드: 디지털(ON/OFF) + 깜빡임 (D13은 디지털 전용 — 아날로그 없음)
     function renderControl() {
+      ew.hidden = true;
       bodyEl.innerHTML = `
         <div class="dash">
           <div class="dash-led">
             <div class="dl-bulb" id="dl-bulb"><span>LED</span></div>
             <div class="dl-state" id="dl-state">상태 · OFF (LOW)</div>
+            <div class="dl-pin">13번 핀 · 디지털 출력</div>
           </div>
           <div class="dash-cards">
             <div class="dcard">
               <div class="dc-h">🔌 디지털 제어 <span>HIGH / LOW</span></div>
-              <div class="dc-btns"><button class="cel-go" id="d-on">켜기 ON</button><button class="prep-btn" id="d-off">끄기 OFF</button></div>
-            </div>
-            <div class="dcard">
-              <div class="dc-h">🎚️ 아날로그 제어 <span>밝기 0~255 (PWM)</span></div>
-              <input type="range" id="a-range" min="0" max="255" value="0">
-              <div class="dc-val">밝기 <b id="a-val">0</b> / 255</div>
+              <div class="dc-btns"><button class="dbtn on" id="d-on">켜기 ON</button><button class="dbtn off" id="d-off">끄기 OFF</button></div>
             </div>
             <div class="dcard">
               <div class="dc-h">⏱️ 깜빡임 <span>속도 <b id="b-spd">0.4초</b></span></div>
-              <div class="dc-row"><button class="prep-btn" id="b-toggle">▶ 깜빡이기</button><input type="range" id="b-range" min="120" max="1000" step="20" value="400"></div>
+              <div class="dc-row"><button class="dbtn ghost" id="b-toggle">▶ 깜빡이기</button><input type="range" id="b-range" min="120" max="1000" step="20" value="400"></div>
             </div>
-            <button class="prep-btn dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 LED)'}</button>
-            <div class="dc-status" id="dc-status">${board.connected ? '버튼/슬라이더로 실제 LED를 제어해봐!' : '연결하면 실제 LED도 제어돼요. (안 해도 화면으로 체험)'}</div>
+            <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 LED)'}</button>
+            <div class="dc-status" id="dc-status">${board.connected ? '버튼으로 실제 13번 LED를 제어해봐!' : '연결하면 실제 LED도 제어돼요. (안 해도 화면으로 체험)'}</div>
           </div>
         </div>`;
       const bulb = bodyEl.querySelector('#dl-bulb'), stateEl = bodyEl.querySelector('#dl-state');
-      const aRange = bodyEl.querySelector('#a-range'), aVal = bodyEl.querySelector('#a-val');
       const bRange = bodyEl.querySelector('#b-range'), bSpd = bodyEl.querySelector('#b-spd'), bTog = bodyEl.querySelector('#b-toggle');
       const status = bodyEl.querySelector('#dc-status');
-      function send(v) { if (!board.connected) return; if (v <= 0 || v >= 255) board.digital(cfg.blockPin, v >= 255).catch(() => {}); else board.pwm(cfg.blockPin, v).catch(() => {}); }
-      function paint(v) {
-        const k = v / 255;
-        bulb.style.background = k > 0.02 ? `radial-gradient(circle at 38% 34%, rgba(255,255,240,${0.55 + 0.45 * k}), rgba(255,205,60,${0.4 + 0.6 * k}))` : 'radial-gradient(circle at 38% 34%, #fff7c0, #cfc9a0)';
-        bulb.style.boxShadow = k > 0.02 ? `0 0 ${10 + 34 * k}px ${4 + 9 * k}px rgba(255,200,40,${0.7 * k})` : 'none';
-        bulb.style.borderColor = k > 0.02 ? '#ffae00' : '#b9b48c';
-        stateEl.textContent = v <= 0 ? '상태 · OFF (LOW)' : v >= 255 ? '상태 · ON (HIGH)' : `상태 · 밝기 ${v}`;
-      }
+      function send(o) { if (board.connected) board.digital(cfg.blockPin, o).catch(() => {}); }
+      function paint(o) { bulb.classList.toggle('on', o); stateEl.textContent = o ? '상태 · ON (HIGH)' : '상태 · OFF (LOW)'; }
       const delayLabel = () => bSpd.textContent = (+bRange.value / 1000).toFixed(1) + '초';
-      aRange.value = level; aVal.textContent = level; paint(level); delayLabel();
-      bodyEl.querySelector('#d-on').onclick = () => { sfx.ok(); stopBlink(); level = 255; aRange.value = 255; aVal.textContent = 255; paint(255); send(255); };
-      bodyEl.querySelector('#d-off').onclick = () => { sfx.pop(); stopBlink(); level = 0; aRange.value = 0; aVal.textContent = 0; paint(0); send(0); };
-      aRange.oninput = () => { stopBlink(); level = +aRange.value; aVal.textContent = level; paint(level); send(level); };
+      paint(ledOn); delayLabel();
+      bodyEl.querySelector('#d-on').onclick = () => { sfx.ok(); stopBlink(); ledOn = true; paint(true); send(true); };
+      bodyEl.querySelector('#d-off').onclick = () => { sfx.pop(); stopBlink(); ledOn = false; paint(false); send(false); };
       bRange.oninput = () => { delayLabel(); if (blinkOn) startBlink(); };
-      bTog.onclick = () => { if (blinkOn) { sfx.pop(); stopBlink(); paint(level); send(level); } else { sfx.click(); startBlink(); } };
+      bTog.onclick = () => { if (blinkOn) { sfx.pop(); stopBlink(); paint(ledOn); send(ledOn); } else { sfx.click(); startBlink(); } };
       function startBlink() {
         stopBlink(); blinkOn = true; bTog.textContent = '⏹ 멈추기';
-        const lv = level > 0 ? level : 255; let o = true; paint(lv); send(lv);
-        blink = setInterval(() => { o = !o; paint(o ? lv : 0); send(o ? lv : 0); }, +bRange.value);
+        let o = true; paint(true); send(true);
+        blink = setInterval(() => { o = !o; paint(o); send(o); }, +bRange.value);
         status.textContent = '깜빡이는 중! 속도 슬라이더를 바꿔봐 🎚️';
       }
       bodyEl.querySelector('#dc-conn').onclick = async () => {
         if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌';
-        try { await board.connect(); bodyEl.querySelector('#dc-conn').textContent = '🔌 보드 연결됨 ✓'; status.textContent = '버튼/슬라이더로 실제 LED를 제어해봐!'; }
+        try { await board.connect(); bodyEl.querySelector('#dc-conn').textContent = '🔌 보드 연결됨 ✓'; status.textContent = '버튼으로 실제 13번 LED를 제어해봐!'; }
         catch (e) { status.textContent = board.classify(e).note; }
       };
     }
