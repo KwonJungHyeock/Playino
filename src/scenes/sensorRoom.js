@@ -7,7 +7,6 @@ import { progress } from '../app/progress.js';
 import { board } from '../app/board.js';
 import { showLedGame } from './ledGame.js';
 
-const DOOR_W = 264, DOOR_H = 318;
 const roomImg = new Image(); roomImg.src = '/brand/room-bg.png';   // 전시관 배경(있으면 사용)
 
 const ROOMS_CFG = {
@@ -23,11 +22,12 @@ const ROOMS_CFG = {
 export function showSensorRoom(root, { id, onExit } = {}) {
   const cfg = ROOMS_CFG[id]; if (!cfg) { onExit?.(); return; }
   const VW = Math.max(900, window.innerWidth), VH = Math.max(440, window.innerHeight);
+  // 배경 좌/우 알코브에 맞춰 양쪽 입구(네온사인) 배치
   const stations = [
-    { id: 'theory', icon: '📖', label: '이론관', sub: '자료 + 블록코딩', cx: VW * 0.32, cy: VH * 0.46 },
-    { id: 'play', icon: '🎮', label: '체험관', sub: '미니게임', cx: VW * 0.68, cy: VH * 0.46 },
+    { id: 'theory', icon: '📖', label: '이론관', sub: '자료 + 블록코딩', cx: VW * 0.13, signY: VH * 0.40, floorY: VH * 0.66 },
+    { id: 'play', icon: '🎮', label: '체험관', sub: '미니게임', cx: VW * 0.87, signY: VH * 0.40, floorY: VH * 0.66 },
   ];
-  const EXIT = { x: VW / 2 - 46, y: VH - 72, w: 92, h: 46 };
+  const EXIT = { x: VW / 2 - 46, y: VH - 70, w: 92, h: 46 };
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade escape-scene sroom2">
@@ -48,14 +48,15 @@ export function showSensorRoom(root, { id, onExit } = {}) {
 
   const map = {
     width: VW, height: VH, bg: '#efe2c8', playerScale: 1.35,
-    spawn: { x: VW / 2 - 14, y: VH * 0.66 },
+    spawn: { x: VW / 2 - 14, y: VH * 0.74 },
     walls: [
-      { x: 0, y: 0, w: VW, h: VH * 0.16 }, { x: 0, y: VH - 16, w: VW, h: 16 },
+      { x: 0, y: 0, w: VW, h: VH * 0.30 },                  // 위쪽 벽(무대 벽화) — 못 올라감
+      { x: 0, y: VH - 16, w: VW, h: 16 },
       { x: 0, y: 0, w: 16, h: VH }, { x: VW - 16, y: 0, w: 16, h: VH },
-      ...stations.map((s) => ({ x: s.cx - DOOR_W / 2, y: s.cy - DOOR_H / 2, w: DOOR_W, h: DOOR_H })),
     ],
     triggers: [
-      ...stations.map((s) => ({ id: s.id, x: s.cx - DOOR_W / 2, y: s.cy + DOOR_H / 2, w: DOOR_W, h: 56 })),
+      { id: 'theory', x: 16, y: VH * 0.42, w: VW * 0.26, h: VH * 0.5 },     // 왼쪽 알코브 앞 바닥
+      { id: 'play', x: VW * 0.74, y: VH * 0.42, w: VW * 0.26 - 16, h: VH * 0.5 },
       { id: '__exit', ...EXIT },
     ],
     draw: (ctx, st) => drawRoom(ctx, st, stations, cfg, VW, VH, EXIT),
@@ -189,7 +190,7 @@ function drawRoom(ctx, st, stations, cfg, VW, VH, EXIT) {
   const t = st?.t || 0, activeId = st?.activeTrigger?.id;
   if (roomImg.complete && roomImg.naturalWidth) {
     drawCover(ctx, roomImg, VW, VH);
-    ctx.fillStyle = 'rgba(30,18,40,0.14)'; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = 'rgba(20,12,30,0.06)'; ctx.fillRect(0, 0, VW, VH);
   } else {
     const wall = ctx.createLinearGradient(0, 0, 0, VH * 0.4); wall.addColorStop(0, '#f6ead6'); wall.addColorStop(1, '#ecd8bf');
     ctx.fillStyle = wall; ctx.fillRect(0, 0, VW, VH * 0.4);
@@ -199,7 +200,7 @@ function drawRoom(ctx, st, stations, cfg, VW, VH, EXIT) {
     for (let y = VH * 0.45; y < VH; y += 48) { ctx.beginPath(); ctx.moveTo(16, y); ctx.lineTo(VW - 16, y); ctx.stroke(); }
     bunting(ctx, VW, t);
   }
-  for (const s of stations) drawStation(ctx, s, s.id === activeId, t, cfg);
+  for (const s of stations) drawEntrance(ctx, s, s.id === activeId, t, cfg);
   ctx.save(); ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(20,26,44,0.9)'; rr(ctx, EXIT.x - 10, EXIT.y, EXIT.w + 20, 30, 9); ctx.fill();
   ctx.strokeStyle = 'rgba(255,210,120,0.85)'; ctx.lineWidth = 2; rr(ctx, EXIT.x - 10, EXIT.y, EXIT.w + 20, 30, 9); ctx.stroke();
@@ -207,39 +208,44 @@ function drawRoom(ctx, st, stations, cfg, VW, VH, EXIT) {
   ctx.restore(); ctx.textAlign = 'start';
 }
 
-function drawStation(ctx, s, active, t, cfg) {
-  const fw = DOOR_W, fh = DOOR_H, fx = s.cx - fw / 2, fy = s.cy - fh / 2, cx = s.cx, by = fy + fh;
-  const acc = s.id === 'play' ? '255,158,60' : cfg.accent;
-  const archR = fw / 2;
-  const fg = ctx.createRadialGradient(cx, by, 4, cx, by, 130);
-  fg.addColorStop(0, `rgba(${acc},${active ? 0.5 : 0.3})`); fg.addColorStop(1, `rgba(${acc},0)`);
-  ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(cx, by + 6, active ? 130 : 108, active ? 32 : 24, 0, 0, 6.283); ctx.fill();
-  ctx.fillStyle = 'rgba(60,40,20,0.2)'; ctx.beginPath(); ctx.ellipse(cx, by + 4, 104, 13, 0, 0, 6.283); ctx.fill();
-  ctx.save(); ctx.shadowColor = 'rgba(40,24,10,0.35)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 10;
-  const frame = ctx.createLinearGradient(fx, fy, fx, by); frame.addColorStop(0, `rgba(${acc},1)`); frame.addColorStop(1, `rgba(${acc},0.82)`);
-  ctx.fillStyle = frame; archPath(ctx, fx, fy, fw, fh, archR); ctx.fill(); ctx.restore();
-  ctx.save(); archPath(ctx, fx, fy, fw, fh, archR); ctx.clip();
-  ctx.fillStyle = 'rgba(255,255,255,0.22)'; for (let x = fx - fh; x < fx + fw; x += 30) ctx.fillRect(x, fy, 15, fh);
+// 좌/우 알코브 위 네온사인 입구 + 바닥 풋라이트 + 화살표
+function drawEntrance(ctx, s, active, t, cfg) {
+  const cx = s.cx, sy = s.signY, fyFloor = s.floorY;
+  const acc = s.id === 'play' ? '255,140,90' : '120,225,255';   // 체험=주황네온 / 이론=시안네온
+  const pulse = 0.55 + 0.45 * Math.sin(t * 0.12 + (s.id === 'play' ? 1 : 0));
+
+  // 바닥 네온 풋라이트
+  const fg = ctx.createRadialGradient(cx, fyFloor, 4, cx, fyFloor, 120);
+  fg.addColorStop(0, `rgba(${acc},${active ? 0.55 : 0.34})`); fg.addColorStop(1, `rgba(${acc},0)`);
+  ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(cx, fyFloor, active ? 110 : 88, active ? 30 : 22, 0, 0, 6.283); ctx.fill();
+
+  // 알코브 입구 빛(은은하게 — 배경 아치 위로)
+  const portal = ctx.createRadialGradient(cx, sy + 40, 8, cx, sy + 40, 130);
+  portal.addColorStop(0, `rgba(${acc},${active ? 0.3 : 0.16})`); portal.addColorStop(1, `rgba(${acc},0)`);
+  ctx.fillStyle = portal; ctx.beginPath(); ctx.ellipse(cx, sy + 40, 95, 150, 0, 0, 6.283); ctx.fill();
+
+  // 네온 사인 패널
+  const w = 210, h = 64, x = cx - w / 2, y = sy - h / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(16,12,24,0.86)'; rr(ctx, x, y, w, h, 16); ctx.fill();
+  ctx.shadowColor = `rgba(${acc},${pulse})`; ctx.shadowBlur = 26 * pulse;
+  ctx.strokeStyle = `rgba(${acc},1)`; ctx.lineWidth = 3.5; rr(ctx, x + 4, y + 4, w - 8, h - 8, 13); ctx.stroke();
+  ctx.shadowBlur = 16;
+  ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+  ctx.font = '900 22px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, sy - 1);
+  ctx.shadowBlur = 8; ctx.fillStyle = `rgb(${acc})`; ctx.font = '700 11px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, sy + 18);
   ctx.restore();
-  const iw = fw - 40, ih = fh - 34, ix = cx - iw / 2, iy = fy + 26;
-  ctx.save(); archPath(ctx, ix, iy, iw, ih, iw / 2); ctx.clip();
-  const inner = ctx.createRadialGradient(cx, iy + ih * 0.5, 10, cx, iy + ih * 0.5, ih * 0.8);
-  inner.addColorStop(0, `rgba(${acc},0.5)`); inner.addColorStop(0.5, 'rgba(40,26,40,0.95)'); inner.addColorStop(1, 'rgba(20,12,22,0.98)');
-  ctx.fillStyle = inner; ctx.fillRect(ix, iy, iw, ih);
-  const bob = Math.sin(t * 0.08 + (s.id === 'play' ? 1 : 0)) * 5;
-  ctx.textAlign = 'center'; ctx.font = '88px sans-serif'; ctx.fillText(s.icon, cx, iy + ih * 0.5 + 18 + bob);
-  ctx.restore();
-  ctx.save(); ctx.textAlign = 'center';
-  const bw = Math.max(150, ctx.measureText(s.label).width + 60);
-  ctx.fillStyle = 'rgba(20,26,44,0.92)'; rr(ctx, cx - bw / 2, fy - 6, bw, 38, 12); ctx.fill();
-  ctx.strokeStyle = `rgba(${acc},0.95)`; ctx.lineWidth = 2; rr(ctx, cx - bw / 2, fy - 6, bw, 38, 12); ctx.stroke();
-  ctx.fillStyle = '#fff'; ctx.font = '800 20px "Space Grotesk", sans-serif'; ctx.fillText(s.label, cx, fy + 14);
-  ctx.fillStyle = `rgb(${acc})`; ctx.font = '700 11px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, fy + 28);
-  ctx.restore();
-  if (active) { ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = `rgb(${acc})`; ctx.font = '800 15px "Space Grotesk", sans-serif'; ctx.fillText('들어가기 ▸ Space', cx, by + 40 + Math.sin(t * 0.14) * 2); ctx.restore(); }
+
+  // 사인 → 바닥 화살표(입장 유도)
+  if (active) {
+    ctx.save(); ctx.fillStyle = `rgb(${acc})`; ctx.textAlign = 'center';
+    ctx.font = '800 16px "Space Grotesk", sans-serif';
+    ctx.fillText('▼', cx, fyFloor - 40 + Math.sin(t * 0.16) * 3);
+    ctx.fillText('들어가기 · Space', cx, fyFloor + 4);
+    ctx.restore();
+  }
   ctx.textAlign = 'start';
 }
-function archPath(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + r); ctx.arc(x + r, y + r, r, Math.PI, 0, false); ctx.lineTo(x + w, y + h); ctx.closePath(); }
 function drawCover(ctx, img, W, H) { const ir = img.naturalWidth / img.naturalHeight, r = W / H; let dw, dh; if (ir > r) { dh = H; dw = H * ir; } else { dw = W; dh = W / ir; } ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh); }
 function bunting(ctx, W, t) {
   ctx.save(); ctx.strokeStyle = 'rgba(90,60,40,0.4)'; ctx.lineWidth = 2;
