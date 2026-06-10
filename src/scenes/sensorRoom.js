@@ -26,13 +26,13 @@ const ROOMS_CFG = {
   },
   buzzer: {
     name: '멜로디 연주단', sensor: '수동 부저 · Passive Buzzer', icon: '🔊', accent: '150,210,120',
-    room: 'room-buzzer-bg', eddie: '/brand/eddie-buzzer.png', signL: '140,210,150', signR: '255,200,110', control: 'keys', blockPin: 8,
+    room: 'room-buzzer-bg', eddie: '/brand/eddie-buzzer.png', signL: '140,210,150', signR: '255,200,110', control: 'keys', blockPin: 5,
     intro: '이론관에서 부저를 배우고, 체험관에서 멜로디를 연주하자! 🎶',
-    info: ['buzzer-info-1', 'buzzer-info-2', 'buzzer-info-3'],
+    animTheory: 'buzzer',                                 // 정적 이미지 대신 코드 애니메이션 이론
     captions: [
-      '수동 부저는 전기로 얇은 판을 떨게 해 소리를 내요! 🔊',
-      '음 높이 = 주파수(Hz). 빠르게 떨릴수록 높은 음! 🎵',
-      '알람·초인종·멜로디… 부저는 소리로 알려줘요 🔔',
+      '전기가 들어오면 얇은 판이 빠르게 떨려요 → 그 떨림이 공기를 흔들어 소리가 나요! 🔊',
+      '음 높이 = 주파수(Hz)! 빠르게 떨릴수록(높은 Hz) 높은 음 — 슬라이더로 바꿔 들어봐 🎵',
+      '알람·초인종·멜로디… 부저는 소리로 우리에게 알려줘요 🔔',
     ],
     play: (root, opt) => soonPlay(root, opt, '멜로디 연주단', 'stage-buzzer-bg'),
   },
@@ -121,7 +121,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   function openTheory() {
     world.pause();
     const v = root.querySelector('#sr-tview'); v.hidden = false;
-    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null;
+    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null, theoryRaf = null;
     const INFO = (cfg.info || []).map((n) => `/brand/${n}.png`), CAPS = cfg.captions || [];
 
     v.innerHTML = `
@@ -141,8 +141,36 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     mountEddieRig(v.querySelector('#tv-eddie'), { hero: cfg.eddie });
     v.querySelectorAll('.tv-tab').forEach((b) => b.onclick = () => { if (tab === b.dataset.t) return; tab = b.dataset.t; if (tab !== 'code') stopBlink(); v.querySelectorAll('.tv-tab').forEach((x) => x.classList.toggle('on', x === b)); renderTab(); });
     v.querySelector('#tv-x').onclick = close;
-    function close() { stopBlink(); if (stateUnsub) { stateUnsub(); stateUnsub = null; } if (board.connected && cfg.control !== 'keys') board.digital(cfg.blockPin, false).catch(() => {}); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
-    function renderTab() { tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : renderControl()); }
+    function close() { stopBlink(); stopRaf(); if (stateUnsub) { stateUnsub(); stateUnsub = null; } if (board.connected && cfg.control !== 'keys') board.digital(cfg.blockPin, false).catch(() => {}); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
+    function stopRaf() { if (theoryRaf) { cancelAnimationFrame(theoryRaf); theoryRaf = null; } }
+    function renderTab() { stopRaf(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : renderControl()); }
+
+    // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
+    function renderAnim() {
+      ew.hidden = false;
+      const ANIM = buzzerTheory();
+      bodyEl.innerHTML = `
+        <div class="tv-slider">
+          <button class="tv-arrow" id="tv-prev">◀</button>
+          <div class="tv-anim" id="tv-anim"></div>
+          <button class="tv-arrow" id="tv-next">▶</button>
+        </div>
+        <div class="tv-dots">${ANIM.map((_, i) => `<i class="${i === ci ? 'on' : ''}" data-i="${i}"></i>`).join('')}</div>`;
+      const stage = bodyEl.querySelector('#tv-anim');
+      const show = () => {
+        stopRaf();
+        stage.innerHTML = ANIM[ci].html;
+        if (ANIM[ci].init) ANIM[ci].init(stage, (id) => { theoryRaf = id; });
+        bodyEl.querySelectorAll('.tv-dots i').forEach((d, i) => d.classList.toggle('on', i === ci));
+        const cap = (cfg.captions || [])[ci] || '';
+        bub.innerHTML = `🤖 ${cap}`; bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop');
+      };
+      show();
+      const go = (d) => { sfx.hover(); ci = (ci + d + ANIM.length) % ANIM.length; show(); };
+      bodyEl.querySelector('#tv-prev').onclick = () => go(-1);
+      bodyEl.querySelector('#tv-next').onclick = () => go(1);
+      bodyEl.querySelectorAll('.tv-dots i').forEach((d) => d.onclick = () => { ci = +d.dataset.i; show(); });
+    }
 
     // 부저 연주판: 계이름 버튼(음 재생) — 보드 연결 시 실제 부저음(tone)
     function renderKeys() {
@@ -173,6 +201,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     // 자료: 큰 슬라이드 + 흰 박스 밖(여백)의 EDDIE가 설명
     function renderInfo() {
       if (stateUnsub) { stateUnsub(); stateUnsub = null; }
+      if (cfg.animTheory) { renderAnim(); return; }
       ew.hidden = false;
       if (!INFO.length) { ew.hidden = true; bodyEl.innerHTML = `<p class="sr-tbody" style="text-align:center;padding:50px">자료 이미지를 준비 중이에요.</p>`; return; }
       bodyEl.innerHTML = `
@@ -256,6 +285,60 @@ export function showSensorRoom(root, { id, onExit } = {}) {
 
     renderTab();
   }
+}
+
+// ───────── 부저 이론 애니메이션(코드로 직접) ─────────
+function buzzerTheory() {
+  return [
+    { // ① 원리: 전기 → 판 떨림 → 음파 → 소리
+      html: `<div class="ba ba1">
+        <div class="ba-stage">
+          <div class="ba-batt">🔋<em>전기</em></div>
+          <div class="ba-wire"><i></i><i></i><i></i><i></i></div>
+          <div class="ba-piezo"><div class="ba-disc"></div><span class="ba-ring"></span><span class="ba-ring r2"></span><span class="ba-ring r3"></span></div>
+          <div class="ba-ear">👂<em>소리!</em></div>
+        </div>
+        <div class="ba-flow">전기 →&nbsp; <b>판이 빠르게 떨림(진동)</b> &nbsp;→ 공기 흔들림(음파) → 소리</div>
+      </div>`,
+    },
+    { // ② 주파수 = 음 높이 (인터랙티브 파형 + 소리)
+      html: `<div class="ba ba2">
+        <canvas id="bw" width="460" height="150"></canvas>
+        <div class="ba-freqrow"><span class="ba-note" id="bn">미</span> · <b id="bf">330</b> Hz</div>
+        <div class="ba-ctrl"><span class="ba-lo">낮은 음</span><input type="range" id="bfreq" min="200" max="780" value="330"><span class="ba-hi">높은 음</span><button class="dbtn ghost" id="bplay">▶ 들어보기</button></div>
+      </div>`,
+      init: (stage, setRaf) => {
+        const cv = stage.querySelector('#bw'), ctx = cv.getContext('2d');
+        const range = stage.querySelector('#bfreq'), bf = stage.querySelector('#bf'), bn = stage.querySelector('#bn');
+        const N = [[262, '도'], [294, '레'], [330, '미'], [349, '파'], [392, '솔'], [440, '라'], [494, '시'], [523, '도↑']];
+        const nameOf = (f) => N.reduce((a, b) => Math.abs(b[0] - f) < Math.abs(a[0] - f) ? b : a)[1];
+        let phase = 0;
+        const upd = () => { bf.textContent = range.value; bn.textContent = nameOf(+range.value); };
+        range.oninput = upd; upd();
+        stage.querySelector('#bplay').onclick = () => sfx.note(+range.value, 520);
+        const loop = () => {
+          const f = +range.value, W = cv.width, H = cv.height;
+          ctx.clearRect(0, 0, W, H);
+          ctx.strokeStyle = 'rgba(120,190,140,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+          const waves = f / 70, amp = H * 0.32;
+          ctx.strokeStyle = '#36a96a'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath();
+          for (let x = 0; x <= W; x += 3) { const y = H / 2 - Math.sin((x / W) * Math.PI * 2 * waves + phase) * amp; x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+          ctx.stroke();
+          phase += f * 0.00045;
+          setRaf(requestAnimationFrame(loop));
+        };
+        loop();
+      },
+    },
+    { // ③ 활용
+      html: `<div class="ba ba3"><div class="ba-uses">
+        <div class="ba-use u-shake"><span>⏰</span>알람 시계</div>
+        <div class="ba-use u-swing"><span>🔔</span>초인종</div>
+        <div class="ba-use u-bounce"><span>🎵</span>멜로디</div>
+        <div class="ba-use u-beep"><span>📟</span>알림음</div>
+      </div></div>`,
+    },
+  ];
 }
 
 // ───────── 그리기 ─────────

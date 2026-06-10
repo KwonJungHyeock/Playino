@@ -1812,3 +1812,40 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
   background: #fff; border-radius: 22px; padding: 30px 34px; text-align: center; box-shadow: 0 26px 70px rgba(0,0,0,.5); }
 .soon-emoji { font-size: 50px; } .soon-card h2 { margin: 8px 0 10px; } .soon-card p { color: #4b5163; line-height: 1.6; margin: 0 0 20px; }
 .led .soon-card { position: absolute; left: 50%; transform: translate(-50%,-50%); }
+
+/* ===== 부저 이론 애니메이션(코드) ===== */
+.tv-anim { aspect-ratio: 16 / 9; background: #fbfcfe; border-radius: 14px; border: 1px solid #e0e4ee; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.ba { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 12px; box-sizing: border-box; }
+.ba1 .ba-stage { display: flex; align-items: center; gap: 20px; }
+.ba-batt, .ba-ear { display: flex; flex-direction: column; align-items: center; font-size: 42px; }
+.ba-batt em, .ba-ear em { font-size: 12px; color: #5a6072; font-style: normal; font-weight: 800; }
+.ba-batt { animation: ba-pulse 1.2s ease-in-out infinite; }
+.ba-wire { width: 84px; height: 6px; background: #cbd3e0; border-radius: 3px; position: relative; overflow: hidden; }
+.ba-wire i { position: absolute; top: 0; left: -12px; width: 10px; height: 6px; background: #ffd24a; border-radius: 3px; animation: ba-flow 1s linear infinite; }
+.ba-wire i:nth-child(2){animation-delay:.25s} .ba-wire i:nth-child(3){animation-delay:.5s} .ba-wire i:nth-child(4){animation-delay:.75s}
+.ba-piezo { position: relative; width: 96px; height: 96px; display: grid; place-items: center; }
+.ba-disc { width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #fff, #b9c0cc); border: 3px solid #8a93a3; animation: ba-vibe .07s linear infinite; }
+.ba-ring { position: absolute; width: 56px; height: 56px; border: 3px solid rgba(70,180,120,.6); border-radius: 50%; animation: ba-ring 1.4s ease-out infinite; }
+.ba-ring.r2 { animation-delay: .46s; } .ba-ring.r3 { animation-delay: .93s; }
+.ba-flow { font-weight: 800; color: #3a4154; font-size: 14px; } .ba-flow b { color: #2ec27e; }
+@keyframes ba-vibe { 0%{transform:translateX(-2px)} 50%{transform:translateX(2px)} 100%{transform:translateX(-2px)} }
+@keyframes ba-ring { from{transform:scale(1);opacity:.7} to{transform:scale(2.7);opacity:0} }
+@keyframes ba-flow { from{left:-12px} to{left:84px} }
+@keyframes ba-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+.ba2 { gap: 10px; }
+.ba2 canvas { background: #f4faf5; border-radius: 12px; border: 1px solid #d8ecdd; max-width: 96%; }
+.ba-freqrow { font-weight: 800; color: #23283a; font-size: 16px; }
+.ba-freqrow b { color: #2ec27e; } .ba-note { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #2ec27e; color: #fff; font-size: 14px; vertical-align: middle; }
+.ba-ctrl { display: flex; align-items: center; gap: 10px; width: 92%; }
+.ba-ctrl input { flex: 1; accent-color: #2ec27e; } .ba-lo, .ba-hi { font-size: 11px; color: #8a90a0; font-weight: 800; } .ba-ctrl .dbtn { height: 40px; padding: 0 16px; }
+.ba3 .ba-uses { display: flex; gap: 22px; }
+.ba-use { display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; color: #3a4154; }
+.ba-use span { font-size: 48px; display: inline-block; }
+.u-shake span { animation: ba-shake .5s ease-in-out infinite; }
+.u-swing span { animation: ba-swing 1.4s ease-in-out infinite; transform-origin: top center; }
+.u-bounce span { animation: ba-bounce 1s ease-in-out infinite; }
+.u-beep span { animation: ba-beep 1s steps(1) infinite; }
+@keyframes ba-shake { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg)} }
+@keyframes ba-swing { 0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(12deg)} }
+@keyframes ba-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes ba-beep { 0%,49%{opacity:1} 50%,100%{opacity:.3} }
