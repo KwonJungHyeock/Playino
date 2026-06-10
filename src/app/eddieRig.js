@@ -8,9 +8,16 @@ const POSE_BASE = '/brand/eddie/';
 const POSES = ['idle', 'wave', 'cheer'];
 const FALLBACK = '/brand/eddie/eddie-hero.png';
 
-export function mountEddieRig(container) {
+export function mountEddieRig(container, { hero } = {}) {
   const el = document.createElement('div');
   el.className = 'eddie-rig';
+  // 방별 코스튬: hero 한 장만 둥실(리깅/포즈 건너뜀)
+  if (hero) {
+    el.innerHTML = `<img class="er-fallback" alt="EDDIE" />`;
+    el.querySelector('.er-fallback').src = hero;
+    container.appendChild(el);
+    return el;
+  }
   el.innerHTML =
     Object.keys(PARTS).map((cls) => `<img class="er-part ${cls}" alt="" />`).join('') +
     POSES.map((p) => `<img class="er-pose er-pose-${p}" alt="" />`).join('') +

@@ -22,10 +22,10 @@ const DIR_IMG = { down: new Image(), up: new Image(), left: new Image(), right: 
 for (const d in DIR_IMG) DIR_IMG[d].src = `/brand/eddie/dir/${d}.png`;
 const dirLoaded = (d) => DIR_IMG[d] && DIR_IMG[d].complete && DIR_IMG[d].naturalWidth > 0;
 
-// 4방향 스프라이트가 없을 때의 폴백: 우리가 디자인한 EDDIE 히어로 한 장(좌우 반전으로 방향 표현)
-const heroImg = new Image();
-heroImg.src = '/brand/eddie/eddie-hero.png';
-const heroLoaded = () => heroImg.complete && heroImg.naturalWidth > 0;
+// EDDIE 히어로 한 장(좌우 반전으로 방향 표현). map.eddieSrc 로 방별 코스튬 교체 가능.
+const DEFAULT_HERO = '/brand/eddie/eddie-hero.png';
+const heroCache = {};
+function heroFor(src) { const key = src || DEFAULT_HERO; if (!heroCache[key]) { const im = new Image(); im.src = key; heroCache[key] = im; } return heroCache[key]; }
 
 const MOVE_KEYS = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'];
 
@@ -168,14 +168,15 @@ export function createWorld(container, map, handlers = {}) {
       const sw = 66 * ps, sh = 72 * ps;
       ctx.save(); ctx.translate(cx, feet - bob); ctx.rotate(sway); ctx.scale(breathe, breathe * squash);
       ctx.drawImage(DIR_IMG[p.dir], -sw / 2, -sh + 10, sw, sh); ctx.restore();
-    } else if (heroLoaded()) {
-      // 우리가 디자인한 EDDIE 히어로. 비율 유지 + 좌/우 반전 + 숨쉬기/갸웃으로 생동감.
-      const sh = 84 * ps, sw = sh * (heroImg.naturalWidth / heroImg.naturalHeight);
+    } else if (heroFor(map.eddieSrc).complete && heroFor(map.eddieSrc).naturalWidth) {
+      // EDDIE 히어로(방별 코스튬). 비율 유지 + 좌/우 반전 + 숨쉬기/갸웃으로 생동감.
+      const hImg = heroFor(map.eddieSrc);
+      const sh = 84 * ps, sw = sh * (hImg.naturalWidth / hImg.naturalHeight);
       ctx.save();
       ctx.translate(cx, feet - bob);
       ctx.rotate(sway);
       ctx.scale((p.face < 0 ? -1 : 1) * breathe, breathe * squash);
-      ctx.drawImage(heroImg, -sw / 2, -sh + 12, sw, sh);
+      ctx.drawImage(hImg, -sw / 2, -sh + 12, sw, sh);
       if (state.tint) {
         ctx.globalCompositeOperation = 'source-atop';
         ctx.fillStyle = state.tint; ctx.fillRect(-sw / 2, -sh + 12, sw, sh);

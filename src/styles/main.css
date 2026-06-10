@@ -1795,3 +1795,20 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .dbtn.on { opacity: .5; }
 .dbtn.on.active { opacity: 1; box-shadow: 0 8px 20px rgba(255,90,120,.4); }
 .dbtn.off.active { background: #2a3040; color: #fff; box-shadow: 0 8px 18px rgba(0,0,0,.25); }
+
+/* ===== 부저 연주판(계이름) ===== */
+.kb { display: flex; flex-direction: column; gap: 14px; }
+.kb-info { text-align: center; color: #3a4154; font-size: 15px; margin: 0; } .kb-info b { color: #e85a8a; }
+.kb-keys { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.kb-key { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px 4px; border-radius: 12px;
+  border: 2px solid #dfe3ec; background: linear-gradient(180deg,#fff,#f3f5fb); color: #2a3040; cursor: pointer; transition: .08s; }
+.kb-key b { font-size: 18px; } .kb-key span { font-size: 10.5px; color: #8a90a0; font-weight: 700; }
+.kb-key:hover { border-color: #62c98a; transform: translateY(-2px); }
+.kb-key.hit { background: linear-gradient(180deg,#d6f7e2,#9be7c0); border-color: #2ec27e; transform: translateY(2px) scale(.97); box-shadow: 0 0 18px rgba(80,210,140,.5); }
+
+/* 체험관 '곧 공개' */
+.soon-bg { position: absolute; inset: 0; background: #1c1230 center/cover no-repeat; filter: brightness(.7); }
+.soon-card { position: relative; z-index: 1; max-width: 460px; margin: 0 auto; top: 50%; transform: translateY(-50%);
+  background: #fff; border-radius: 22px; padding: 30px 34px; text-align: center; box-shadow: 0 26px 70px rgba(0,0,0,.5); }
+.soon-emoji { font-size: 50px; } .soon-card h2 { margin: 8px 0 10px; } .soon-card p { color: #4b5163; line-height: 1.6; margin: 0 0 20px; }
+.led .soon-card { position: absolute; left: 50%; transform: translate(-50%,-50%); }

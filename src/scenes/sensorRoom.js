@@ -8,22 +8,46 @@ import { board } from '../app/board.js';
 import { mountEddieRig } from '../app/eddieRig.js';
 import { showLedGame } from './ledGame.js';
 
-const roomImg = new Image(); roomImg.src = '/brand/room-bg.png';   // 전시관 배경(있으면 사용)
+const roomCache = {};
+function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.png`; roomCache[key] = im; } return roomCache[key]; }
 
 const ROOMS_CFG = {
   led: {
     name: '반짝반짝 라이트쇼', sensor: 'LED · 발광 다이오드', icon: '💡', accent: '255,200,74',
+    room: 'room-bg', eddie: null, signL: '120,225,255', signR: '255,158,90', control: 'led', blockPin: 13,
     intro: '이론관에서 LED를 배우고, 체험관에서 직접 연주해보자! 🎶',
-    info: ['led-info-1', 'led-info-2', 'led-info-3'],   // /brand/{name}.png 가로 슬라이드
+    info: ['led-info-1', 'led-info-2', 'led-info-3'],
     captions: [
       'LED는 색마다 빛 에너지(파장)가 달라요 — 노랑·초록·빨강! 🌈',
       '전자와 정공이 ‘딱’ 만나면 빛이 짠! 하고 나와요 ✨',
       '신호등·시계·자전거 후미등… LED는 생활 곳곳에 있어요! 🚦',
     ],
-    blockPin: 13,                                        // 보드 내장 LED(추가 결선 없이 체험)
     play: (root, opt) => showLedGame(root, opt),
   },
+  buzzer: {
+    name: '멜로디 연주단', sensor: '수동 부저 · Passive Buzzer', icon: '🔊', accent: '150,210,120',
+    room: 'room-buzzer-bg', eddie: '/brand/eddie-buzzer.png', signL: '140,210,150', signR: '255,200,110', control: 'keys', blockPin: 8,
+    intro: '이론관에서 부저를 배우고, 체험관에서 멜로디를 연주하자! 🎶',
+    info: ['buzzer-info-1', 'buzzer-info-2', 'buzzer-info-3'],
+    captions: [
+      '수동 부저는 전기로 얇은 판을 떨게 해 소리를 내요! 🔊',
+      '음 높이 = 주파수(Hz). 빠르게 떨릴수록 높은 음! 🎵',
+      '알람·초인종·멜로디… 부저는 소리로 알려줘요 🔔',
+    ],
+    play: (root, opt) => soonPlay(root, opt, '멜로디 연주단', 'stage-buzzer-bg'),
+  },
 };
+
+// 아직 게임 미구현인 체험관 — 무대 배경 위에 '곧 공개' 안내
+function soonPlay(root, { onExit } = {}, name, bg) {
+  root.innerHTML = `<div class="led scene-fade"><div class="soon-bg" id="soon-bg"></div>
+    <div class="soon-card"><div class="soon-emoji">🎵</div><h2>${name} — 곧 공개!</h2>
+    <p>이 체험관 미니게임은 준비 중이에요. 이론관에서 먼저 배워볼까요?</p>
+    <button class="cel-go" id="soon-back">전시관으로 ▶</button></div></div>`;
+  const im = new Image(); im.onload = () => { const e = root.querySelector('#soon-bg'); if (e) { e.style.backgroundImage = `url(${im.src})`; } };
+  im.src = `/brand/${bg}.png`;
+  root.querySelector('#soon-back').onclick = () => onExit?.();
+}
 
 export function showSensorRoom(root, { id, onExit } = {}) {
   const cfg = ROOMS_CFG[id]; if (!cfg) { onExit?.(); return; }
@@ -31,8 +55,8 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   const FLOOR_Y = VH * 0.74;                       // EDDIE가 걷는 바닥 라인(좌우 전용)
   // 화살표 푯말 — 각 문을 가리킴(왼쪽=이론관/오른쪽=체험관)
   const stations = [
-    { id: 'theory', icon: '📖', label: '이론관', sub: '자료 + 블록코딩', dir: -1, cx: VW * 0.27, signY: VH * 0.50, postY: FLOOR_Y },
-    { id: 'play', icon: '🎮', label: '체험관', sub: '미니게임', dir: 1, cx: VW * 0.73, signY: VH * 0.50, postY: FLOOR_Y },
+    { id: 'theory', icon: '📖', label: '이론관', sub: '자료 + 체험', dir: -1, cx: VW * 0.27, signY: VH * 0.50, postY: FLOOR_Y, color: cfg.signL },
+    { id: 'play', icon: '🎮', label: '체험관', sub: '미니게임', dir: 1, cx: VW * 0.73, signY: VH * 0.50, postY: FLOOR_Y, color: cfg.signR },
   ];
 
   root.innerHTML = `
@@ -55,7 +79,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   function guide(t, ms = 4200) { bubble.innerHTML = `🤖 ${t}`; bubble.classList.add('show'); clearTimeout(bubbleT); if (ms) bubbleT = setTimeout(() => bubble.classList.remove('show'), ms); }
 
   const map = {
-    width: VW, height: VH, bg: '#efe2c8', playerScale: 1.75, lockVertical: true,
+    width: VW, height: VH, bg: '#efe2c8', playerScale: 1.75, lockVertical: true, eddieSrc: cfg.eddie,
     spawn: { x: VW / 2 - 14, y: FLOOR_Y - 30 },
     walls: [{ x: 0, y: 0, w: 14, h: VH }, { x: VW - 14, y: 0, w: 14, h: VH }],
     // 문 끝(좌/우 가장자리)에 닿으면 자동 입장(페이드)
@@ -63,7 +87,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       { id: 'theory', auto: true, x: 0, y: 0, w: VW * 0.13, h: VH },
       { id: 'play', auto: true, x: VW * 0.87, y: 0, w: VW * 0.13, h: VH },
     ],
-    draw: (ctx, st) => drawRoom(ctx, st, stations, cfg, VW, VH),
+    draw: (ctx, st) => drawRoom(ctx, st, stations, cfg, VW, VH, roomImgFor(cfg.room)),
   };
 
   const world = createWorld(host, map, {
@@ -104,7 +128,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       <div class="prep-card tv-card">
         <div class="tv-tabs">
           <button class="tv-tab on" data-t="info">📚 자료</button>
-          <button class="tv-tab" data-t="code">🎛️ LED 제어</button>
+          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : '🎛️ LED 제어'}</button>
           <button class="tv-x" id="tv-x">✕ 나가기</button>
         </div>
         <div class="tv-body" id="tv-body"></div>
@@ -114,11 +138,37 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         <div class="tv-eddie" id="tv-eddie"></div>
       </div>`;
     const bodyEl = v.querySelector('#tv-body'), ew = v.querySelector('#tv-ew'), bub = v.querySelector('#tv-bubble');
-    mountEddieRig(v.querySelector('#tv-eddie'));
+    mountEddieRig(v.querySelector('#tv-eddie'), { hero: cfg.eddie });
     v.querySelectorAll('.tv-tab').forEach((b) => b.onclick = () => { if (tab === b.dataset.t) return; tab = b.dataset.t; if (tab !== 'code') stopBlink(); v.querySelectorAll('.tv-tab').forEach((x) => x.classList.toggle('on', x === b)); renderTab(); });
     v.querySelector('#tv-x').onclick = close;
-    function close() { stopBlink(); if (stateUnsub) { stateUnsub(); stateUnsub = null; } if (board.connected) board.digital(cfg.blockPin, false).catch(() => {}); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
-    function renderTab() { tab === 'info' ? renderInfo() : renderControl(); }
+    function close() { stopBlink(); if (stateUnsub) { stateUnsub(); stateUnsub = null; } if (board.connected && cfg.control !== 'keys') board.digital(cfg.blockPin, false).catch(() => {}); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
+    function renderTab() { tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : renderControl()); }
+
+    // 부저 연주판: 계이름 버튼(음 재생) — 보드 연결 시 실제 부저음(tone)
+    function renderKeys() {
+      ew.hidden = true;
+      const NOTES = [['도', 262], ['레', 294], ['미', 330], ['파', 349], ['솔', 392], ['라', 440], ['시', 494], ['도↑', 523]];
+      bodyEl.innerHTML = `
+        <div class="kb">
+          <p class="kb-info">🎹 계이름 버튼을 누르면 부저가 그 음을 연주해! 음이 <b>높을수록 주파수(Hz)</b>가 커져.</p>
+          <div class="kb-keys">${NOTES.map((n, i) => `<button class="kb-key" data-i="${i}"><b>${n[0]}</b><span>${n[1]}Hz</span></button>`).join('')}</div>
+          <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 부저)'}</button>
+          <div class="dc-status" id="dc-status">${board.connected ? '누르면 실제 부저가 소리나! 🔊' : '연결하면 실제 부저음이 나요. (안 해도 화면 소리로 체험)'}</div>
+        </div>`;
+      const status = bodyEl.querySelector('#dc-status'), connBtn = bodyEl.querySelector('#dc-conn');
+      bodyEl.querySelectorAll('.kb-key').forEach((b) => b.onclick = () => {
+        const [, freq] = NOTES[+b.dataset.i]; sfx.note(freq, 320);
+        if (board.connected) board.tone(cfg.blockPin, freq, 320).catch(() => {});
+        b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 170);
+      });
+      connBtn.onclick = async () => {
+        if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌';
+        try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '누르면 실제 부저가 소리나! 🔊'; }
+        catch (e) { status.textContent = board.classify(e).note; }
+      };
+      if (stateUnsub) stateUnsub();
+      stateUnsub = board.onState(() => { const c = board.connected; connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 부저)'; if (!c) status.textContent = '보드 연결이 끊겼어요 — 다시 [보드 연결]을 눌러줘'; });
+    }
 
     // 자료: 큰 슬라이드 + 흰 박스 밖(여백)의 EDDIE가 설명
     function renderInfo() {
@@ -209,10 +259,10 @@ export function showSensorRoom(root, { id, onExit } = {}) {
 }
 
 // ───────── 그리기 ─────────
-function drawRoom(ctx, st, stations, cfg, VW, VH) {
+function drawRoom(ctx, st, stations, cfg, VW, VH, roomBg) {
   const t = st?.t || 0, activeId = st?.activeTrigger?.id;
-  if (roomImg.complete && roomImg.naturalWidth) {
-    drawCover(ctx, roomImg, VW, VH);
+  if (roomBg && roomBg.complete && roomBg.naturalWidth) {
+    drawCover(ctx, roomBg, VW, VH);
     ctx.fillStyle = 'rgba(20,12,30,0.06)'; ctx.fillRect(0, 0, VW, VH);
   } else {
     const wall = ctx.createLinearGradient(0, 0, 0, VH * 0.4); wall.addColorStop(0, '#f6ead6'); wall.addColorStop(1, '#ecd8bf');
@@ -225,8 +275,8 @@ function drawRoom(ctx, st, stations, cfg, VW, VH) {
   }
   // 문 쪽 빛 기둥(좌/우 끝) — 가까이 갈수록 환해지는 입구 연출
   const px = st?.player ? st.player.x : VW / 2;
-  doorGlow(ctx, VW * 0.05, VH, '120,225,255', 1 - Math.min(1, px / (VW * 0.32)));
-  doorGlow(ctx, VW * 0.95, VH, '255,140,90', 1 - Math.min(1, (VW - px) / (VW * 0.32)));
+  doorGlow(ctx, VW * 0.05, VH, cfg.signL, 1 - Math.min(1, px / (VW * 0.32)));
+  doorGlow(ctx, VW * 0.95, VH, cfg.signR, 1 - Math.min(1, (VW - px) / (VW * 0.32)));
   for (const s of stations) drawSign(ctx, s, s.id === activeId, t);
 }
 
@@ -239,7 +289,7 @@ function doorGlow(ctx, x, VH, acc, k) {
 // 화살표 푯말(문을 가리킴) — 기둥 + 화살표 보드 + 큰 방향 화살표
 function drawSign(ctx, s, active, t) {
   const dir = s.dir, cx = s.cx, boardY = s.signY, baseY = s.postY;
-  const acc = s.id === 'play' ? '255,140,90' : '120,225,255';
+  const acc = s.color || (s.id === 'play' ? '255,140,90' : '120,225,255');
   const pulse = 0.55 + 0.45 * Math.sin(t * 0.12 + (dir > 0 ? 1 : 0));
   const bob = active ? Math.sin(t * 0.12) * 3 : 0, by = boardY + bob;
 
