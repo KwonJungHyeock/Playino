@@ -53,6 +53,7 @@ function enterRoom(roomId) {
     case 'basics': showBasics(app(), { onExit: back }); break;
     case 'led': showSensorRoom(app(), { id: 'led', onExit: back }); break;
     case 'buzzer': showSensorRoom(app(), { id: 'buzzer', onExit: back }); break;
+    case 'rgb': showSensorRoom(app(), { id: 'rgb', onExit: back }); break;
     case 'dht11': dhtCoding(back); break;
     case 'relay': showRelay(app(), { onExit: back }); break;
     case 'setup': showSetup(app(), { onDone: () => { progress.mark('setup'); back(); } }); break;
