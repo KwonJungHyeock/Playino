@@ -34,7 +34,7 @@ export function showPlatformIntro(root, { onDone } = {}) {
         <h1 class="pi-word"><span class="pi-e">Eduino</span> <span class="pi-ai">AI</span></h1>
         <div class="pi-tag">AIoT LEARNING PLATFORM</div>
       </div>
-      <div class="pi-skip">화면을 누르면 건너뜁니다</div>
+      <div class="pi-skip">▶ 화면을 눌러 START ◀</div>
     </div>`;
 
   const el = root.querySelector('#pintro');
