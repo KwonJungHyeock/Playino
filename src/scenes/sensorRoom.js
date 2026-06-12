@@ -51,6 +51,19 @@ const ROOMS_CFG = {
     ],
     play: (root, opt) => showRgbGame(root, opt),
   },
+  cds: {
+    name: '손그림자 마술', sensor: '조도센서(CDS) · 빛 감지', icon: '🔆', accent: '255,210,90',
+    room: 'room-cds-bg', eddie: null, signL: '255,210,120', signR: '120,180,255', control: 'cds', adc: 0,
+    intro: '이론관에서 빛 센서를 배우고, 체험관에서 손그림자로 빛을 다뤄보자! 🔆',
+    animTheory: 'cds',
+    captions: [
+      'CDS는 빛을 받으면 저항이 작아져 전기가 잘 통하고, 어두우면 저항이 커져요! 🔆',
+      '아날로그로 빛의 양을 0~1023 숫자로 읽어요 — 밝으면 큰 값, 어두우면 작은 값! 📈',
+      '자동 가로등·화면 밝기 자동조절… 빛 센서가 똑똑하게 켜고 꺼줘요 💡',
+    ],
+    // 체험관 미니게임은 다음 단계 — 지금은 '곧 공개'
+    play: (root, opt) => soonPlay(root, opt, '손그림자 마술', 'stage-cds-bg'),
+  },
 };
 
 // 아직 게임 미구현인 체험관 — 무대 배경 위에 '곧 공개' 안내
@@ -136,14 +149,15 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   function openTheory() {
     world.pause();
     const v = root.querySelector('#sr-tview'); v.hidden = false;
-    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null, theoryRaf = null;
+    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null, theoryRaf = null, cdsTimer = null;
+    function stopCdsPoll() { if (cdsTimer) { clearInterval(cdsTimer); cdsTimer = null; } }
     const INFO = (cfg.info || []).map((n) => `/brand/${n}.webp`), CAPS = cfg.captions || [];
 
     v.innerHTML = `
       <div class="prep-card tv-card">
         <div class="tv-tabs">
           <button class="tv-tab on" data-t="info">📚 자료</button>
-          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : '🎛️ LED 제어'}</button>
+          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : cfg.control === 'cds' ? '🔆 빛 측정' : '🎛️ LED 제어'}</button>
           <button class="tv-x" id="tv-x">✕ 나가기</button>
         </div>
         <div class="tv-body" id="tv-body"></div>
@@ -157,20 +171,20 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     v.querySelectorAll('.tv-tab').forEach((b) => b.onclick = () => { if (tab === b.dataset.t) return; tab = b.dataset.t; if (tab !== 'code') stopBlink(); v.querySelectorAll('.tv-tab').forEach((x) => x.classList.toggle('on', x === b)); renderTab(); });
     v.querySelector('#tv-x').onclick = close;
     function close() {
-      stopBlink(); stopRaf(); if (stateUnsub) { stateUnsub(); stateUnsub = null; }
+      stopBlink(); stopRaf(); stopCdsPoll(); if (stateUnsub) { stateUnsub(); stateUnsub = null; }
       if (board.connected) {
         if (cfg.control === 'rgb') { const p = cfg.pins; board.pwm(p.r, 0).catch(() => {}); board.pwm(p.g, 0).catch(() => {}); board.pwm(p.b, 0).catch(() => {}); }
-        else if (cfg.control !== 'keys') board.digital(cfg.blockPin, false).catch(() => {});
+        else if (cfg.control === 'led') board.digital(cfg.blockPin, false).catch(() => {});
       }
       v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume();
     }
     function stopRaf() { if (theoryRaf) { cancelAnimationFrame(theoryRaf); theoryRaf = null; } }
-    function renderTab() { stopRaf(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : renderControl()); }
+    function renderTab() { stopRaf(); stopCdsPoll(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : renderControl()); }
 
     // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
     function renderAnim() {
       ew.hidden = false;
-      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : buzzerTheory();
+      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : buzzerTheory();
       bodyEl.innerHTML = `
         <div class="tv-slider">
           <button class="tv-arrow" id="tv-prev">◀</button>
@@ -285,6 +299,63 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         const c = board.connected;
         connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 RGB LED)';
         if (!c) status.textContent = '보드 연결이 끊겼어요 — 다시 [보드 연결]을 눌러줘';
+      });
+    }
+
+    // 조도센서 빛 측정 대시보드: 실시간 빛 값(A0) 게이지. 보드 연결 시 실제 센서, 미연결 시 슬라이더 시뮬.
+    function renderCds() {
+      showEddie('센서 위에서 손을 움직여봐! 가리면 어두워지고 값이 뚝 떨어져 🔆');
+      const CH = cfg.adc ?? 0;
+      bodyEl.innerHTML = `
+        <div class="dash cds-dash">
+          <div class="dash-led">
+            <div class="cds-gauge"><span class="cds-ico top">☀️</span><div class="cds-tube"><div class="cds-fill" id="cds-fill"></div></div><span class="cds-ico bot">🌑</span></div>
+            <div class="dl-pin">🔆 테스트: <b>CDS → A0</b><br><span>(한쪽 5V · 다른쪽 10kΩ→GND · 가운데 A0)</span></div>
+          </div>
+          <div class="dash-cards">
+            <div class="dcard">
+              <div class="dc-h">📈 빛 센서 값 <span>아날로그 0~1023</span></div>
+              <div class="cds-readout"><b id="cds-num">—</b><span class="cds-state" id="cds-state">연결 대기</span></div>
+              <div class="cds-bar"><div class="cds-bar-fill" id="cds-bar"></div></div>
+              <p class="cds-tip">손으로 센서를 가리면 값이 <b>뚝</b> 떨어져요! 🖐️</p>
+            </div>
+            <div class="dcard" id="cds-sim-card">
+              <div class="dc-h">🔦 빛 시뮬 <span>연결 안 했을 때 체험</span></div>
+              <input type="range" id="cds-sim" min="0" max="1023" value="760">
+            </div>
+            <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 CDS)'}</button>
+            <div class="dc-status" id="dc-status">${board.connected ? '센서 위에서 손을 움직여봐! 🖐️' : '연결하면 실제 빛 값이 실시간으로 보여요. (안 해도 슬라이더로 체험)'}</div>
+          </div>
+        </div>`;
+      const fill = bodyEl.querySelector('#cds-fill'), num = bodyEl.querySelector('#cds-num'), stEl = bodyEl.querySelector('#cds-state');
+      const bar = bodyEl.querySelector('#cds-bar'), sim = bodyEl.querySelector('#cds-sim'), simCard = bodyEl.querySelector('#cds-sim-card');
+      const status = bodyEl.querySelector('#dc-status');
+      function paint(v) {
+        if (v == null) { num.textContent = '—'; stEl.textContent = '읽는 중…'; return; }
+        const pct = Math.max(0, Math.min(100, Math.round(v / 1023 * 100)));
+        num.textContent = v; fill.style.height = pct + '%'; bar.style.width = pct + '%';
+        stEl.textContent = v < 300 ? '어두움 🌑' : v > 720 ? '밝음 ☀️' : '보통 🌤️';
+        stEl.className = 'cds-state ' + (v < 300 ? 'dark' : v > 720 ? 'bright' : 'mid');
+      }
+      function startPoll() {
+        stopCdsPoll(); simCard.hidden = board.connected;
+        if (!board.connected) { paint(+sim.value); return; }
+        cdsTimer = setInterval(async () => { const val = await board.analogRead(CH); if (val != null) paint(val); }, 240);
+      }
+      sim.oninput = () => { if (!board.connected) paint(+sim.value); };
+      startPoll();
+      const connBtn = bodyEl.querySelector('#dc-conn');
+      connBtn.onclick = async () => {
+        if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌';
+        try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '센서 위에서 손을 움직여봐! 🖐️'; startPoll(); }
+        catch (e) { status.textContent = board.classify(e).note; }
+      };
+      if (stateUnsub) stateUnsub();
+      stateUnsub = board.onState(() => {
+        const c = board.connected;
+        connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 CDS)';
+        if (!c) { status.textContent = '보드 연결이 끊겼어요 — 슬라이더로 체험하거나 다시 연결!'; }
+        startPoll();
       });
     }
 
@@ -442,6 +513,41 @@ function rgbTheory() {
         <div class="rt-use u-beep"><span>🎮</span>게임 조명</div>
       </div>
       <div class="ba-flow">화면 속 모든 색은 <b>작은 RGB 픽셀</b>들이 만들어요 — 우리 눈엔 하나의 색으로 보여요! 🌈</div></div>` },
+  ];
+}
+
+// ───────── 조도센서(CDS) 이론 애니메이션(코드로 직접) ─────────
+function cdsTheory() {
+  return [
+    { // ① 빛 ↔ 저항
+      html: `<div class="ba ct1">
+        <div class="ct-scene">
+          <div class="ct-sun">☀️</div>
+          <div class="ct-beam"></div>
+          <div class="ct-cds"><span class="ct-cell"></span><em>CDS</em></div>
+          <div class="ct-hand">🖐️</div>
+        </div>
+        <div class="ba-flow">빛이 많으면 <b>저항↓</b> (전기 쑥쑥) · 손으로 가리면 <b>저항↑</b> (전기 막힘)</div>
+      </div>` },
+    { // ② 아날로그 0~1023 (인터랙티브)
+      html: `<div class="ba ct2">
+        <div class="ct-meter"><div class="ct-meter-fill" id="ctf"></div></div>
+        <div class="ct-read"><b id="ctv">760</b> <span id="cts">밝음 ☀️</span></div>
+        <div class="ct-slider"><span>🌑</span><input type="range" id="ctl" min="0" max="1023" value="760"><span>☀️</span></div>
+        <div class="ba-flow">빛의 양을 <b>0~1023</b> 숫자로 읽어요 — 밝으면 큰 값, 어두우면 작은 값! 📈</div>
+      </div>`,
+      init: (stage) => {
+        const l = stage.querySelector('#ctl'), f = stage.querySelector('#ctf'), v = stage.querySelector('#ctv'), s = stage.querySelector('#cts');
+        const upd = () => { const n = +l.value, pct = Math.round(n / 1023 * 100); f.style.width = pct + '%'; v.textContent = n; s.textContent = n < 300 ? '어두움 🌑' : n > 720 ? '밝음 ☀️' : '보통 🌤️'; };
+        l.oninput = upd; upd();
+      } },
+    { // ③ 활용
+      html: `<div class="ba ct3"><div class="rt-uses">
+        <div class="rt-use u-shake"><span>🌃</span>자동 가로등</div>
+        <div class="rt-use u-bounce"><span>📱</span>화면 밝기</div>
+        <div class="rt-use u-swing"><span>🌅</span>스마트 커튼</div>
+        <div class="rt-use u-beep"><span>🚨</span>침입 감지</div>
+      </div><div class="ba-flow">어두워지면 <b>자동으로</b> 켜고, 밝아지면 꺼요 💡</div></div>` },
   ];
 }
 
