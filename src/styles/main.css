@@ -1302,7 +1302,7 @@ html, body {
 .snd-toggle:hover { background: rgba(20,28,44,.72); transform: scale(1.06); }
 
 /* EDDIE 말풍선(메인) */
-.pm-eddie-say { position: absolute; z-index: 3; top: 1%; left: 50%; transform: translateX(-50%);
+.pm-eddie-say { position: absolute; z-index: 3; top: -8%; left: 50%; transform: translateX(-50%);
   background: #fff; color: #1a2440; font-weight: 700; font-size: 13px; white-space: nowrap;
   padding: 8px 14px; border-radius: 14px 14px 14px 4px; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
 .pm-eddie-say.pop { animation: say-pop .32s cubic-bezier(.2,.9,.2,1); }
@@ -2011,3 +2011,7 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 
 /* ===== 전역: 한글 단어 중간 끊김 방지(어절 단위 줄바꿈) ===== */
 body { word-break: keep-all; overflow-wrap: break-word; }
+/* 카드·말풍선·안내문에도 명시적으로(상속 누락 방지) */
+.celebrate-msg, .celebrate-msg h1, .celebrate-msg p, .prep-card, .led-pcard,
+.prep-sub, .lp-cond, .eddie-bubble, .pm-eddie-say, .pm-sub, .rgbg-fb,
+.fm-emoji + h1, h1, h2, p { word-break: keep-all; }
