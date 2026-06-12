@@ -11,12 +11,12 @@ let CARD_W = 184, CARD_H = 128;          // 단일 부스면 더 크게(showChap
 const COL_W = 248, ROW_H = 224, MARGIN = 80;
 const PAL = [['255,200,74', '255,170,40'], ['255,122,184', '233,80,150'], ['90,201,255', '40,160,235'], ['155,140,255', '120,100,235'], ['120,220,150', '60,185,110']];
 
-// 스테이지별 배경(있으면 사용): /brand/stage-{chapterId}-bg.png
+// 스테이지별 배경(있으면 사용): /brand/stage-{chapterId}-bg.webp
 const STAGE_IMG = {};
-function stageImg(id) { if (!STAGE_IMG[id]) { const im = new Image(); im.src = `/brand/stage-${id}-bg.png`; STAGE_IMG[id] = im; } return STAGE_IMG[id]; }
-// 부스 대표 썸네일(있으면 사용): /brand/game-{roomId}-cover.png
+function stageImg(id) { if (!STAGE_IMG[id]) { const im = new Image(); im.src = `/brand/stage-${id}-bg.webp`; STAGE_IMG[id] = im; } return STAGE_IMG[id]; }
+// 부스 대표 썸네일(있으면 사용): /brand/game-{roomId}-cover.webp
 const COVER_IMG = {};
-function coverImg(id) { if (!COVER_IMG[id]) { const im = new Image(); im.src = `/brand/game-${id}-cover.png`; COVER_IMG[id] = im; } return COVER_IMG[id]; }
+function coverImg(id) { if (!COVER_IMG[id]) { const im = new Image(); im.src = `/brand/game-${id}-cover.webp`; COVER_IMG[id] = im; } return COVER_IMG[id]; }
 function drawCoverInto(ctx, img, x, y, w, h) {
   const ir = img.naturalWidth / img.naturalHeight, r = w / h;
   let dw, dh; if (ir > r) { dh = h; dw = h * ir; } else { dw = w; dh = w / ir; }

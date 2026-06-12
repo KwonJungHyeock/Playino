@@ -53,6 +53,7 @@ function enterRoom(roomId) {
     case 'basics': showBasics(app(), { onExit: back }); break;
     case 'led': showSensorRoom(app(), { id: 'led', onExit: back }); break;
     case 'buzzer': showSensorRoom(app(), { id: 'buzzer', onExit: back }); break;
+    case 'rgb': showSensorRoom(app(), { id: 'rgb', onExit: back }); break;
     case 'dht11': dhtCoding(back); break;
     case 'relay': showRelay(app(), { onExit: back }); break;
     case 'setup': showSetup(app(), { onDone: () => { progress.mark('setup'); back(); } }); break;
@@ -71,7 +72,7 @@ function dhtGame(back) { showDht11(app(), { onQuit: () => dhtRoom(back) }); }
 // 다음 장면 배경을 미리 받아두면(인트로 4초 동안) 전환 시 '남색 물방울' 플레이스홀더가 안 보인다.
 function preloadAssets() {
   ['main-bg', 'login-bg', 'setup-bg', 'hub-bg', 'basics-bg', 'stage-led-bg', 'game-led-cover', 'wiring-led']
-    .forEach((n) => { const im = new Image(); im.src = `/brand/${n}.png`; });
+    .forEach((n) => { const im = new Image(); im.src = `/brand/${n}.webp`; });
 }
 
 window.addEventListener('DOMContentLoaded', () => { bgm.armAutostart(); preloadAssets(); scenePlatformIntro(); });

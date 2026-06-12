@@ -1,5 +1,5 @@
 // hub.js — Eduino AI : 미니게임천국 · 미니게임 광장(HUB) = 월드맵 레벨 셀렉트.
-// 일러스트 카니발 배경(/brand/hub-bg.png) 위를 EDDIE가 걸어다니며 무대(챕터)를 고른다.
+// 일러스트 카니발 배경(/brand/hub-bg.webp) 위를 EDDIE가 걸어다니며 무대(챕터)를 고른다.
 // 진입 UI는 무대를 흉내내지 않고 '명백한 게임 UI'(레벨 노드 메달 + 리본 + 점선 길)로 둔다.
 // 월드 크기를 뷰포트에 맞춰(=풀스크린) 채우고, 노드/배경 모두 같은 좌표계라 항상 정렬된다.
 
@@ -119,7 +119,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
   }
 }
 
-const hubImg = new Image(); hubImg.src = '/brand/hub-bg.png';
+const hubImg = new Image(); hubImg.src = '/brand/hub-bg.webp';
 const PAL = [['255,200,74', '255,170,40'], ['255,122,184', '233,80,150'], ['90,201,255', '40,160,235'], ['155,140,255', '120,100,235']];
 
 function drawCover(ctx, img, W, H) {

@@ -96,7 +96,7 @@ export function showBasics(root, { onExit } = {}) {
 
   const bgProbe = new Image();
   bgProbe.onload = () => { const b = root.querySelector('#bx-bg'); b.style.backgroundImage = `url(${bgProbe.src})`; b.classList.add('has-img'); };
-  bgProbe.src = '/brand/basics-bg.png';
+  bgProbe.src = '/brand/basics-bg.webp';
 
   const rig = mountEddieRig(root.querySelector('#bx-hero'));
   const speech = root.querySelector('#bx-speech');

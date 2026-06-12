@@ -17,13 +17,13 @@ import eddieSvg from '../assets/eddie.svg?raw';
 const eddieImg = new Image();
 eddieImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(eddieSvg);
 
-// EDDIE 탑다운 4방향 스프라이트(있으면 사용): /brand/eddie/dir/{down,up,left,right}.png
+// EDDIE 탑다운 4방향 스프라이트(있으면 사용): /brand/eddie/dir/{down,up,left,right}.webp
 const DIR_IMG = { down: new Image(), up: new Image(), left: new Image(), right: new Image() };
-for (const d in DIR_IMG) DIR_IMG[d].src = `/brand/eddie/dir/${d}.png`;
+for (const d in DIR_IMG) DIR_IMG[d].src = `/brand/eddie/dir/${d}.webp`;
 const dirLoaded = (d) => DIR_IMG[d] && DIR_IMG[d].complete && DIR_IMG[d].naturalWidth > 0;
 
 // EDDIE 히어로 한 장(좌우 반전으로 방향 표현). map.eddieSrc 로 방별 코스튬 교체 가능.
-const DEFAULT_HERO = '/brand/eddie/eddie-hero.png';
+const DEFAULT_HERO = '/brand/eddie/eddie-hero.webp';
 const heroCache = {};
 function heroFor(src) { const key = src || DEFAULT_HERO; if (!heroCache[key]) { const im = new Image(); im.src = key; heroCache[key] = im; } return heroCache[key]; }
 
@@ -102,10 +102,10 @@ export function createWorld(container, map, handlers = {}) {
     p.y = Math.max(0, Math.min((map.height || canvas.height) - p.h, p.y));
   }
 
-  function update() {
+  function update(fs) {
     const p = state.player;
     if (!state.paused) {
-      const sp = 2.6;
+      const sp = 2.6 * fs;                      // 60fps 기준 속도 × 경과배율 → 어떤 주사율/FPS 에서도 동일 속도
       let dx = 0, dy = 0;
       if (state.keys.has('arrowleft') || state.keys.has('a')) dx -= sp;
       if (state.keys.has('arrowright') || state.keys.has('d')) dx += sp;
@@ -132,7 +132,7 @@ export function createWorld(container, map, handlers = {}) {
         }
       }
       state.activeTrigger = active;
-      state.t += 1;
+      state.t += fs;                            // 애니메이션 시계도 경과배율로 진행 → 숨쉬기/걷기 속도 일정
     }
   }
 
@@ -214,8 +214,15 @@ export function createWorld(container, map, handlers = {}) {
     handlers.onFrame?.(state);
   }
 
-  function loop() {
-    update();
+  // 프레임 기반(주사율 의존) → 시간 기반으로. 60fps 를 1.0 으로 정규화한 경과배율(fs)을 곱한다.
+  let last = performance.now();
+  function loop(now) {
+    if (now == null) now = performance.now();
+    let fs = (now - last) / (1000 / 60);
+    last = now;
+    if (!isFinite(fs) || fs <= 0) fs = 1;       // 첫 프레임/이상값 보호
+    fs = Math.min(fs, 3);                        // 탭 복귀 등 긴 공백에 순간이동 방지(최대 3프레임치)
+    update(fs);
     camera();
     draw();
     state.raf = requestAnimationFrame(loop);

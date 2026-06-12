@@ -49,7 +49,7 @@ export const board = {
   /** 포트 선택 + 오픈 + 핸드셰이크. (사용자 클릭 핸들러에서 호출) */
   async connect() {
     emitLine('sys', '포트 선택 중…');
-    await conn.connect();                       // 취소 시 throw
+    await conn.connect({ useFilters: false });    // 모든 시리얼 포트 표시(칩 종류 무관 — 클론 보드 호환)
     const i = conn.getInfo();
     emitLine('sys', `포트 열림 (VID ${hex(i?.usbVendorId)} / PID ${hex(i?.usbProductId)}).`);
     emitLine('tx', 'PING (최대 4회)');
@@ -99,7 +99,7 @@ export const board = {
     const msg = (e?.message || String(e) || '').toLowerCase();
     if (!_isSupported()) return { kind: 'unsupported', note: '이 브라우저는 WebSerial 을 지원하지 않아요. Chrome/Edge 데스크톱에서 열어주세요.', speak: '이 브라우저는 보드 연결을 지원 안 해. Chrome이나 Edge에서 열어줘.' };
     if (name === 'NotFoundError' || /no port selected|cancel/.test(msg))
-      return { kind: 'cancel', note: '포트 선택이 취소됐어요. [다시 연결 시도]를 눌러 포트를 골라주세요.', speak: '취소됐구나! 다시 [보드 연결]을 눌러 포트를 골라줘.' };
+      return { kind: 'cancel', note: '포트를 못 골랐어요. 선택창에 포트가 없으면 ① 아두이노 IDE/시리얼모니터를 닫고 ② 케이블을 다시 꽂은 뒤 ③ [보드 연결]을 다시 눌러주세요. (Chrome/Edge 데스크톱 필요)', speak: '포트가 안 보이면 IDE를 닫고 케이블을 다시 꽂아 시도해줘!' };
     if (name === 'InvalidStateError' || /open|in use|busy|already|access/.test(msg))
       return { kind: 'busy', note: '포트가 다른 프로그램(아두이노 IDE 등)이나 다른 탭에서 사용 중일 수 있어요. 닫고 다시 시도해주세요.', speak: '포트가 사용 중인 것 같아. 아두이노 IDE나 다른 탭을 닫고 다시!' };
     return { kind: 'unknown', note: '연결 중 오류가 났어요. 케이블을 다시 꽂고 [다시 연결 시도]를 눌러주세요.', speak: '오류가 났어. 케이블을 다시 꽂고 시도해보자.' };

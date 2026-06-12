@@ -10,7 +10,7 @@ import { showLedGame } from './ledGame.js';
 import { showBuzzerGame } from './buzzerGame.js';
 
 const roomCache = {};
-function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.png`; roomCache[key] = im; } return roomCache[key]; }
+function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.webp`; roomCache[key] = im; } return roomCache[key]; }
 
 const ROOMS_CFG = {
   led: {
@@ -27,7 +27,7 @@ const ROOMS_CFG = {
   },
   buzzer: {
     name: '멜로디 연주단', sensor: '수동 부저 · Passive Buzzer', icon: '🔊', accent: '150,210,120',
-    room: 'room-buzzer-bg', eddie: '/brand/eddie-buzzer.png', signL: '140,210,150', signR: '255,200,110', control: 'keys', blockPin: 5,
+    room: 'room-buzzer-bg', eddie: '/brand/eddie-buzzer.webp', signL: '140,210,150', signR: '255,200,110', control: 'keys', blockPin: 5,
     intro: '이론관에서 부저를 배우고, 체험관에서 멜로디를 연주하자! 🎶',
     animTheory: 'buzzer',                                 // 정적 이미지 대신 코드 애니메이션 이론
     captions: [
@@ -36,6 +36,20 @@ const ROOMS_CFG = {
       '알람·초인종·멜로디… 부저는 소리로 우리에게 알려줘요 🔔',
     ],
     play: (root, opt) => showBuzzerGame(root, opt),
+  },
+  rgb: {
+    name: '무지개 물감놀이', sensor: 'RGB LED · 3색 LED', icon: '🌈', accent: '180,140,255',
+    room: 'room-rgb-bg', eddie: null, signL: '120,200,255', signR: '255,150,200', control: 'rgb',
+    pins: { r: 9, g: 10, b: 11 }, blockPin: 9,
+    intro: '이론관에서 빛의 삼원색을 배우고, 체험관에서 색을 섞어보자! 🌈',
+    animTheory: 'rgb',
+    captions: [
+      '빨강·초록·파랑(RGB) 빛을 겹치면 새 색이 돼요 — 빛은 섞을수록 밝아져요! ✨',
+      'PWM으로 각 색의 밝기(0~255)를 조절 → 원하는 색을 자유자재로! 🎚️',
+      '폰·TV·무드등 화면이 전부 이 RGB로 모든 색을 만들어요 📺',
+    ],
+    // 체험관(미니게임)은 다음 단계 — 지금은 '곧 공개' 안내
+    play: (root, opt) => soonPlay(root, opt, '무지개 물감놀이', 'stage-rgb-bg'),
   },
 };
 
@@ -46,7 +60,7 @@ function soonPlay(root, { onExit } = {}, name, bg) {
     <p>이 체험관 미니게임은 준비 중이에요. 이론관에서 먼저 배워볼까요?</p>
     <button class="cel-go" id="soon-back">전시관으로 ▶</button></div></div>`;
   const im = new Image(); im.onload = () => { const e = root.querySelector('#soon-bg'); if (e) { e.style.backgroundImage = `url(${im.src})`; } };
-  im.src = `/brand/${bg}.png`;
+  im.src = `/brand/${bg}.webp`;
   root.querySelector('#soon-back').onclick = () => onExit?.();
 }
 
@@ -123,13 +137,13 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     world.pause();
     const v = root.querySelector('#sr-tview'); v.hidden = false;
     let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null, theoryRaf = null;
-    const INFO = (cfg.info || []).map((n) => `/brand/${n}.png`), CAPS = cfg.captions || [];
+    const INFO = (cfg.info || []).map((n) => `/brand/${n}.webp`), CAPS = cfg.captions || [];
 
     v.innerHTML = `
       <div class="prep-card tv-card">
         <div class="tv-tabs">
           <button class="tv-tab on" data-t="info">📚 자료</button>
-          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : '🎛️ LED 제어'}</button>
+          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : '🎛️ LED 제어'}</button>
           <button class="tv-x" id="tv-x">✕ 나가기</button>
         </div>
         <div class="tv-body" id="tv-body"></div>
@@ -142,14 +156,21 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     mountEddieRig(v.querySelector('#tv-eddie'), { hero: cfg.eddie });
     v.querySelectorAll('.tv-tab').forEach((b) => b.onclick = () => { if (tab === b.dataset.t) return; tab = b.dataset.t; if (tab !== 'code') stopBlink(); v.querySelectorAll('.tv-tab').forEach((x) => x.classList.toggle('on', x === b)); renderTab(); });
     v.querySelector('#tv-x').onclick = close;
-    function close() { stopBlink(); stopRaf(); if (stateUnsub) { stateUnsub(); stateUnsub = null; } if (board.connected && cfg.control !== 'keys') board.digital(cfg.blockPin, false).catch(() => {}); v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume(); }
+    function close() {
+      stopBlink(); stopRaf(); if (stateUnsub) { stateUnsub(); stateUnsub = null; }
+      if (board.connected) {
+        if (cfg.control === 'rgb') { const p = cfg.pins; board.pwm(p.r, 0).catch(() => {}); board.pwm(p.g, 0).catch(() => {}); board.pwm(p.b, 0).catch(() => {}); }
+        else if (cfg.control !== 'keys') board.digital(cfg.blockPin, false).catch(() => {});
+      }
+      v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume();
+    }
     function stopRaf() { if (theoryRaf) { cancelAnimationFrame(theoryRaf); theoryRaf = null; } }
-    function renderTab() { stopRaf(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : renderControl()); }
+    function renderTab() { stopRaf(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : renderControl()); }
 
     // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
     function renderAnim() {
       ew.hidden = false;
-      const ANIM = cfg.animTheory === 'led' ? ledTheory() : buzzerTheory();
+      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : buzzerTheory();
       bodyEl.innerHTML = `
         <div class="tv-slider">
           <button class="tv-arrow" id="tv-prev">◀</button>
@@ -201,6 +222,66 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       };
       if (stateUnsub) stateUnsub();
       stateUnsub = board.onState(() => { const c = board.connected; connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 부저)'; if (!c) status.textContent = '보드 연결이 끊겼어요 — 다시 [보드 연결]을 눌러줘'; });
+    }
+
+    // RGB 색 섞기 대시보드: R/G/B 슬라이더(0~255) → 실시간 색 미리보기 + 프리셋. 보드 연결 시 실제 RGB LED(PWM)
+    function renderRgb() {
+      showEddie('빨강·초록·파랑을 섞어 색을 만들어봐! 다 올리면 하양, 다 내리면 꺼짐 🎨');
+      const P = cfg.pins;
+      const h2 = (n) => (+n).toString(16).padStart(2, '0').toUpperCase();
+      const PRESETS = [['하양', 255, 255, 255], ['빨강', 255, 0, 0], ['초록', 0, 255, 0], ['파랑', 0, 0, 255], ['노랑', 255, 255, 0], ['하늘', 0, 255, 255], ['분홍', 255, 0, 255], ['주황', 255, 110, 0], ['보라', 150, 0, 255]];
+      bodyEl.innerHTML = `
+        <div class="dash rgb-dash">
+          <div class="dash-led">
+            <div class="rgb-sw" id="rgb-sw"></div>
+            <div class="rgb-read"><b id="rgb-hex">#FFFFFF</b><span id="rgb-rgb">R255 · G255 · B255</span></div>
+            <div class="dl-pin">🎨 테스트: <b>R→D9 · G→D10 · B→D11</b><br><span>(공통 캐소드 RGB LED · 각 다리에 220Ω 저항)</span></div>
+          </div>
+          <div class="dash-cards">
+            <div class="dcard">
+              <div class="dc-h">🎚️ PWM 색 혼합 <span>각 채널 0~255</span></div>
+              <div class="rt-sliders">
+                <label class="rs r">R <input type="range" id="cr" min="0" max="255" value="255"><b id="cvr">255</b></label>
+                <label class="rs g">G <input type="range" id="cg" min="0" max="255" value="255"><b id="cvg">255</b></label>
+                <label class="rs b">B <input type="range" id="cb" min="0" max="255" value="255"><b id="cvb">255</b></label>
+              </div>
+            </div>
+            <div class="dcard">
+              <div class="dc-h">🎨 프리셋 색</div>
+              <div class="rgb-presets">${PRESETS.map((p, i) => `<button class="rgb-chip" data-i="${i}" style="background:rgb(${p[1]},${p[2]},${p[3]})" title="${p[0]}"></button>`).join('')}</div>
+            </div>
+            <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 RGB LED)'}</button>
+            <div class="dc-status" id="dc-status">${board.connected ? '슬라이더로 실제 RGB LED 색을 바꿔봐! 🌈' : '연결하면 실제 RGB LED가 같은 색으로 빛나요. (안 해도 화면으로 체험)'}</div>
+          </div>
+        </div>`;
+      const sw = bodyEl.querySelector('#rgb-sw'), hexEl = bodyEl.querySelector('#rgb-hex'), rgbEl = bodyEl.querySelector('#rgb-rgb');
+      const cr = bodyEl.querySelector('#cr'), cg = bodyEl.querySelector('#cg'), cb = bodyEl.querySelector('#cb');
+      const vr = bodyEl.querySelector('#cvr'), vg = bodyEl.querySelector('#cvg'), vb = bodyEl.querySelector('#cvb');
+      const status = bodyEl.querySelector('#dc-status');
+      function sendRGB(r, g, b) { if (board.connected) { board.pwm(P.r, r).catch(() => {}); board.pwm(P.g, g).catch(() => {}); board.pwm(P.b, b).catch(() => {}); } }
+      function paint(send) {
+        const r = +cr.value, g = +cg.value, b = +cb.value;
+        sw.style.background = `rgb(${r},${g},${b})`;
+        hexEl.textContent = '#' + h2(r) + h2(g) + h2(b);
+        rgbEl.textContent = `R${r} · G${g} · B${b}`;
+        vr.textContent = r; vg.textContent = g; vb.textContent = b;
+        if (send) sendRGB(r, g, b);
+      }
+      [cr, cg, cb].forEach((s) => s.oninput = () => paint(true));
+      bodyEl.querySelectorAll('.rgb-chip').forEach((c) => c.onclick = () => { const p = PRESETS[+c.dataset.i]; cr.value = p[1]; cg.value = p[2]; cb.value = p[3]; sfx.ok(); paint(true); });
+      paint(false);
+      const connBtn = bodyEl.querySelector('#dc-conn');
+      connBtn.onclick = async () => {
+        if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌';
+        try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '슬라이더로 실제 RGB LED 색을 바꿔봐! 🌈'; paint(true); }
+        catch (e) { status.textContent = board.classify(e).note; }
+      };
+      if (stateUnsub) stateUnsub();
+      stateUnsub = board.onState(() => {
+        const c = board.connected;
+        connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 RGB LED)';
+        if (!c) status.textContent = '보드 연결이 끊겼어요 — 다시 [보드 연결]을 눌러줘';
+      });
     }
 
     // 자료: 큰 슬라이드 + 흰 박스 밖(여백)의 EDDIE가 설명
@@ -316,6 +397,47 @@ function ledTheory() {
         <div class="la-names"><i>초록</i><i>노랑</i><i>빨강</i></div>
         <div class="ba-flow">색마다 <b>빛 에너지(파장)</b>가 달라서 다른 색으로 빛나요! 🌈</div>
       </div>` },
+  ];
+}
+
+// ───────── RGB 이론 애니메이션(코드로 직접) ─────────
+function rgbTheory() {
+  return [
+    { // ① 빛의 삼원색 — 겹치면 밝아짐(가산혼합)
+      html: `<div class="ba rt1">
+        <div class="rt-venn"><span class="rc r"></span><span class="rc g"></span><span class="rc b"></span></div>
+        <div class="ba-flow">빨강·초록·파랑 <b>빛</b>을 겹치면 → 가운데는 <b>하양</b>! 빛은 섞을수록 <b>밝아져요</b> ✨</div>
+      </div>` },
+    { // ② PWM 색 혼합 — 인터랙티브 슬라이더
+      html: `<div class="ba rt2">
+        <div class="rt-mix"><div class="rt-sw" id="rsw"></div><div class="rt-val"><b id="rhex">#FFFFFF</b><span id="rrgb">R255 · G255 · B255</span></div></div>
+        <div class="rt-sliders">
+          <label class="rs r">R <input type="range" id="sr" min="0" max="255" value="255"><b id="vr">255</b></label>
+          <label class="rs g">G <input type="range" id="sg" min="0" max="255" value="200"><b id="vg">200</b></label>
+          <label class="rs b">B <input type="range" id="sb" min="0" max="255" value="60"><b id="vb">60</b></label>
+        </div>
+        <div class="ba-flow"><b>PWM</b>으로 각 색 밝기(0~255)를 조절 → 슬라이더를 움직여 색을 만들어봐! 🎚️</div>
+      </div>`,
+      init: (stage) => {
+        const sr = stage.querySelector('#sr'), sg = stage.querySelector('#sg'), sb = stage.querySelector('#sb');
+        const sw = stage.querySelector('#rsw'), hex = stage.querySelector('#rhex'), rgb = stage.querySelector('#rrgb');
+        const vr = stage.querySelector('#vr'), vg = stage.querySelector('#vg'), vb = stage.querySelector('#vb');
+        const h = (n) => (+n).toString(16).padStart(2, '0').toUpperCase();
+        const upd = () => {
+          const r = +sr.value, g = +sg.value, b = +sb.value;
+          sw.style.background = `rgb(${r},${g},${b})`; hex.textContent = '#' + h(r) + h(g) + h(b);
+          rgb.textContent = `R${r} · G${g} · B${b}`; vr.textContent = r; vg.textContent = g; vb.textContent = b;
+        };
+        [sr, sg, sb].forEach((s) => s.oninput = upd); upd();
+      } },
+    { // ③ 활용 — 화면·조명
+      html: `<div class="ba rt3"><div class="rt-uses">
+        <div class="rt-use u-shake"><span>📱</span>폰 화면</div>
+        <div class="rt-use u-swing"><span>📺</span>TV·모니터</div>
+        <div class="rt-use u-bounce"><span>💡</span>무드등</div>
+        <div class="rt-use u-beep"><span>🎮</span>게임 조명</div>
+      </div>
+      <div class="ba-flow">화면 속 모든 색은 <b>작은 RGB 픽셀</b>들이 만들어요 — 우리 눈엔 하나의 색으로 보여요! 🌈</div></div>` },
   ];
 }
 

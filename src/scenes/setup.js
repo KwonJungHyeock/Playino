@@ -57,7 +57,7 @@ export function showSetup(root, { onDone }) {
   // 배경: 전용(setup-bg) 우선, 없으면 카니발(main-bg)로 폴백 — recede 처리
   const suBg = root.querySelector('#su-bg');
   const tryBg = (src, next) => { const im = new Image(); im.onload = () => { suBg.style.backgroundImage = `url(${im.src})`; suBg.classList.add('has-img'); }; im.onerror = next; im.src = src; };
-  tryBg('/brand/setup-bg.png', () => tryBg('/brand/main-bg.png', null));
+  tryBg('/brand/setup-bg.webp', () => tryBg('/brand/main-bg.webp', null));
   goBtn.addEventListener('click', () => { sfx.start(); onDone?.(); });
   root.querySelector('#su-skip').addEventListener('click', () => { sfx.click(); onDone?.(); });
   const snd = root.querySelector('#snd-toggle');

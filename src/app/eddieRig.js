@@ -1,12 +1,12 @@
 // eddieRig.js — 움직이는 EDDIE.
 // 우선순위: ① rig 부위(body/head/arm-l/arm-r/antenna) 5장 → 퍼펫 리깅
 //          ② 풀바디 포즈(idle/wave/cheer) → 부드러운 교차 애니(둥실+손흔들+만세)
-//          ③ 둘 다 없으면 정지 히어로(eddie-hero.png) 폴백  (전부 전체 둥실 모션)
+//          ③ 둘 다 없으면 정지 히어로(eddie-hero.webp) 폴백  (전부 전체 둥실 모션)
 const RIG_BASE = '/brand/eddie/rig/';
-const PARTS = { 'er-arm-l': 'arm-l.png', 'er-body': 'body.png', 'er-arm-r': 'arm-r.png', 'er-head': 'head.png', 'er-antenna': 'antenna.png' };
+const PARTS = { 'er-arm-l': 'arm-l.webp', 'er-body': 'body.webp', 'er-arm-r': 'arm-r.webp', 'er-head': 'head.webp', 'er-antenna': 'antenna.webp' };
 const POSE_BASE = '/brand/eddie/';
 const POSES = ['idle', 'wave', 'cheer'];
-const FALLBACK = '/brand/eddie/eddie-hero.png';
+const FALLBACK = '/brand/eddie/eddie-hero.webp';
 
 export function mountEddieRig(container, { hero } = {}) {
   const el = document.createElement('div');
@@ -40,7 +40,7 @@ export function mountEddieRig(container, { hero } = {}) {
     const img = el.querySelector('.er-pose-' + p);
     img.onload = () => { loaded.add(p); settle(); };
     img.onerror = () => { settle(); };
-    img.src = POSE_BASE + p + '.png';
+    img.src = POSE_BASE + p + '.webp';
   });
   function settle() { if (--pending > 0) return; if (!el.classList.contains('rigged') && loaded.has('idle')) startPoses(); }
 

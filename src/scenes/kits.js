@@ -1,6 +1,6 @@
 // kits.js — 호환 키트 안내 페이지.
 // 이 게임은 '아두이노 스타터 키트 [이지 커넥트편]' 기준으로 제작됐지만, 다른 키트들도 호환됨을 안내한다.
-// 제품 사진은 public/brand/kits/<id>.png 자동 교체형(없으면 📦 플레이스홀더).
+// 제품 사진은 public/brand/kits/<id>.webp 자동 교체형(없으면 📦 플레이스홀더).
 import { sfx } from '../app/sfx.js';
 
 const KITS = [
@@ -38,13 +38,13 @@ export function showKits(root, { onDone } = {}) {
   // 배경 컨셉 통일(메인 카니발 있으면 recede로 깔기)
   const bgProbe = new Image();
   bgProbe.onload = () => { const b = root.querySelector('#kits-bg'); b.style.backgroundImage = `url(${bgProbe.src})`; b.classList.add('has-img'); };
-  bgProbe.src = '/brand/main-bg.png';
+  bgProbe.src = '/brand/main-bg.webp';
 
   // 제품 사진 자동 적용
   KITS.forEach((k) => {
     const probe = new Image();
     probe.onload = () => { const box = root.querySelector('#kit-' + k.id); box.style.backgroundImage = `url(${probe.src})`; box.classList.add('has-img'); };
-    probe.src = `/brand/kits/${k.id}.png`;
+    probe.src = `/brand/kits/${k.id}.webp`;
   });
 
   const goBtn = root.querySelector('#kits-go');
