@@ -8,6 +8,7 @@ import { board } from '../app/board.js';
 import { mountEddieRig } from '../app/eddieRig.js';
 import { showLedGame } from './ledGame.js';
 import { showBuzzerGame } from './buzzerGame.js';
+import { showRgbGame } from './rgbGame.js';
 
 const roomCache = {};
 function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.webp`; roomCache[key] = im; } return roomCache[key]; }
@@ -48,8 +49,7 @@ const ROOMS_CFG = {
       'PWM으로 각 색의 밝기(0~255)를 조절 → 원하는 색을 자유자재로! 🎚️',
       '폰·TV·무드등 화면이 전부 이 RGB로 모든 색을 만들어요 📺',
     ],
-    // 체험관(미니게임)은 다음 단계 — 지금은 '곧 공개' 안내
-    play: (root, opt) => soonPlay(root, opt, '무지개 물감놀이', 'stage-rgb-bg'),
+    play: (root, opt) => showRgbGame(root, opt),
   },
 };
 

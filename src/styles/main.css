@@ -1980,3 +1980,26 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 @keyframes erp-forer { 0%,100%{transform:rotate(2deg)}    50%{transform:rotate(-7deg)} }
 @keyframes erp-legl  { 0%,100%{transform:rotate(-1.6deg)} 50%{transform:rotate(1.6deg)} }
 @keyframes erp-legr  { 0%,100%{transform:rotate(1.6deg)}  50%{transform:rotate(-1.6deg)} }
+
+/* ===== RGB 체험관 — 색 맞추기 게임 ===== */
+.rgbgame { position: relative; overflow: hidden; }
+.rgbg-bg { position: absolute; inset: 0; z-index: 0; background: #1a1226 center/cover no-repeat; }
+.rgbg-bg.has-img { filter: saturate(.8) brightness(.5); }
+.rgbg-bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 100% at 50% 40%, rgba(20,12,30,.2), rgba(12,8,18,.66)); }
+.rgbg-play { position: absolute; z-index: 2; left: 50%; top: 52%; transform: translate(-50%, -50%);
+  width: min(620px, 92vw); display: flex; flex-direction: column; align-items: center; gap: 22px;
+  background: rgba(14,12,22,.62); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px);
+  border: 1px solid rgba(255,255,255,.12); border-radius: 22px; padding: 26px 30px; box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+.rgbg-swatches { display: flex; align-items: flex-end; justify-content: center; gap: 22px; }
+.rgbg-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.rgbg-lbl { font-weight: 800; color: #e8dcff; font-size: 14px; }
+.rgbg-sw { width: 150px; height: 150px; border-radius: 20px; background: #fff;
+  box-shadow: 0 12px 30px rgba(0,0,0,.4), inset 0 0 0 4px rgba(255,255,255,.5); transition: background .1s; }
+.rgbg-vs { font-size: 30px; color: #fff; opacity: .7; padding-bottom: 58px; }
+.rgbg-sliders { width: 100%; max-width: 460px; }
+.rgbg-foot { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; min-height: 56px; }
+.rgbg-fb { font-weight: 800; font-size: 15px; padding: 8px 16px; border-radius: 12px; text-align: center; }
+.rgbg-fb.ok { background: rgba(46,194,126,.2); color: #7ef0b4; } .rgbg-fb.ok b { color: #aef7cf; }
+.rgbg-fb.no { background: rgba(255,120,120,.16); color: #ffb0b0; } .rgbg-fb.no b { color: #ffd0d0; }
+.rgbg-fb b { font-family: "Space Grotesk", monospace; }
+@media (max-width: 560px) { .rgbg-sw { width: 112px; height: 112px; } .rgbg-vs { padding-bottom: 44px; } }
