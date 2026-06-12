@@ -71,7 +71,7 @@ const PARTS = [
   { icon: '💡', name: 'LED', cat: 'out' }, { icon: '🔊', name: '부저', cat: 'out' }, { icon: '⚙️', name: '모터', cat: 'out' },
 ];
 
-export function showBasics(root, { onExit } = {}) {
+export function showBasics(root, { onExit, onComplete } = {}) {
   root.innerHTML = `
     <div class="bx scene-fade">
       <div class="pm-bg" id="bx-bg"></div>
@@ -232,7 +232,7 @@ export function showBasics(root, { onExit } = {}) {
       title: '기초 수료! 🎓',
       message: '피지컬 코딩 기초를 마쳤어요 — <b>🎓 기초 수료증</b> 획득!<br/>이제 <b>기초의 전당</b>이 열렸어요.',
       exitLabel: '광장으로 ▶',
-      onExit: () => onExit?.(),
+      onExit: () => (onComplete || onExit)?.(),
     }), 600);
   }
 

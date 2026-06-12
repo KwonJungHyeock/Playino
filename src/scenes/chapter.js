@@ -158,7 +158,7 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   function updateHint(state) {
     const p = state.player, cam = state.cam;
     bubble.style.left = ((p.x + p.w / 2) - cam.x) + 'px';
-    bubble.style.top = (p.y - cam.y - 92) + 'px';
+    bubble.style.top = (p.y - cam.y - 120) + 'px';
 
     const tr = state.activeTrigger;
     if (!tr) { hintEl.classList.remove('show'); return; }

@@ -50,7 +50,7 @@ function enterRoom(roomId) {
   lastRoom = roomId;
   const back = () => backToChapter(roomId);
   switch (roomId) {
-    case 'basics': showBasics(app(), { onExit: back }); break;
+    case 'basics': showBasics(app(), { onExit: back, onComplete: () => sceneHub() }); break;
     case 'led': showSensorRoom(app(), { id: 'led', onExit: back }); break;
     case 'buzzer': showSensorRoom(app(), { id: 'buzzer', onExit: back }); break;
     case 'rgb': showSensorRoom(app(), { id: 'rgb', onExit: back }); break;

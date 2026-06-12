@@ -1919,7 +1919,7 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 
 /* ===== RGB 전시관 — 이론 애니메이션 ===== */
 /* ① 가산혼합 벤다이어그램 */
-.rt1 .rt-venn { position: relative; width: 300px; height: 250px; margin: 4px auto; }
+.rt1 .rt-venn { position: relative; width: 320px; height: 260px; margin: 4px auto; background: #14101f; border-radius: 22px; box-shadow: inset 0 0 40px rgba(0,0,0,.5); overflow: hidden; }
 .rt1 .rt-venn .rc { position: absolute; width: 172px; height: 172px; border-radius: 50%; mix-blend-mode: screen; filter: blur(.4px); animation: rt-breathe 3.4s ease-in-out infinite; }
 .rt1 .rt-venn .rc.r { background: #ff2d2d; left: 64px; top: 2px; }
 .rt1 .rt-venn .rc.g { background: #19e64b; left: 10px; top: 76px; animation-delay: .3s; }
@@ -1963,14 +1963,14 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .er-arm, .er-fore { position: absolute; inset: 0; }      /* 래퍼: 캔버스 채워 자식이 제자리 유지 */
 
 /* 관절 회전축(캔버스 %) + 부드러운 다부위 모션 */
-.rig2 .er-antenna { transform-origin: 50% 15%; animation: erp-ant 2.3s ease-in-out infinite; }
-.rig2 .er-head    { transform-origin: 50% 52%; animation: erp-head 4.2s ease-in-out infinite; }
-.rig2 .er-arm-l   { transform-origin: 41% 54%; animation: erp-arml 3.4s ease-in-out infinite; }
-.rig2 .er-fore-l  { transform-origin: 30% 54%; animation: erp-forel 3.0s ease-in-out infinite; }
-.rig2 .er-arm-r   { transform-origin: 59% 53%; animation: erp-armr 3.6s ease-in-out infinite; }
-.rig2 .er-fore-r  { transform-origin: 70% 54%; animation: erp-forer 3.2s ease-in-out infinite; }
-.rig2 .er-leg-l   { transform-origin: 42% 70%; animation: erp-legl 4.0s ease-in-out infinite; }
-.rig2 .er-leg-r   { transform-origin: 58% 70%; animation: erp-legr 4.4s ease-in-out infinite; }
+.rig2 .er-antenna { transform-origin: 50% 15%; animation: erp-ant 1.8s ease-in-out infinite; }
+.rig2 .er-head    { transform-origin: 50% 52%; animation: erp-head 3.2s ease-in-out infinite; }
+.rig2 .er-arm-l   { transform-origin: 41% 54%; animation: erp-arml 2.7s ease-in-out infinite; }
+.rig2 .er-fore-l  { transform-origin: 30% 54%; animation: erp-forel 2.3s ease-in-out infinite; }
+.rig2 .er-arm-r   { transform-origin: 59% 53%; animation: erp-armr 2.9s ease-in-out infinite; }
+.rig2 .er-fore-r  { transform-origin: 70% 54%; animation: erp-forer 2.5s ease-in-out infinite; }
+.rig2 .er-leg-l   { transform-origin: 42% 70%; animation: erp-legl 3.2s ease-in-out infinite; }
+.rig2 .er-leg-r   { transform-origin: 58% 70%; animation: erp-legr 3.5s ease-in-out infinite; }
 
 @keyframes erp-ant   { 0%,100%{transform:rotate(-7deg)}   50%{transform:rotate(7deg)} }
 @keyframes erp-head  { 0%,100%{transform:rotate(-2.4deg)} 50%{transform:rotate(2.4deg)} }
@@ -1982,7 +1982,7 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 @keyframes erp-legr  { 0%,100%{transform:rotate(1.6deg)}  50%{transform:rotate(-1.6deg)} }
 
 /* ===== RGB 체험관 — 색 맞추기 게임 ===== */
-.rgbgame { position: relative; overflow: hidden; }
+.rgbgame { overflow: hidden; }
 .rgbg-bg { position: absolute; inset: 0; z-index: 0; background: #1a1226 center/cover no-repeat; }
 .rgbg-bg.has-img { filter: saturate(.8) brightness(.5); }
 .rgbg-bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 100% at 50% 40%, rgba(20,12,30,.2), rgba(12,8,18,.66)); }
@@ -2003,3 +2003,6 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .rgbg-fb.no { background: rgba(255,120,120,.16); color: #ffb0b0; } .rgbg-fb.no b { color: #ffd0d0; }
 .rgbg-fb b { font-family: "Space Grotesk", monospace; }
 @media (max-width: 560px) { .rgbg-sw { width: 112px; height: 112px; } .rgbg-vs { padding-bottom: 44px; } }
+
+/* ===== 전역: 한글 단어 중간 끊김 방지(어절 단위 줄바꿈) ===== */
+body { word-break: keep-all; overflow-wrap: break-word; }

@@ -33,9 +33,9 @@ export function mountEddieRig(container, { hero } = {}) {
     // ① 관절 퍼펫 (뒤→앞 레이어 순서)
     `<img class="erp er-leg-l" alt="" />
      <img class="erp er-leg-r" alt="" />
-     <img class="erp er-body" alt="" />
      <div class="er-arm er-arm-l"><img class="erp er-aup" alt="" /><div class="er-fore er-fore-l"><img class="erp er-alow" alt="" /></div></div>
      <div class="er-arm er-arm-r"><img class="erp er-aup" alt="" /><div class="er-fore er-fore-r"><img class="erp er-alow" alt="" /></div></div>
+     <img class="erp er-body" alt="" />
      <img class="erp er-head" alt="" />
      <img class="erp er-antenna" alt="" />` +
     // ② 풀바디 포즈 + ③ 폴백

@@ -91,7 +91,7 @@ export function showHub(root, { onEnter, spawnAt } = {}) {
     // EDDIE 머리 위로 말풍선 따라가기(캔버스 좌표 = host 기준)
     const p = state.player, cam = state.cam;
     bubble.style.left = ((p.x + p.w / 2) - cam.x) + 'px';
-    bubble.style.top = (p.y - cam.y - 92) + 'px';
+    bubble.style.top = (p.y - cam.y - 128) + 'px';
 
     const tr = state.activeTrigger;
     if (!tr) { bannerEl.classList.remove('show'); return; }

@@ -124,7 +124,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   }
   function onFrame(state) {
     const p = state.player, cam = state.cam;
-    bubble.style.left = ((p.x + p.w / 2) - cam.x) + 'px'; bubble.style.top = (p.y - cam.y - 110) + 'px';
+    bubble.style.left = ((p.x + p.w / 2) - cam.x) + 'px'; bubble.style.top = (p.y - cam.y - 150) + 'px';
   }
   function drawVignette(ctx, st, canvas) {
     const g = ctx.createRadialGradient(canvas.width / 2, canvas.height * 0.46, canvas.height * 0.42, canvas.width / 2, canvas.height / 2, canvas.height * 1.02);
@@ -188,7 +188,11 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         bub.innerHTML = `🤖 ${cap}`; bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop');
       };
       show();
-      const go = (d) => { sfx.hover(); ci = (ci + d + ANIM.length) % ANIM.length; show(); };
+      const go = (d) => {
+        // 마지막 자료에서 ▶ → 실습 탭(제어/연주판/색섞기)으로 자동 이동 (롤링 방지)
+        if (d > 0 && ci === ANIM.length - 1) { v.querySelector('.tv-tab[data-t="code"]')?.click(); return; }
+        sfx.hover(); ci = (ci + d + ANIM.length) % ANIM.length; show();
+      };
       bodyEl.querySelector('#tv-prev').onclick = () => go(-1);
       bodyEl.querySelector('#tv-next').onclick = () => go(1);
       bodyEl.querySelectorAll('.tv-dots i').forEach((d) => d.onclick = () => { ci = +d.dataset.i; show(); });

@@ -105,7 +105,7 @@ export function createWorld(container, map, handlers = {}) {
   function update(fs) {
     const p = state.player;
     if (!state.paused) {
-      const sp = 2.6 * fs;                      // 60fps 기준 속도 × 경과배율 → 어떤 주사율/FPS 에서도 동일 속도
+      const sp = 3.1 * fs;                      // 60fps 기준 속도 × 경과배율 → 어떤 주사율/FPS 에서도 동일 속도
       let dx = 0, dy = 0;
       if (state.keys.has('arrowleft') || state.keys.has('a')) dx -= sp;
       if (state.keys.has('arrowright') || state.keys.has('d')) dx += sp;
