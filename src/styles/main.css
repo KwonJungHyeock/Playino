@@ -1974,9 +1974,9 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 
 @keyframes erp-ant   { 0%,100%{transform:rotate(-7deg)}   50%{transform:rotate(7deg)} }
 @keyframes erp-head  { 0%,100%{transform:rotate(-2.4deg)} 50%{transform:rotate(2.4deg)} }
-@keyframes erp-arml  { 0%,100%{transform:rotate(3deg)}    50%{transform:rotate(-4deg)} }
-@keyframes erp-forel { 0%,100%{transform:rotate(-3deg)}   50%{transform:rotate(7deg)} }
-@keyframes erp-armr  { 0%,100%{transform:rotate(-3deg)}   50%{transform:rotate(4deg)} }
-@keyframes erp-forer { 0%,100%{transform:rotate(3deg)}    50%{transform:rotate(-7deg)} }
+@keyframes erp-arml  { 0%,100%{transform:rotate(-40deg)}  50%{transform:rotate(-46deg)} }
+@keyframes erp-forel { 0%,100%{transform:rotate(-2deg)}   50%{transform:rotate(7deg)} }
+@keyframes erp-armr  { 0%,100%{transform:rotate(40deg)}   50%{transform:rotate(46deg)} }
+@keyframes erp-forer { 0%,100%{transform:rotate(2deg)}    50%{transform:rotate(-7deg)} }
 @keyframes erp-legl  { 0%,100%{transform:rotate(-1.6deg)} 50%{transform:rotate(1.6deg)} }
 @keyframes erp-legr  { 0%,100%{transform:rotate(1.6deg)}  50%{transform:rotate(-1.6deg)} }
