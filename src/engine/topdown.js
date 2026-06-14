@@ -91,7 +91,7 @@ export function createWorld(container, map, handlers = {}) {
   touch.innerHTML =
     `<div class="td-joy" aria-label="이동 조이스틱"><div class="td-knob"></div></div>
      <button class="td-act" aria-label="확인">✔</button>
-     <button class="td-modetoggle" aria-label="모드 전환">${isTablet() ? '📱' : '🖥️'}</button>`;
+     <button class="td-modetoggle" aria-label="모드 전환">${isTablet() ? '📱 태블릿 모드' : '🖥️ PC 모드'}</button>`;
   container.appendChild(touch);
   // 조이스틱: 중심 기준 벡터를 state.joy(-1~1)로. setPointerCapture 로 밖으로 나가도 추적.
   const joy = touch.querySelector('.td-joy'), knob = touch.querySelector('.td-knob');
@@ -115,7 +115,7 @@ export function createWorld(container, map, handlers = {}) {
   touch.querySelector('.td-act').addEventListener('pointerdown', (e) => { e.preventDefault(); interact(); });
   const mt = touch.querySelector('.td-modetoggle');
   mt.addEventListener('pointerdown', (e) => { e.preventDefault(); setMode(isTablet() ? 'pc' : 'tablet'); });
-  const unsubMode = onModeChange((m) => { mt.textContent = m === 'tablet' ? '📱' : '🖥️'; state.keys.clear(); state.joy.x = 0; state.joy.y = 0; });
+  const unsubMode = onModeChange((m) => { mt.textContent = m === 'tablet' ? '📱 태블릿 모드' : '🖥️ PC 모드'; state.keys.clear(); state.joy.x = 0; state.joy.y = 0; });
 
   function interact() {
     if (state.paused) return;

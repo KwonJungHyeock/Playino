@@ -2105,11 +2105,15 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .td-act:active { transform: scale(.93); }
 html[data-mode="tablet"] .td-joy { display: flex; }
 html[data-mode="tablet"] .td-act { display: flex; }
-/* 모드 전환 토글(테스트용 — 항상 표시) */
-.td-modetoggle { pointer-events: auto; position: fixed; left: 50%; transform: translateX(-50%); bottom: 14px;
-  width: 46px; height: 46px; border-radius: 13px; border: 1px solid rgba(255,255,255,.18);
-  background: rgba(10,14,24,.6); color: #fff; font-size: 20px; cursor: pointer; z-index: 32;
+/* 모드 전환 토글(테스트용 — 좌하단, 텍스트 표시) */
+.td-modetoggle { pointer-events: auto; position: fixed; left: 18px; bottom: 18px;
+  height: 42px; padding: 0 16px; border-radius: 21px; border: 1px solid rgba(255,255,255,.2);
+  background: rgba(10,14,24,.62); color: #fff; font-size: 14px; font-weight: 800; letter-spacing: .3px;
+  cursor: pointer; z-index: 33; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,.3);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.td-modetoggle:active { transform: scale(.96); }
+/* 태블릿 모드에선 좌하단 조이스틱과 겹치지 않게 그 위로 */
+html[data-mode="tablet"] .td-modetoggle { bottom: 178px; }
 
 /* 태블릿/모바일: 바깥 가로 스크롤 방지 (세로는 각 씬이 100dvh 로 맞춤) */
 html, body { overflow-x: hidden; }
