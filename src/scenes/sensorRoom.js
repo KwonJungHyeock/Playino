@@ -9,6 +9,7 @@ import { mountEddieRig } from '../app/eddieRig.js';
 import { showLedGame } from './ledGame.js';
 import { showBuzzerGame } from './buzzerGame.js';
 import { showRgbGame } from './rgbGame.js';
+import { showCdsGame } from './cdsGame.js';
 
 const roomCache = {};
 function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.webp`; roomCache[key] = im; } return roomCache[key]; }
@@ -61,8 +62,7 @@ const ROOMS_CFG = {
       '아날로그로 빛의 양을 0~1023 숫자로 읽어요 — 밝으면 큰 값, 어두우면 작은 값! 📈',
       '자동 가로등·화면 밝기 자동조절… 빛 센서가 똑똑하게 켜고 꺼줘요 💡',
     ],
-    // 체험관 미니게임은 다음 단계 — 지금은 '곧 공개'
-    play: (root, opt) => soonPlay(root, opt, '손그림자 마술', 'stage-cds-bg'),
+    play: (root, opt) => showCdsGame(root, opt),
   },
 };
 
