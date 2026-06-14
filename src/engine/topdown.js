@@ -39,6 +39,7 @@ export function createWorld(container, map, handlers = {}) {
   const state = {
     player: { x: map.spawn.x, y: map.spawn.y, w: 28, h: 30, face: 1, dir: 'down', moving: false },
     keys: new Set(),
+    joy: { x: 0, y: 0 },
     paused: false,
     t: 0,
     activeTrigger: null,
@@ -84,32 +85,37 @@ export function createWorld(container, map, handlers = {}) {
   };
   canvas.addEventListener('pointerdown', onPointer);
 
-  // ── 터치 조작(태블릿 모드) — 화면 D패드 + 상호작용 버튼. CSS 가 data-mode 로 표시/숨김.
+  // ── 터치 조작(태블릿 모드) — 아날로그 조이스틱 + 상호작용 버튼. CSS 가 data-mode 로 표시/숨김.
   const touch = document.createElement('div');
   touch.className = 'td-touch' + (map.lockVertical ? ' td-lockv' : '');
   touch.innerHTML =
-    `<div class="td-dpad">
-       <button class="td-b td-up" data-k="arrowup" aria-label="위">▲</button>
-       <button class="td-b td-left" data-k="arrowleft" aria-label="왼쪽">◀</button>
-       <button class="td-b td-right" data-k="arrowright" aria-label="오른쪽">▶</button>
-       <button class="td-b td-down" data-k="arrowdown" aria-label="아래">▼</button>
-     </div>
+    `<div class="td-joy" aria-label="이동 조이스틱"><div class="td-knob"></div></div>
      <button class="td-act" aria-label="확인">✔</button>
      <button class="td-modetoggle" aria-label="모드 전환">${isTablet() ? '📱' : '🖥️'}</button>`;
   container.appendChild(touch);
-  touch.querySelectorAll('.td-b').forEach((b) => {
-    const k = b.dataset.k;
-    const press = (e) => { e.preventDefault(); if (state.paused) return; state.keys.add(k); b.classList.add('on'); };
-    const release = (e) => { e.preventDefault(); state.keys.delete(k); b.classList.remove('on'); };
-    b.addEventListener('pointerdown', press);
-    b.addEventListener('pointerup', release);
-    b.addEventListener('pointerleave', release);
-    b.addEventListener('pointercancel', release);
+  // 조이스틱: 중심 기준 벡터를 state.joy(-1~1)로. setPointerCapture 로 밖으로 나가도 추적.
+  const joy = touch.querySelector('.td-joy'), knob = touch.querySelector('.td-knob');
+  const R = 50; let joyId = null, jcx = 0, jcy = 0;
+  const joyMove = (e) => {
+    if (joyId !== e.pointerId) return;
+    let dx = e.clientX - jcx, dy = e.clientY - jcy; const d = Math.hypot(dx, dy);
+    const m = d > 0 ? Math.min(1, d / R) / d : 0; dx *= m; dy *= m;
+    state.joy.x = dx; state.joy.y = dy; knob.style.transform = `translate(${dx * R}px, ${dy * R}px)`;
+  };
+  const joyEnd = (e) => { if (joyId !== e.pointerId) return; joyId = null; state.joy.x = 0; state.joy.y = 0; knob.style.transform = 'translate(0,0)'; };
+  joy.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); if (state.paused) return;
+    joyId = e.pointerId; const r = joy.getBoundingClientRect(); jcx = r.left + r.width / 2; jcy = r.top + r.height / 2;
+    try { joy.setPointerCapture(e.pointerId); } catch (_) {}
+    joyMove(e);
   });
+  joy.addEventListener('pointermove', joyMove);
+  joy.addEventListener('pointerup', joyEnd);
+  joy.addEventListener('pointercancel', joyEnd);
   touch.querySelector('.td-act').addEventListener('pointerdown', (e) => { e.preventDefault(); interact(); });
   const mt = touch.querySelector('.td-modetoggle');
   mt.addEventListener('pointerdown', (e) => { e.preventDefault(); setMode(isTablet() ? 'pc' : 'tablet'); });
-  const unsubMode = onModeChange((m) => { mt.textContent = m === 'tablet' ? '📱' : '🖥️'; state.keys.clear(); });
+  const unsubMode = onModeChange((m) => { mt.textContent = m === 'tablet' ? '📱' : '🖥️'; state.keys.clear(); state.joy.x = 0; state.joy.y = 0; });
 
   function interact() {
     if (state.paused) return;
@@ -135,12 +141,18 @@ export function createWorld(container, map, handlers = {}) {
     if (!state.paused) {
       const sp = 3.1 * fs;                      // 60fps 기준 속도 × 경과배율 → 어떤 주사율/FPS 에서도 동일 속도
       let dx = 0, dy = 0;
-      if (state.keys.has('arrowleft') || state.keys.has('a')) dx -= sp;
-      if (state.keys.has('arrowright') || state.keys.has('d')) dx += sp;
-      if (state.keys.has('arrowup') || state.keys.has('w')) dy -= sp;
-      if (state.keys.has('arrowdown') || state.keys.has('s')) dy += sp;
-      if (map.lockVertical) dy = 0;             // 좌우 전용 씬(전시관 복도 등)
-      if (dx && dy) { dx *= 0.707; dy *= 0.707; }
+      const j = state.joy;
+      if (Math.abs(j.x) > 0.14 || Math.abs(j.y) > 0.14) {   // 아날로그 조이스틱(태블릿)
+        dx = j.x * sp; dy = j.y * sp;
+        if (map.lockVertical) dy = 0;
+      } else {                                              // 키보드(PC)
+        if (state.keys.has('arrowleft') || state.keys.has('a')) dx -= sp;
+        if (state.keys.has('arrowright') || state.keys.has('d')) dx += sp;
+        if (state.keys.has('arrowup') || state.keys.has('w')) dy -= sp;
+        if (state.keys.has('arrowdown') || state.keys.has('s')) dy += sp;
+        if (map.lockVertical) dy = 0;           // 좌우 전용 씬(전시관 복도 등)
+        if (dx && dy) { dx *= 0.707; dy *= 0.707; }
+      }
       p.moving = !!(dx || dy);
       if (dx < 0) p.face = -1; else if (dx > 0) p.face = 1;
       if (Math.abs(dy) > Math.abs(dx)) { if (dy) p.dir = dy > 0 ? 'down' : 'up'; }
