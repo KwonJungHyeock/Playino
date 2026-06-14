@@ -7,6 +7,7 @@ import { bgm } from '../app/bgm.js';
 import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
+import { isTablet } from '../app/device.js';
 
 const PIN = 5, LANES = 4, KEYS = ['d', 'f', 'j', 'k'];
 const LEAD = 1600, W_PERFECT = 110, W_GOOD = 200, PASS_ACC = 0.85;
@@ -158,7 +159,7 @@ export function showBuzzerGame(root, { onExit } = {}) {
       const padOn = nowAbs - state.lastHit < 90;
       ctx.fillStyle = `rgba(${LANE_COL[i]},${padOn ? 0.5 : 0.22})`; rr(ctx, lx + 6, hitY, lw - 12, 56, 12); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = '800 20px "Space Grotesk", sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(KEYS[i].toUpperCase(), lx + lw / 2, hitY + 36);
+      ctx.fillText(isTablet() ? '탭' : KEYS[i].toUpperCase(), lx + lw / 2, hitY + 36);
     }
     // 판정선
     ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x0, hitY); ctx.lineTo(x0 + lw * LANES, hitY); ctx.stroke();
