@@ -3,6 +3,8 @@
 //   → 미니게임 광장(HUB) → 무대 입구 → 미니게임 부스 → 복귀.
 
 import { showPlatformIntro } from './scenes/platformIntro.js';
+import { showModeSelect } from './scenes/modeSelect.js';
+import { hasChosenMode } from './app/device.js';
 import { showProductMain } from './scenes/productMain.js';
 import { showKits } from './scenes/kits.js';
 import { showLogin } from './scenes/login.js';
@@ -25,7 +27,8 @@ const app = () => document.getElementById('app');
 let lastChapter = null;   // HUB 복귀 시 들어갔던 게이트 앞
 let lastRoom = null;      // 챕터 복귀 시 나온 방 앞
 
-function scenePlatformIntro() { showPlatformIntro(app(), { onDone: sceneProductMain }); }   // ① 플랫폼 스튜디오 인트로
+function scenePlatformIntro() { showPlatformIntro(app(), { onDone: sceneModeSelect }); }     // ① 플랫폼 스튜디오 인트로
+function sceneModeSelect() { if (hasChosenMode()) { sceneProductMain(); return; } showModeSelect(app(), { onDone: sceneProductMain }); }   // ①-b 기기 모드 선택(최초 1회)
 function sceneProductMain() { showProductMain(app(), { onDone: sceneKits }); }                // ② 상품 메인페이지
 function sceneKits() { showKits(app(), { onDone: sceneLogin }); }                              // ②-b 호환 키트 안내
 function sceneLogin() { showLogin(app(), { onDone: sceneSetup }); }

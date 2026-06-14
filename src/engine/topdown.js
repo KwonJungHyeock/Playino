@@ -13,6 +13,7 @@
 // handlers: { onInteract(id,tr), onAuto(id,tr), onFrame(state), onDrawOverlay(ctx,state,canvas) }
 
 import eddieSvg from '../assets/eddie.svg?raw';
+import { isTablet, setMode, onModeChange } from '../app/device.js';
 
 const eddieImg = new Image();
 eddieImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(eddieSvg);
@@ -82,6 +83,33 @@ export function createWorld(container, map, handlers = {}) {
     }
   };
   canvas.addEventListener('pointerdown', onPointer);
+
+  // ── 터치 조작(태블릿 모드) — 화면 D패드 + 상호작용 버튼. CSS 가 data-mode 로 표시/숨김.
+  const touch = document.createElement('div');
+  touch.className = 'td-touch' + (map.lockVertical ? ' td-lockv' : '');
+  touch.innerHTML =
+    `<div class="td-dpad">
+       <button class="td-b td-up" data-k="arrowup" aria-label="위">▲</button>
+       <button class="td-b td-left" data-k="arrowleft" aria-label="왼쪽">◀</button>
+       <button class="td-b td-right" data-k="arrowright" aria-label="오른쪽">▶</button>
+       <button class="td-b td-down" data-k="arrowdown" aria-label="아래">▼</button>
+     </div>
+     <button class="td-act" aria-label="확인">✔</button>
+     <button class="td-modetoggle" aria-label="모드 전환">${isTablet() ? '📱' : '🖥️'}</button>`;
+  container.appendChild(touch);
+  touch.querySelectorAll('.td-b').forEach((b) => {
+    const k = b.dataset.k;
+    const press = (e) => { e.preventDefault(); if (state.paused) return; state.keys.add(k); b.classList.add('on'); };
+    const release = (e) => { e.preventDefault(); state.keys.delete(k); b.classList.remove('on'); };
+    b.addEventListener('pointerdown', press);
+    b.addEventListener('pointerup', release);
+    b.addEventListener('pointerleave', release);
+    b.addEventListener('pointercancel', release);
+  });
+  touch.querySelector('.td-act').addEventListener('pointerdown', (e) => { e.preventDefault(); interact(); });
+  const mt = touch.querySelector('.td-modetoggle');
+  mt.addEventListener('pointerdown', (e) => { e.preventDefault(); setMode(isTablet() ? 'pc' : 'tablet'); });
+  const unsubMode = onModeChange((m) => { mt.textContent = m === 'tablet' ? '📱' : '🖥️'; state.keys.clear(); });
 
   function interact() {
     if (state.paused) return;
@@ -245,6 +273,8 @@ export function createWorld(container, map, handlers = {}) {
       window.removeEventListener('keydown', kd);
       window.removeEventListener('keyup', ku);
       canvas.removeEventListener('pointerdown', onPointer);
+      unsubMode();
+      touch.remove();
       canvas.remove();
     },
   };

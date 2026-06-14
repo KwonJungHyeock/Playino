@@ -2051,3 +2051,49 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .cds-bar-fill { height: 100%; width: 0; background: linear-gradient(90deg, #4a5a72, #ffd24a); transition: width .18s; }
 .cds-tip { margin-top: 8px; font-size: 13px; color: var(--muted); font-weight: 700; }
 .cds-dash #cds-sim { width: 100%; accent-color: #f0a92a; }
+
+/* ===== 기기 모드 선택 화면 ===== */
+.mode-select { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  background: radial-gradient(120% 90% at 50% 30%, #2a2140, #14101f 70%); }
+.ms-card { text-align: center; max-width: 680px; width: 92%; padding: 10px; }
+.ms-emoji { font-size: 56px; margin-bottom: 6px; }
+.ms-card h1 { font-size: clamp(24px, 4vw, 36px); color: #fff; margin: 0 0 8px; }
+.ms-sub { color: #b9b2cf; font-size: 14px; margin: 0 auto 28px; max-width: 480px; line-height: 1.5; }
+.ms-opts { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.ms-opt { position: relative; width: 230px; padding: 26px 18px 22px; border-radius: 20px; cursor: pointer;
+  background: rgba(255,255,255,.06); border: 2px solid rgba(255,255,255,.14); color: #fff;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; transition: transform .15s, border-color .15s, background .15s; }
+.ms-opt:hover { transform: translateY(-4px); background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); }
+.ms-opt.rec { border-color: #ffb13c; box-shadow: 0 10px 30px rgba(255,160,60,.25); }
+.ms-ico { font-size: 52px; }
+.ms-opt b { font-size: 19px; }
+.ms-opt span { font-size: 13px; color: #c7c0db; }
+.ms-badge { position: absolute; top: -10px; right: 14px; background: #ffb13c; color: #3a2410; font-size: 11px;
+  font-weight: 800; padding: 3px 9px; border-radius: 10px; font-style: normal; }
+
+/* ===== 터치 조작(태블릿 모드) — data-mode 로 표시/숨김 ===== */
+.td-touch { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+.td-dpad { display: none; position: fixed; left: 22px; bottom: 22px; pointer-events: none;
+  grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); gap: 6px; }
+.td-up { grid-row: 1; grid-column: 2; } .td-left { grid-row: 2; grid-column: 1; }
+.td-right { grid-row: 2; grid-column: 3; } .td-down { grid-row: 3; grid-column: 2; }
+.td-b { pointer-events: auto; border: none; border-radius: 14px; background: rgba(18,14,28,.5); color: #fff;
+  font-size: 20px; touch-action: none; user-select: none; -webkit-user-select: none;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+.td-b.on { background: rgba(255,170,60,.9); transform: scale(.93); }
+.td-act { display: none; pointer-events: auto; position: fixed; right: 26px; bottom: 32px;
+  width: 84px; height: 84px; border-radius: 50%; border: none; background: rgba(255,120,90,.88); color: #fff;
+  font-size: 30px; align-items: center; justify-content: center; touch-action: none;
+  box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+html[data-mode="tablet"] .td-dpad { display: grid; }
+html[data-mode="tablet"] .td-act { display: flex; }
+/* 좌우 전용(전시관 복도): 위/아래 숨기고 좌우만 한 줄로 */
+.td-touch.td-lockv .td-up, .td-touch.td-lockv .td-down { display: none; }
+.td-touch.td-lockv .td-dpad { grid-template-rows: 58px; }
+.td-touch.td-lockv .td-left { grid-row: 1; grid-column: 1; }
+.td-touch.td-lockv .td-right { grid-row: 1; grid-column: 3; }
+/* 모드 전환 토글(테스트용 — 항상 표시) */
+.td-modetoggle { pointer-events: auto; position: fixed; left: 50%; transform: translateX(-50%); bottom: 14px;
+  width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,.18);
+  background: rgba(10,14,24,.6); color: #fff; font-size: 20px; cursor: pointer; z-index: 32;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
