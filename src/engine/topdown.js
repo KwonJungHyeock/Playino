@@ -215,7 +215,7 @@ export function createWorld(container, map, handlers = {}) {
       ctx.save();
       ctx.translate(cx, feet - bob);
       ctx.rotate(sway);
-      ctx.scale((p.face < 0 ? -1 : 1) * breathe, breathe * squash);
+      ctx.scale((p.face < 0 ? 1 : -1) * breathe, breathe * squash);
       ctx.drawImage(hImg, -sw / 2, -sh + 12, sw, sh);
       if (state.tint) {
         ctx.globalCompositeOperation = 'source-atop';
@@ -226,7 +226,7 @@ export function createWorld(container, map, handlers = {}) {
     } else if (eddieImg.complete && eddieImg.naturalWidth) {
       ctx.save();
       ctx.translate(cx, feet - dh * ps + bob);
-      if (p.face < 0) ctx.scale(-1, 1);
+      if (p.face >= 0) ctx.scale(-1, 1);
       ctx.drawImage(eddieImg, -dw * ps / 2, 0, dw * ps, dh * ps);
       if (state.tint) {
         ctx.globalCompositeOperation = 'source-atop';

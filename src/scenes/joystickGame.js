@@ -9,7 +9,7 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = { x: 0, y: 1 }, PASS_ACC = 0.85, GAP = 4;
+const PINS = { x: 0, y: 1 }, PASS_ACC = 0.85, GAP = 6;
 const GAMES = [
   { key: 'easy', no: 1, name: '별 지렁이', target: 12, speed: 2.7, turn: 0.10, rocks: 3, rockSpd: 1.2, selfAt: 8 },
   { key: 'hard', no: 2, name: '운석 미로', target: 18, speed: 3.5, turn: 0.12, rocks: 7, rockSpd: 2.2, selfAt: 6 },
@@ -20,7 +20,7 @@ const headImg = new Image(); headImg.src = '/brand/eddie-pilot.webp';
 const heroImg = new Image(); heroImg.src = '/brand/eddie/eddie-hero.webp';
 const ready = (im) => im.complete && im.naturalWidth > 0;
 const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >= 0.5 ? 'C' : 'D';
-const HEAD_R = 30;
+const HEAD_R = 37;
 
 export function showJoystickGame(root, { onExit } = {}) {
   root.innerHTML = `
@@ -120,7 +120,7 @@ export function showJoystickGame(root, { onExit } = {}) {
   }
   function beginPlay() {
     bgm.setDuck(0); pad.hidden = false;
-    S = { x: W / 2, y: H / 2, ang: 0, hist: [], len: 3 };
+    S = { x: W / 2, y: H / 2, ang: 0, hist: [], len: 4 };
     stars = []; rocks = []; parts = [];
     for (let i = 0; i < game.rocks; i++) { const a = Math.random() * 6.283; rocks.push({ x: Math.random() * W, y: 80 + Math.random() * (H - 120), vx: Math.cos(a) * game.rockSpd, vy: Math.sin(a) * game.rockSpd, r: 20 + Math.random() * 14 }); }
     Object.assign(state, { phase: 'count', countT: performance.now(), collected: 0, target: game.target, ended: false });
@@ -160,7 +160,7 @@ export function showJoystickGame(root, { onExit } = {}) {
     if (S.x < 0) S.x += W; if (S.x > W) S.x -= W; if (S.y < 40) S.y += (H - 40); if (S.y > H) S.y -= (H - 40);
     S.hist.unshift({ x: S.x, y: S.y }); const maxh = S.len * GAP + 14; if (S.hist.length > maxh) S.hist.length = maxh;
     // 별
-    for (const s of stars) { if (s.got) continue; if (Math.hypot(S.x - s.x, S.y - s.y) < HEAD_R + 13) { s.got = true; state.collected++; S.len++; sfx.note(540 + Math.min(10, state.collected) * 30, 150); burst(s.x, s.y, '255,220,90', 10); sync(); if (state.collected >= state.target) { endPlay(); return; } spawnStar(); } }
+    for (const s of stars) { if (s.got) continue; if (Math.hypot(S.x - s.x, S.y - s.y) < HEAD_R + 13) { s.got = true; state.collected++; S.len += 2; sfx.note(540 + Math.min(10, state.collected) * 30, 150); burst(s.x, s.y, '255,220,90', 10); sync(); if (state.collected >= state.target) { endPlay(); return; } spawnStar(); } }
     stars = stars.filter((s) => !s.got);
     // 운석
     for (const k of rocks) { k.x += k.vx * dt; k.y += k.vy * dt; if (k.x < k.r || k.x > W - k.r) k.vx *= -1; if (k.y < k.r + 40 || k.y > H - k.r) k.vy *= -1; if (Math.hypot(S.x - k.x, S.y - k.y) < k.r + HEAD_R - 6) { crash(S.x, S.y); return; } }
@@ -180,12 +180,12 @@ export function showJoystickGame(root, { onExit } = {}) {
     if (S) {
       for (let i = S.len; i >= 1; i--) {
         const seg = S.hist[Math.min(S.hist.length - 1, i * GAP)]; if (!seg) continue;
-        const r = 13 - Math.min(6, i * 0.4);
+        const r = 15 - Math.min(7, i * 0.4);
         ctx.save(); ctx.globalAlpha = 0.92; ctx.fillStyle = i <= game.selfAt ? '#9fe0ff' : '#ffd24a'; ctx.shadowColor = 'rgba(150,200,255,.7)'; ctx.shadowBlur = 8; star(ctx, seg.x, seg.y, Math.max(6, r), 5); ctx.fill(); ctx.restore();
       }
       // 머리(에디)
       const img = ready(headImg) ? headImg : (ready(heroImg) ? heroImg : null);
-      const s = HEAD_R * 2.1;
+      const s = HEAD_R * 2.7;
       if (img) { const w = s * (img.naturalWidth / img.naturalHeight); ctx.save(); ctx.translate(S.x, S.y); ctx.drawImage(img, -w / 2, -s / 2, w, s); ctx.restore(); }
       else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(S.x, S.y, HEAD_R, 0, 6.283); ctx.fill(); }
     }
