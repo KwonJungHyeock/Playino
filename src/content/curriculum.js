@@ -61,7 +61,10 @@ export const chapterTotal = (id) => getChapter(id)?.rooms.length || 0;
 export const chapterDone = (id) => chapterTotal(id) > 0 && chapterClearedCount(id) === chapterTotal(id);
 
 // 잠금 규칙: 첫 무대는 항상 개방, 이후 무대는 직전 무대를 모두 클리어해야 개방.
+// ⚠️ 테스트용: 전체 잠금 해제 (출시 시 false 로 변경)
+export const UNLOCK_ALL = true;
 export function chapterUnlocked(id) {
+  if (UNLOCK_ALL) return true;
   const idx = CHAPTERS.findIndex((c) => c.id === id);
   if (idx <= 0) return true;
   return chapterDone(CHAPTERS[idx - 1].id);
