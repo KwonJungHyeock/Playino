@@ -42,6 +42,10 @@ export function showCdsGame(root, { onExit } = {}) {
           <h2>🔆 손그림자 마술</h2>
           <p class="prep-sub">빛을 다루는 두 가지 미션! <b>1단계</b> 신호 맞추기 · <b>2단계</b> 반딧불이 비행 🪰</p>
           <p class="prep-sub">조작: <b>가리기 패드를 꾹</b>(또는 Space) = 어둠 / 떼면 = 밝음. CDS를 <b>A0</b>에 연결하면 진짜 손으로 가려도 돼요.</p>
+          <div class="prep-wire"><b>🔌 결선</b>
+            <table class="prep-table prep-wire-t"><tbody><tr><td>🔆 Grove 조도센서(CDS)</td><td><b>A0</b> 포트</td></tr></tbody></table>
+            <span class="prep-wire-note">Grove 케이블을 A0(아날로그) 포트에 꽂기</span>
+          </div>
           <div class="prep-actions" style="justify-content:center">
             <button class="prep-btn" id="cd-connect">🔌 보드 연결(선택)</button>
             <button class="cel-go" id="cd-start">시작 ▶</button>

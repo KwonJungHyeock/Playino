@@ -2129,3 +2129,47 @@ html, body { overflow-x: hidden; }
 .cds-pad .cds-pad-lbl { font-weight: 900; font-size: 18px; letter-spacing: 1px; }
 .cds-pad .cds-pad-hint { font-size: 11px; color: #b9c2d6; }
 .cds-pad.on { background: rgba(40,44,70,.95); border-color: #ffd24a; transform: translateX(-50%) scale(.95); box-shadow: 0 0 30px rgba(120,140,255,.5); }
+
+/* 게임 prep 결선표(부저·RGB·CDS) */
+.prep-wire { margin: 4px auto 14px; max-width: 360px; }
+.prep-wire > b { display: block; font-size: 14px; color: #ffd24a; margin-bottom: 6px; }
+.prep-wire .prep-wire-t { font-size: 13px; }
+.prep-wire .prep-wire-t td { padding: 7px 10px; }
+.prep-wire-note { display: block; margin-top: 6px; font-size: 12px; color: #aeb6c8; }
+
+/* ===== 조이스틱 — 이론 애니메이션 ===== */
+.jt1 .jt-pad { position: relative; width: 170px; height: 170px; border-radius: 50%; margin: 6px auto;
+  background: radial-gradient(circle at 50% 45%, #2a3350, #161b2e); box-shadow: inset 0 0 24px rgba(0,0,0,.5); }
+.jt1 .jt-ax { position: absolute; background: rgba(150,180,255,.4); }
+.jt1 .jt-ax-x { left: 8%; right: 8%; top: 50%; height: 2px; }
+.jt1 .jt-ax-y { top: 8%; bottom: 8%; left: 50%; width: 2px; }
+.jt1 .jt-knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; border-radius: 50%; margin: -23px;
+  background: radial-gradient(circle at 38% 34%, #ff7adf, #b13ca0); box-shadow: 0 0 18px rgba(255,120,220,.7);
+  animation: jt-orbit 4s ease-in-out infinite; }
+@keyframes jt-orbit { 0%{transform:translate(0,0)} 20%{transform:translate(44px,0)} 40%{transform:translate(0,40px)} 60%{transform:translate(-44px,0)} 80%{transform:translate(0,-40px)} 100%{transform:translate(0,0)} }
+.jt2 .jt-bar { position: relative; width: 90%; max-width: 460px; height: 16px; margin: 28px auto 30px; border-radius: 8px;
+  background: linear-gradient(90deg, #ff6b6b, #ffd24a 50%, #6fb7ff); }
+.jt2 .jt-bar b { position: absolute; top: 22px; font-size: 13px; font-weight: 800; color: #3a4154; transform: translateX(-50%); }
+.jt2 .jt-t0 { left: 0; } .jt2 .jt-tm { left: 50%; } .jt2 .jt-t1 { left: 100%; }
+.jt2 .jt-marker { position: absolute; top: -7px; width: 14px; height: 30px; border-radius: 5px; background: #1b2030;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4); animation: jt-slide 3.4s ease-in-out infinite; }
+@keyframes jt-slide { 0%,100%{left:50%} 25%{left:2%} 50%{left:50%} 75%{left:98%} }
+
+/* ===== 조이스틱 — 조종 모니터(이론관 제어 탭) ===== */
+.joy-dash .joy-mon { position: relative; width: 190px; height: 190px; border-radius: 18px; margin: 0 auto 10px;
+  background: radial-gradient(circle at 50% 45%, #232b44, #12172a); box-shadow: inset 0 0 22px rgba(0,0,0,.55); overflow: hidden; touch-action: none; cursor: grab; }
+.joy-dash .joy-cx { position: absolute; left: 6%; right: 6%; top: 50%; height: 2px; background: rgba(150,180,255,.35); }
+.joy-dash .joy-cy { position: absolute; top: 6%; bottom: 6%; left: 50%; width: 2px; background: rgba(150,180,255,.35); }
+.joy-dash .joy-dot { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; border-radius: 50%; transform: translate(-50%,-50%);
+  background: radial-gradient(circle at 38% 34%, #b6c2ff, #6a78ff); box-shadow: 0 0 16px rgba(120,140,255,.8); transition: left .06s, top .06s; }
+.joy-read { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-weight: 800; }
+.joy-read b { font-size: 26px; font-family: "Space Grotesk", monospace; margin-left: 4px; }
+.joy-dir { padding: 3px 12px; border-radius: 11px; background: #eef1f6; color: #4a6da0; }
+
+/* ===== 조이스틱 게임 — 별줍기 ===== */
+.joygame .joy-stage-bg { position: absolute; inset: 0; z-index: 0; background: #0a0820 center/cover no-repeat; }
+.joy-pad { position: fixed; left: 26px; bottom: 26px; z-index: 8; width: 130px; height: 130px; border-radius: 50%;
+  background: rgba(18,16,40,.4); border: 2px solid rgba(160,150,255,.3); display: flex; align-items: center; justify-content: center;
+  touch-action: none; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.joy-pad .joy-knob { width: 58px; height: 58px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 38% 34%, #d7c2ff, #9a7aff); box-shadow: 0 5px 16px rgba(0,0,0,.45); }

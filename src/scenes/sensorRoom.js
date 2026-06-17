@@ -10,6 +10,7 @@ import { showLedGame } from './ledGame.js';
 import { showBuzzerGame } from './buzzerGame.js';
 import { showRgbGame } from './rgbGame.js';
 import { showCdsGame } from './cdsGame.js';
+import { showJoystickGame } from './joystickGame.js';
 
 const roomCache = {};
 function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.webp`; roomCache[key] = im; } return roomCache[key]; }
@@ -63,6 +64,19 @@ const ROOMS_CFG = {
       '자동 가로등·화면 밝기 자동조절… 빛 센서가 똑똑하게 켜고 꺼줘요 💡',
     ],
     play: (root, opt) => showCdsGame(root, opt),
+  },
+  joystick: {
+    name: '우주 조종 훈련소', sensor: '조이스틱 · 2축 아날로그', icon: '🕹️', accent: '150,120,255',
+    room: 'room-joystick-bg', eddie: '/brand/eddie-pilot.webp', signL: '120,200,255', signR: '255,120,220',
+    control: 'joystick', pins: { x: 0, y: 1 },
+    intro: '이론관에서 조종 원리를 배우고, 체험관에서 우주선으로 별을 모으자! 🚀',
+    animTheory: 'joystick',
+    captions: [
+      '조이스틱은 X(좌우)·Y(상하) 두 개의 아날로그 값을 한 번에 읽어요 — 2축! 🕹️',
+      '안 움직이면 가운데(약 512), 끝까지 밀면 0 또는 1023 — 값의 변화가 곧 방향!',
+      '스틱을 밀면 우주선이 그 방향으로 — 조종간이 되는 거예요 🚀',
+    ],
+    play: (root, opt) => showJoystickGame(root, opt),
   },
 };
 
@@ -149,15 +163,16 @@ export function showSensorRoom(root, { id, onExit } = {}) {
   function openTheory() {
     world.pause();
     const v = root.querySelector('#sr-tview'); v.hidden = false;
-    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null, theoryRaf = null, cdsTimer = null;
+    let tab = 'info', ci = 0, blink = null, ledOn = false, blinkOn = false, stateUnsub = null, theoryRaf = null, cdsTimer = null, joyTimer = null;
     function stopCdsPoll() { if (cdsTimer) { clearInterval(cdsTimer); cdsTimer = null; } }
+    function stopJoyPoll() { if (joyTimer) { clearInterval(joyTimer); joyTimer = null; } }
     const INFO = (cfg.info || []).map((n) => `/brand/${n}.webp`), CAPS = cfg.captions || [];
 
     v.innerHTML = `
       <div class="prep-card tv-card">
         <div class="tv-tabs">
           <button class="tv-tab on" data-t="info">📚 자료</button>
-          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : cfg.control === 'cds' ? '🔆 빛 측정' : '🎛️ LED 제어'}</button>
+          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : cfg.control === 'cds' ? '🔆 빛 측정' : cfg.control === 'joystick' ? '🕹️ 조종 모니터' : '🎛️ LED 제어'}</button>
           <button class="tv-x" id="tv-x">✕ 나가기</button>
         </div>
         <div class="tv-body" id="tv-body"></div>
@@ -171,7 +186,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     v.querySelectorAll('.tv-tab').forEach((b) => b.onclick = () => { if (tab === b.dataset.t) return; tab = b.dataset.t; if (tab !== 'code') stopBlink(); v.querySelectorAll('.tv-tab').forEach((x) => x.classList.toggle('on', x === b)); renderTab(); });
     v.querySelector('#tv-x').onclick = close;
     function close() {
-      stopBlink(); stopRaf(); stopCdsPoll(); if (stateUnsub) { stateUnsub(); stateUnsub = null; }
+      stopBlink(); stopRaf(); stopCdsPoll(); stopJoyPoll(); if (stateUnsub) { stateUnsub(); stateUnsub = null; }
       if (board.connected) {
         if (cfg.control === 'rgb') { const p = cfg.pins; board.pwm(p.r, 0).catch(() => {}); board.pwm(p.g, 0).catch(() => {}); board.pwm(p.b, 0).catch(() => {}); }
         else if (cfg.control === 'led') board.digital(cfg.blockPin, false).catch(() => {});
@@ -179,12 +194,12 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume();
     }
     function stopRaf() { if (theoryRaf) { cancelAnimationFrame(theoryRaf); theoryRaf = null; } }
-    function renderTab() { stopRaf(); stopCdsPoll(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : renderControl()); }
+    function renderTab() { stopRaf(); stopCdsPoll(); stopJoyPoll(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : cfg.control === 'joystick' ? renderJoystick() : renderControl()); }
 
     // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
     function renderAnim() {
       ew.hidden = false;
-      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : buzzerTheory();
+      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : cfg.animTheory === 'joystick' ? joystickTheory() : buzzerTheory();
       bodyEl.innerHTML = `
         <div class="tv-slider">
           <button class="tv-arrow" id="tv-prev">◀</button>
@@ -357,6 +372,50 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         if (!c) { status.textContent = '보드 연결이 끊겼어요 — 슬라이더로 체험하거나 다시 연결!'; }
         startPoll();
       });
+    }
+
+    // 조이스틱 조종 모니터: 드래그(또는 실물)로 X·Y·방향 실시간 표시
+    function renderJoystick() {
+      showEddie('조이스틱을 드래그(또는 실물 연결)해봐! X·Y 값과 방향이 실시간으로 🕹️');
+      const P = cfg.pins;
+      bodyEl.innerHTML = `
+        <div class="dash joy-dash">
+          <div class="dash-led">
+            <div class="joy-mon" id="joy-mon"><div class="joy-cx"></div><div class="joy-cy"></div><div class="joy-dot" id="joy-dot"></div></div>
+            <div class="dl-pin">🕹️ 테스트: <b>X→A0 · Y→A1</b><br><span>(Grove 조이스틱을 A0 포트에)</span></div>
+          </div>
+          <div class="dash-cards">
+            <div class="dcard">
+              <div class="dc-h">📈 조이스틱 값 <span>0~1023 · 중앙 512</span></div>
+              <div class="joy-read"><span>X <b id="joy-x">512</b></span><span>Y <b id="joy-y">512</b></span><span class="joy-dir" id="joy-dir">● 중앙</span></div>
+            </div>
+            <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 조이스틱)'}</button>
+            <div class="dc-status" id="dc-status">${board.connected ? '실물 조이스틱을 움직여봐! 🕹️' : '드래그로 체험하거나, 연결하면 실물 값이 보여요.'}</div>
+          </div>
+        </div>`;
+      const mon = bodyEl.querySelector('#joy-mon'), dot = bodyEl.querySelector('#joy-dot');
+      const xEl = bodyEl.querySelector('#joy-x'), yEl = bodyEl.querySelector('#joy-y'), dirEl = bodyEl.querySelector('#joy-dir');
+      const status = bodyEl.querySelector('#dc-status');
+      function show(nx, ny) {
+        xEl.textContent = Math.round(512 + nx * 511); yEl.textContent = Math.round(512 + ny * 511);
+        dot.style.left = (50 + nx * 44) + '%'; dot.style.top = (50 + ny * 44) + '%';
+        const mag = Math.hypot(nx, ny);
+        if (mag <= 0.3) { dirEl.textContent = '● 중앙'; }
+        else { const dirs = ['→ 오른쪽', '↘ 우하', '↓ 아래', '↙ 좌하', '← 왼쪽', '↖ 좌상', '↑ 위', '↗ 우상']; dirEl.textContent = dirs[(Math.round(Math.atan2(ny, nx) / (Math.PI / 4)) + 8) % 8]; }
+      }
+      show(0, 0);
+      let dragId = null;
+      const drag = (e) => { if (dragId !== e.pointerId) return; const r = mon.getBoundingClientRect(); let nx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2); let ny = (e.clientY - (r.top + r.height / 2)) / (r.height / 2); const m = Math.hypot(nx, ny); if (m > 1) { nx /= m; ny /= m; } show(nx, ny); };
+      mon.addEventListener('pointerdown', (e) => { e.preventDefault(); if (board.connected) return; dragId = e.pointerId; try { mon.setPointerCapture(e.pointerId); } catch (_) {} drag(e); });
+      mon.addEventListener('pointermove', drag);
+      const end = (e) => { if (dragId !== e.pointerId) return; dragId = null; if (!board.connected) show(0, 0); };
+      mon.addEventListener('pointerup', end); mon.addEventListener('pointercancel', end);
+      function startPoll() { stopJoyPoll(); if (!board.connected) return; joyTimer = setInterval(async () => { const vx = await board.analogRead(P.x); const vy = await board.analogRead(P.y); if (vx != null && vy != null) show((vx - 512) / 512, (vy - 512) / 512); }, 140); }
+      startPoll();
+      const connBtn = bodyEl.querySelector('#dc-conn');
+      connBtn.onclick = async () => { if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌'; try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '실물 조이스틱을 움직여봐! 🕹️'; startPoll(); } catch (e) { status.textContent = board.classify(e).note; } };
+      if (stateUnsub) stateUnsub();
+      stateUnsub = board.onState(() => { const c = board.connected; connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 조이스틱)'; startPoll(); if (!c) show(0, 0); });
     }
 
     // 자료: 큰 슬라이드 + 흰 박스 밖(여백)의 EDDIE가 설명
@@ -548,6 +607,29 @@ function cdsTheory() {
         <div class="rt-use u-swing"><span>🌅</span>스마트 커튼</div>
         <div class="rt-use u-beep"><span>🚨</span>침입 감지</div>
       </div><div class="ba-flow">어두워지면 <b>자동으로</b> 켜고, 밝아지면 꺼요 💡</div></div>` },
+  ];
+}
+
+// ───────── 조이스틱 이론 애니메이션(코드로 직접) ─────────
+function joystickTheory() {
+  return [
+    { // ① 2축
+      html: `<div class="ba jt1">
+        <div class="jt-pad"><span class="jt-ax jt-ax-x"></span><span class="jt-ax jt-ax-y"></span><span class="jt-knob"></span></div>
+        <div class="ba-flow">조이스틱은 <b>X(좌우)</b>와 <b>Y(상하)</b> 두 값을 <b>동시에</b> 읽어요 — 2축 입력! 🕹️</div>
+      </div>` },
+    { // ② 중심 512
+      html: `<div class="ba jt2">
+        <div class="jt-bar"><b class="jt-t0">0</b><b class="jt-tm">512</b><b class="jt-t1">1023</b><span class="jt-marker"></span></div>
+        <div class="ba-flow">가만히 두면 <b>가운데(≈512)</b>, 밀면 <b>0 또는 1023</b> — 값의 변화가 곧 <b>방향</b>!</div>
+      </div>` },
+    { // ③ 활용
+      html: `<div class="ba jt3"><div class="rt-uses">
+        <div class="rt-use u-bounce"><span>🚀</span>우주선 조종</div>
+        <div class="rt-use u-swing"><span>🤖</span>로봇 팔</div>
+        <div class="rt-use u-shake"><span>🎮</span>게임 컨트롤</div>
+        <div class="rt-use u-beep"><span>🚁</span>드론</div>
+      </div><div class="ba-flow">스틱을 밀면 그 방향으로 — 무엇이든 <b>조종</b>할 수 있어요! 🚀</div></div>` },
   ];
 }
 

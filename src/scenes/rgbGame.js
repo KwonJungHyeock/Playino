@@ -45,6 +45,14 @@ export function showRgbGame(root, { onExit } = {}) {
           <h2>🌈 무지개 물감놀이</h2>
           <p class="prep-sub"><b>목표 색</b>을 보고 <b>R·G·B</b> 슬라이더를 섞어 똑같이 만들어봐! 빛은 섞을수록 밝아져 ✨</p>
           <p class="prep-sub">RGB LED를 <b>R→D9 · G→D10 · B→D11</b>에 연결하면 실제로 같은 색이 켜져요. (없어도 화면으로 플레이)</p>
+          <div class="prep-wire"><b>🔌 결선</b>
+            <table class="prep-table prep-wire-t"><tbody>
+              <tr><td>🔴 빨강(R)</td><td><b>D9</b></td></tr>
+              <tr><td>🟢 초록(G)</td><td><b>D10</b></td></tr>
+              <tr><td>🔵 파랑(B)</td><td><b>D11</b></td></tr>
+            </tbody></table>
+            <span class="prep-wire-note">공통 캐소드 RGB LED · 공통 핀 → GND</span>
+          </div>
           <p class="prep-sub">1차·2차 모두 <b>평균 A등급(85%↑)</b>이면 🌈 무지개 메달!</p>
           <div class="prep-actions" style="justify-content:center">
             <button class="prep-btn" id="rg-connect">🔌 보드 연결(선택)</button>
