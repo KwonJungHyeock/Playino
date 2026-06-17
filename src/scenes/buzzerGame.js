@@ -49,6 +49,10 @@ export function showBuzzerGame(root, { onExit } = {}) {
           <h2>🎵 멜로디 연주단</h2>
           <p class="prep-sub">떨어지는 음표가 판정선에 닿을 때 <b>그 레인의 키(D·F·J·K)</b>나 음표를 눌러 연주! 1차·2차 모두 A등급↑이면 메달 🏅</p>
           <p class="prep-sub">부저를 <b>D5</b>에 연결하면 실제 소리까지! (없어도 화면 소리로 플레이)</p>
+          <div class="prep-wire"><b>🔌 결선</b>
+            <table class="prep-table prep-wire-t"><tbody><tr><td>🔊 Grove 부저</td><td><b>D5</b> 포트</td></tr></tbody></table>
+            <span class="prep-wire-note">Grove 케이블을 D5 포트에 꽂기 (전원·GND 자동)</span>
+          </div>
           <div class="prep-actions" style="justify-content:center">
             <button class="prep-btn" id="bz-connect">🔌 보드 연결(선택)</button>
             <button class="cel-go" id="bz-start">시작 ▶</button>

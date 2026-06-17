@@ -2129,3 +2129,10 @@ html, body { overflow-x: hidden; }
 .cds-pad .cds-pad-lbl { font-weight: 900; font-size: 18px; letter-spacing: 1px; }
 .cds-pad .cds-pad-hint { font-size: 11px; color: #b9c2d6; }
 .cds-pad.on { background: rgba(40,44,70,.95); border-color: #ffd24a; transform: translateX(-50%) scale(.95); box-shadow: 0 0 30px rgba(120,140,255,.5); }
+
+/* 게임 prep 결선표(부저·RGB·CDS) */
+.prep-wire { margin: 4px auto 14px; max-width: 360px; }
+.prep-wire > b { display: block; font-size: 14px; color: #ffd24a; margin-bottom: 6px; }
+.prep-wire .prep-wire-t { font-size: 13px; }
+.prep-wire .prep-wire-t td { padding: 7px 10px; }
+.prep-wire-note { display: block; margin-top: 6px; font-size: 12px; color: #aeb6c8; }
