@@ -68,7 +68,7 @@ const ROOMS_CFG = {
   joystick: {
     name: '우주 조종 훈련소', sensor: '조이스틱 · 2축 아날로그', icon: '🕹️', accent: '150,120,255',
     room: 'room-joystick-bg', eddie: '/brand/eddie-pilot.webp', signL: '120,200,255', signR: '255,120,220',
-    control: 'joystick', pins: { x: 0, y: 1 },
+    control: 'joystick', pins: { x: 0, y: 1 }, floor: 0.82,
     intro: '이론관에서 조종 원리를 배우고, 체험관에서 우주선으로 별을 모으자! 🚀',
     animTheory: 'joystick',
     captions: [
@@ -94,7 +94,7 @@ function soonPlay(root, { onExit } = {}, name, bg) {
 export function showSensorRoom(root, { id, onExit } = {}) {
   const cfg = ROOMS_CFG[id]; if (!cfg) { onExit?.(); return; }
   const VW = Math.max(900, window.innerWidth), VH = Math.max(440, window.innerHeight);
-  const FLOOR_Y = VH * 0.74;                       // EDDIE가 걷는 바닥 라인(좌우 전용)
+  const FLOOR_Y = VH * (cfg.floor || 0.74);        // EDDIE가 걷는 바닥 라인(좌우 전용, 방별 조정)
   // 화살표 푯말 — 각 문을 가리킴(왼쪽=이론관/오른쪽=체험관)
   const stations = [
     { id: 'theory', icon: '📖', label: '이론관', sub: '자료 + 체험', dir: -1, cx: VW * 0.27, signY: VH * 0.50, postY: FLOOR_Y, color: cfg.signL },
