@@ -85,7 +85,7 @@
 | 2 | Grove 베이스 실드 | Base Shield v2 | 1 | Grove 무납땜 연결 |
 | 3 | USB 케이블 | USB-B, 1m | 1 | PC/크롬북 연결·전원 |
 | 4 | **BLE 모듈** | **Grove BLE (HM-10/HM-11)** | 1 | **안드로이드 태블릿 무선 연결** |
-| 5 | LED 모듈 | Grove LED(또는 Red LED) | 1~3 | 라이트쇼 |
+| 5 | LED ×3 | 빨강·노랑·초록 각 1개 (D2/D3/D4) | 3 | 라이트쇼 |
 | 6 | 부저 | Grove Buzzer(Passive) | 1 | 멜로디 연주단 |
 | 7 | RGB LED | Grove RGB LED(Chainable) | 1 | 무지개 물감놀이 |
 | 8 | 조도센서 | Grove Light Sensor(CDS) | 1 | 손그림자 마술 |

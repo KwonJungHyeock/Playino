@@ -1,9 +1,9 @@
 // ledGame.js — 반짝반짝 라이트쇼 (LED · 디지털 출력)
 // [준비] 결선 안내 → 보드 연결/진단 → 통과 시 [2단계 게임]
 //   1단계 타이밍 쇼: 빛 마커가 판정선에 닿을 때 Space.
-//   2단계 라이트 연주: 노트 색에 맞는 LED(초록1·주황2·빨강3)를 눌러 연주.
+//   2단계 라이트 연주: 노트 색에 맞는 LED(초록1·노랑2·빨강3)를 눌러 연주.
 // 각 단계 A등급(정확도 85%↑) 이상이어야 통과. 두 단계 모두 통과해야 💡 조명 메달.
-// LED 3개 ↔ D2(초록)/D3(주황)/D4(빨강), 보드 연결 시 실제 점등.
+// LED 3개 ↔ D2(초록)/D3(노랑)/D4(빨강), 보드 연결 시 실제 점등.
 import { sfx } from '../app/sfx.js';
 import { bgm } from '../app/bgm.js';
 import { progress } from '../app/progress.js';
@@ -13,12 +13,12 @@ import { board } from '../app/board.js';
 const LEAD = 1450, W_PERFECT = 90, W_GOOD = 170;
 const LEDS = [
   { pin: 2, color: '46,200,106', label: '초록', flash: 0 },
-  { pin: 3, color: '255,158,60', label: '주황', flash: 0 },
+  { pin: 3, color: '255,205,50', label: '노랑', flash: 0 },
   { pin: 4, color: '239,77,77', label: '빨강', flash: 0 },
 ];
 const GAMES = [
   { key: 'timing', no: 1, name: '타이밍 쇼', icon: '🎯', desc: '빛 마커가 <b>판정선(◎)</b>에 닿는 순간 <b>Space</b>! 박자에 맞춰 무대 조명을 켜자.', n: 44 },
-  { key: 'play', no: 2, name: '라이트 연주', icon: '🎹', desc: '음 높이에 맞는 LED를 눌러 <b>작은별</b>을 연주! <b>① 초록(낮음) · ② 주황(중간) · ③ 빨강(높음)</b> — 키 1·2·3 또는 LED 클릭. 제때 누르면 멜로디가 흘러요 🎵' },
+  { key: 'play', no: 2, name: '라이트 연주', icon: '🎹', desc: '음 높이에 맞는 LED를 눌러 <b>작은별</b>을 연주! <b>① 초록(낮음) · ② 노랑(중간) · ③ 빨강(높음)</b> — 키 1·2·3 또는 LED 클릭. 제때 누르면 멜로디가 흘러요 🎵' },
 ];
 const PASS_ACC = 0.85;   // A등급 이상
 
@@ -39,7 +39,7 @@ function buildBeats(game) {
     return a;
   }
   // 라이트 연주: 저작권 없는 멜로디(작은별, public domain)를 실제로 연주.
-  // 음 높이에 따라 LED 배정(낮음=초록·중간=주황·높음=빨강), 제때 누르면 그 음정이 소리난다.
+  // 음 높이에 따라 LED 배정(낮음=초록·중간=노랑·높음=빨강), 제때 누르면 그 음정이 소리난다.
   const a = []; let t = 900; const gap = 470;
   for (let i = 0; i < MELODY.length; i++) {
     const f = MELODY[i];
@@ -82,7 +82,7 @@ export function showLedGame(root, { onExit } = {}) {
                 <thead><tr><th>LED</th><th>아두이노 핀</th></tr></thead>
                 <tbody>
                   <tr><td>🟢 초록 LED</td><td>D2</td></tr>
-                  <tr><td>🟠 주황 LED</td><td>D3</td></tr>
+                  <tr><td>🟡 노랑 LED</td><td>D3</td></tr>
                   <tr><td>🔴 빨강 LED</td><td>D4</td></tr>
                 </tbody>
               </table>
@@ -128,7 +128,7 @@ export function showLedGame(root, { onExit } = {}) {
     try { await board.connect(); onConnected(); } catch (e) { setStatus(board.classify(e).note, 'warn'); }
   };
   function onConnected() { setStatus('보드 연결 완료! ✅ LED 테스트로 결선을 확인하거나 바로 시작하세요', 'ok'); bTest.disabled = false; bStart.disabled = false; bConnect.textContent = '🔌 연결됨 ✓'; }
-  bTest.onclick = async () => { setStatus('초록·주황·빨강 순서로 깜빡여 볼게요! 💡'); sfx.ok(); try { for (const l of LEDS) await board.blink(l.pin, 2, 200); } catch (e) { setStatus('테스트 실패 — 결선을 다시 확인해주세요', 'warn'); } };
+  bTest.onclick = async () => { setStatus('초록·노랑·빨강 순서로 깜빡여 볼게요! 💡'); sfx.ok(); try { for (const l of LEDS) await board.blink(l.pin, 2, 200); } catch (e) { setStatus('테스트 실패 — 결선을 다시 확인해주세요', 'warn'); } };
   bStart.onclick = () => { root.querySelector('#led-prep').classList.add('hide'); startFlow(); };
   root.querySelector('#p-skip').onclick = () => { root.querySelector('#led-prep').classList.add('hide'); startFlow(); };
 
