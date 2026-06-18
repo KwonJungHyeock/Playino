@@ -47,14 +47,14 @@ export function showJoystickGame(root, { onExit } = {}) {
               <table class="prep-table">
                 <thead><tr><th>조이스틱 핀</th><th>아두이노</th></tr></thead>
                 <tbody>
-                  <tr><td>VCC</td><td>5V</td></tr>
                   <tr><td>GND</td><td>GND</td></tr>
-                  <tr><td>X</td><td>A0</td></tr>
-                  <tr><td>Y</td><td>A1</td></tr>
-                  <tr><td>SW(버튼)</td><td>D2</td></tr>
+                  <tr><td>VCC</td><td>5V</td></tr>
+                  <tr><td>X</td><td>D5</td></tr>
+                  <tr><td>Y</td><td>D6</td></tr>
+                  <tr><td>SW(버튼)</td><td>D7</td></tr>
                 </tbody>
               </table>
-              <div class="prep-status">조작: 화면 조이스틱(왼쪽 아래) · 방향키/WASD · 실물(X→A0·Y→A1)</div>
+              <div class="prep-status">⚠️ X·Y는 아날로그라 실물 조종은 <b>A0·A1</b> 권장 · 화면 조이스틱/방향키로도 플레이 OK</div>
             </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
