@@ -1478,6 +1478,7 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .nav-back-arrow { font-size: 17px; line-height: 1; }
 body[data-canback="1"] .nav-back { display: inline-flex; }
 body[data-canback="1"] .brand-badge { left: 116px; }   /* 게임/인트로: 좌상단 뱃지를 우측으로 비켜줌 */
+body[data-canback="1"] .led-hud { left: 116px !important; }   /* 게임 HUD도 뒤로 버튼과 안 겹치게 */
 /* 상단 헤더 바(허브·챕터·미니게임)에선 로고와 겹치지 않게 버튼을 한 칸 아래로 */
 body:has(.curr-header) .nav-back,
 body:has(.hud-top) .nav-back,

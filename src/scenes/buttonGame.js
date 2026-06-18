@@ -86,9 +86,9 @@ export function showButtonGame(root, { onExit } = {}) {
     bgGrad = ctx.createLinearGradient(0, 0, 0, H); bgGrad.addColorStop(0, '#bfe8ff'); bgGrad.addColorStop(0.55, '#dff3c0'); bgGrad.addColorStop(1, '#a7d36b');
   }
   resize(); window.addEventListener('resize', resize);
-  const holeX = () => [W * 0.27, W * 0.5, W * 0.73];
-  const holeY = () => H * 0.66;
-  const holeR = () => clamp(Math.min(W, H) * 0.11, 54, 120);
+  const holeX = () => [W * 0.28, W * 0.5, W * 0.72];
+  const holeY = () => H * 0.78;
+  const holeR = () => clamp(Math.min(W, H) * 0.12, 60, 132);
 
   // ── 입력 ──
   const keys = ['1', '2', '3'];
@@ -209,15 +209,37 @@ export function showButtonGame(root, { onExit } = {}) {
   }
 
   function moleHead(cx, cy, r, golden, dead) {
-    ctx.fillStyle = golden ? '#f3c33a' : '#9c6b43';
-    ctx.beginPath(); ctx.ellipse(cx, cy, r, r * 1.05, 0, 0, 6.283); ctx.fill();
-    ctx.fillStyle = golden ? '#fff3cf' : '#d9b48f';   // 주둥이
-    ctx.beginPath(); ctx.ellipse(cx, cy + r * 0.42, r * 0.5, r * 0.36, 0, 0, 6.283); ctx.fill();
-    ctx.fillStyle = '#3a2418'; ctx.beginPath(); ctx.ellipse(cx, cy + r * 0.42, r * 0.13, r * 0.1, 0, 0, 6.283); ctx.fill(); // 코
-    ctx.fillStyle = '#26190f';   // 눈
-    if (dead) { ctx.lineWidth = r * 0.09; ctx.strokeStyle = '#26190f'; const e = r * 0.12; [[-r * 0.34, -r * 0.1], [r * 0.34, -r * 0.1]].forEach(([ex, ey]) => { ctx.beginPath(); ctx.moveTo(cx + ex - e, cy + ey - e); ctx.lineTo(cx + ex + e, cy + ey + e); ctx.moveTo(cx + ex + e, cy + ey - e); ctx.lineTo(cx + ex - e, cy + ey + e); ctx.stroke(); }); }
-    else { ctx.beginPath(); ctx.arc(cx - r * 0.34, cy - r * 0.12, r * 0.12, 0, 6.283); ctx.arc(cx + r * 0.34, cy - r * 0.12, r * 0.12, 0, 6.283); ctx.fill(); }
-    if (golden) { ctx.fillStyle = '#fff'; ctx.font = `${r * 0.5}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✨', cx + r * 0.75, cy - r * 0.7); }
+    const fur = golden ? ['#ffe07a', '#e3a826'] : ['#b98a5c', '#7d5536'];
+    // 귀
+    ctx.fillStyle = fur[1];
+    ctx.beginPath(); ctx.arc(cx - r * 0.66, cy - r * 0.72, r * 0.3, 0, 6.283); ctx.arc(cx + r * 0.66, cy - r * 0.72, r * 0.3, 0, 6.283); ctx.fill();
+    ctx.fillStyle = golden ? '#fff1c6' : '#caa07a';
+    ctx.beginPath(); ctx.arc(cx - r * 0.66, cy - r * 0.72, r * 0.15, 0, 6.283); ctx.arc(cx + r * 0.66, cy - r * 0.72, r * 0.15, 0, 6.283); ctx.fill();
+    // 머리(세로 그라데이션)
+    const g = ctx.createLinearGradient(cx, cy - r * 1.1, cx, cy + r * 1.15); g.addColorStop(0, fur[0]); g.addColorStop(1, fur[1]);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, cy, r * 0.96, r * 1.04, 0, 0, 6.283); ctx.fill();
+    // 볼/주둥이
+    ctx.fillStyle = golden ? '#fff6da' : '#e6c79f';
+    ctx.beginPath(); ctx.ellipse(cx, cy + r * 0.36, r * 0.58, r * 0.44, 0, 0, 6.283); ctx.fill();
+    // 앞니
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = 1;
+    ctx.fillRect(cx - r * 0.15, cy + r * 0.4, r * 0.13, r * 0.24); ctx.fillRect(cx + r * 0.02, cy + r * 0.4, r * 0.13, r * 0.24);
+    ctx.strokeRect(cx - r * 0.15, cy + r * 0.4, r * 0.13, r * 0.24); ctx.strokeRect(cx + r * 0.02, cy + r * 0.4, r * 0.13, r * 0.24);
+    // 코
+    ctx.fillStyle = '#c0625e'; ctx.beginPath(); ctx.ellipse(cx, cy + r * 0.24, r * 0.16, r * 0.12, 0, 0, 6.283); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.ellipse(cx - r * 0.05, cy + r * 0.2, r * 0.05, r * 0.035, 0, 0, 6.283); ctx.fill();
+    // 수염
+    ctx.strokeStyle = 'rgba(60,40,28,.45)'; ctx.lineWidth = Math.max(1, r * 0.03);
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(cx + s * r * 0.2, cy + r * 0.28); ctx.lineTo(cx + s * r * 0.95, cy + r * 0.16); ctx.moveTo(cx + s * r * 0.2, cy + r * 0.34); ctx.lineTo(cx + s * r * 0.98, cy + r * 0.36); ctx.stroke(); }
+    // 눈
+    const ex = r * 0.36, ey = -r * 0.18;
+    if (dead) { ctx.strokeStyle = '#2a1c10'; ctx.lineWidth = r * 0.1; const e = r * 0.13; for (const sx of [-1, 1]) { const bx = cx + sx * ex; ctx.beginPath(); ctx.moveTo(bx - e, cy + ey - e); ctx.lineTo(bx + e, cy + ey + e); ctx.moveTo(bx + e, cy + ey - e); ctx.lineTo(bx - e, cy + ey + e); ctx.stroke(); } }
+    else {
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(cx - ex, cy + ey, r * 0.17, r * 0.2, 0, 0, 6.283); ctx.ellipse(cx + ex, cy + ey, r * 0.17, r * 0.2, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = '#241a12'; ctx.beginPath(); ctx.arc(cx - ex, cy + ey + r * 0.02, r * 0.1, 0, 6.283); ctx.arc(cx + ex, cy + ey + r * 0.02, r * 0.1, 0, 6.283); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx - ex + r * 0.04, cy + ey - r * 0.04, r * 0.035, 0, 6.283); ctx.arc(cx + ex + r * 0.04, cy + ey - r * 0.04, r * 0.035, 0, 6.283); ctx.fill();
+    }
+    if (golden) { ctx.font = `${r * 0.55}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✨', cx + r * 0.85, cy - r * 0.85); }
   }
 
   function draw(now) {
@@ -225,23 +247,33 @@ export function showButtonGame(root, { onExit } = {}) {
     if (!ready(bgImg)) { ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H); } else { ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(0, 0, W, H); }
     const hx = holeX(), hy = holeY(), R = holeR();
     for (let i = 0; i < HOLES; i++) {
-      // 흙더미 + 구멍
-      ctx.fillStyle = 'rgba(90,64,40,.55)'; ctx.beginPath(); ctx.ellipse(hx[i], hy + R * 0.12, R * 1.32, R * 0.66, 0, 0, 6.283); ctx.fill();
-      ctx.fillStyle = '#2f2013'; ctx.beginPath(); ctx.ellipse(hx[i], hy, R, R * 0.5, 0, 0, 6.283); ctx.fill();
-      // 두더지(구멍 위로만 보이게 클립)
       const m = holes[i];
+      // 흙더미(불투명 — 배경에 그려진 구멍을 덮어 정렬 어긋남 방지)
+      const mg = ctx.createLinearGradient(0, hy - R * 0.55, 0, hy + R * 0.95); mg.addColorStop(0, '#b9824e'); mg.addColorStop(1, '#744d2c');
+      ctx.fillStyle = mg; ctx.beginPath(); ctx.ellipse(hx[i], hy + R * 0.3, R * 1.5, R * 0.85, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = 'rgba(255,235,200,.12)'; ctx.beginPath(); ctx.ellipse(hx[i], hy + R * 0.06, R * 1.46, R * 0.7, 0, Math.PI, 0); ctx.fill();
+      // 구멍(라디얼 그라데이션)
+      const hg = ctx.createRadialGradient(hx[i], hy - R * 0.08, R * 0.12, hx[i], hy, R); hg.addColorStop(0, '#140b04'); hg.addColorStop(1, '#3c2614');
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.ellipse(hx[i], hy, R, R * 0.52, 0, 0, 6.283); ctx.fill();
+      // 두더지(구멍선 위로만 보이게 클립)
       if (m.pop > 0.02) {
-        ctx.save(); ctx.beginPath(); ctx.rect(hx[i] - R * 1.4, 0, R * 2.8, hy + R * 0.1); ctx.clip();
-        const r = R * 0.72, cy = hy + R * 0.35 - m.pop * (R * 1.05);
+        ctx.save(); ctx.beginPath(); ctx.rect(hx[i] - R * 1.1, 0, R * 2.2, hy + R * 0.04); ctx.clip();
+        const r = R * 0.8, cy = hy + R * 0.28 - m.pop * (R * 1.02);
+        // 그림자(구멍 안)
+        ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(hx[i], hy + R * 0.02, r * 0.8, R * 0.2, 0, 0, 6.283); ctx.fill();
         moleHead(hx[i], cy, r, m.golden, m.hit);
         ctx.restore();
       }
-      // 구멍 앞테두리(두더지 아랫부분 가림)
-      ctx.fillStyle = '#241809'; ctx.beginPath(); ctx.ellipse(hx[i], hy, R, R * 0.5, 0, 0, Math.PI); ctx.fill();
+      // 구멍 앞테두리(두더지 밑단을 둥글게 가림)
+      ctx.fillStyle = '#2c1b0d'; ctx.beginPath(); ctx.ellipse(hx[i], hy, R, R * 0.52, 0, 0, Math.PI); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(hx[i], hy, R, R * 0.52, 0, 0, 6.283); ctx.stroke();
       // 망치 타격 효과
-      if (whack[i] > 0) { ctx.save(); ctx.globalAlpha = clamp(whack[i] / 14, 0, 1); ctx.font = `${R * 0.95}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🔨', hx[i] + R * 0.5, hy - R * 0.8); ctx.restore(); }
-      // 번호 라벨
-      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.font = '700 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`${i + 1}`, hx[i], hy + R * 0.78);
+      if (whack[i] > 0) { ctx.save(); ctx.globalAlpha = clamp(whack[i] / 14, 0, 1); ctx.translate(hx[i] + R * 0.55, hy - R * 0.85); ctx.rotate(-0.4 + (1 - whack[i] / 14) * 0.5); ctx.font = `${R * 1.05}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🔨', 0, 0); ctx.restore(); }
+      // 번호 표(흙더미 위)
+      ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(hx[i], hy + R * 0.86, 13, 0, 6.283); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#7a512f'; ctx.font = '800 15px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(`${i + 1}`, hx[i], hy + R * 0.86);
+      ctx.textBaseline = 'alphabetic';
     }
     // 파티클
     for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.16; p.life--; ctx.globalAlpha = Math.max(0, p.life / 32); ctx.fillStyle = `rgb(${p.color})`; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; if (p.life <= 0) parts.splice(i, 1); }
