@@ -111,7 +111,21 @@ export function showUltraGame(root, { onExit } = {}) {
   const hwNorm = () => clamp((hwCm - NEAR) / (FAR - NEAR), 0, 1);
 
   const pstat = root.querySelector('#ug-pstat');
-  function fwCheck() { if (board.connected && board.fwOutdated) { pstat.innerHTML = `⚠️ 보드 펌웨어가 옛날 버전(v${board.version})이라 초음파를 못 읽어요. <b>[설정 → 펌웨어 굽기]</b>로 업데이트하면 실제 거리로 동작! (지금은 마우스로 체험 가능)`; return true; } return false; }
+  function fwCheck() {
+    if (!(board.connected && board.fwOutdated)) return false;
+    pstat.innerHTML = `⚠️ 보드 펌웨어가 옛날 버전(v${board.version})이라 초음파를 못 읽어요. 아래 버튼으로 업데이트하면 실제 거리로 동작! (지금도 마우스로 체험 가능)
+      <div style="margin-top:8px"><button class="prep-btn" id="ug-flash">🔧 펌웨어 업데이트 (약 10초)</button> <b id="ug-fstat"></b></div>`;
+    const fb = pstat.querySelector('#ug-flash'), fstat = pstat.querySelector('#ug-fstat');
+    fb.onclick = async () => {
+      fb.disabled = true; stopHw(); fstat.textContent = ' 시작…';
+      try {
+        const r = await board.flash({ onProgress: (d, t) => { fstat.textContent = ` 굽는 중… ${Math.round(d / t * 100)}%`; }, onLog: (m) => { fstat.textContent = ' ' + m; } });
+        if (r.ok && !board.fwOutdated) { pstat.innerHTML = '✅ 펌웨어 업데이트 완료! 이제 센서 앞에서 손을 움직이면 실제 거리로 우주선을 조종해요 📡'; startHw(); }
+        else { fstat.textContent = ' 다 구웠는데 응답 확인이 필요해요 — 케이블을 확인하고 다시.'; fb.disabled = false; }
+      } catch (e) { fstat.textContent = ' 실패: ' + (e?.message ?? e) + ' — 케이블 다시 꽂고 시도'; fb.disabled = false; }
+    };
+    return true;
+  }
   root.querySelector('#ug-connect').onclick = async () => { const b = root.querySelector('#ug-connect'); try { await board.connect(); b.textContent = '🔌 연결됨 ✓'; startHw(); fwCheck(); } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
   board.connectAuto().then(() => { startHw(); fwCheck(); }).catch(() => {});
   root.querySelector('#ug-start').onclick = () => { root.querySelector('#ug-prep').classList.add('hide'); skipBtn.hidden = false; startFlow(); };

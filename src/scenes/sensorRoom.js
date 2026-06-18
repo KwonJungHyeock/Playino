@@ -473,7 +473,21 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       const drag = (e) => { if (board.connected) return; const r = mon.getBoundingClientRect(); const p = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)); show(NEAR + p * (FAR - NEAR)); };
       mon.addEventListener('pointerdown', (e) => { e.preventDefault(); if (board.connected) return; dragId = e.pointerId; try { mon.setPointerCapture(e.pointerId); } catch (_) {} drag(e); });
       mon.addEventListener('pointermove', (e) => { if (dragId === e.pointerId || e.pointerType === 'mouse') drag(e); });
-      function fwWarn() { if (board.connected && board.fwOutdated) { status.innerHTML = `⚠️ 보드 펌웨어가 옛날 버전(v${board.version})이라 거리를 못 읽어요. [설정 → 펌웨어 굽기]로 업데이트하면 실제 거리가 보여요. (지금은 마우스로 체험)`; return true; } return false; }
+      function fwWarn() {
+        if (!(board.connected && board.fwOutdated)) return false;
+        status.innerHTML = `⚠️ 보드 펌웨어가 옛날 버전(v${board.version})이라 거리를 못 읽어요. 아래 버튼으로 업데이트하면 실제 거리가 보여요. (지금은 마우스로 체험)
+          <div style="margin-top:6px"><button class="dbtn ghost" id="ult-flash">🔧 펌웨어 업데이트 (약 10초)</button> <b id="ult-fstat"></b></div>`;
+        const fb = status.querySelector('#ult-flash'), fstat = status.querySelector('#ult-fstat');
+        fb.onclick = async () => {
+          fb.disabled = true; stopJoyPoll(); fstat.textContent = ' 시작…';
+          try {
+            const r = await board.flash({ onProgress: (d, t) => { fstat.textContent = ` 굽는 중… ${Math.round(d / t * 100)}%`; }, onLog: (m) => { fstat.textContent = ' ' + m; } });
+            if (r.ok && !board.fwOutdated) { status.innerHTML = '✅ 펌웨어 업데이트 완료! 센서 앞에서 손을 움직여봐 📡'; startPoll(); }
+            else { fstat.textContent = ' 다 구웠는데 응답 확인 필요 — 케이블 확인 후 다시.'; fb.disabled = false; }
+          } catch (e) { fstat.textContent = ' 실패: ' + (e?.message ?? e); fb.disabled = false; }
+        };
+        return true;
+      }
       function startPoll() { stopJoyPoll(); if (!board.connected) return; if (fwWarn()) return; joyTimer = setInterval(async () => { const cm = await board.readUltrasonic({ trig: P.trig, echo: P.echo }); if (cm != null && cm > 0) show(cm); }, 120); }
       startPoll();
       const connBtn = bodyEl.querySelector('#dc-conn');
