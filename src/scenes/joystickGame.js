@@ -1,11 +1,11 @@
 // joystickGame.js — 별 지렁이 대모험 (조이스틱 · 스네이크형)
 // 조이스틱으로 우주뱀(EDDIE)을 조종해 별을 먹는다. 별을 먹을수록 꼬리가 길어지고
 // 속도가 빨라져 점점 어려워진다(자기 꼬리·운석 충돌 = 크래시).
-// 입력: 키보드(방향키/WASD) · 화면 조이스틱(터치) · 실물 조이스틱(D5=X · D6=Y · D7=SW).
-//  └ 디지털 포트 키트 대응: 아두이노 입력 임계전압(≈2.5V)이 조이스틱 중앙값과 거의 같아
-//    한쪽으로 '꺾으면' digitalRead 가 그 방향(LOW/HIGH)을 또렷이 읽는다. 중앙(놓음)만
-//    임계점이라 값이 떨려 → 최근 표본 다수결로 '확실히 꺾은 방향'만 인정(떨림=중립).
-//    즉 실물 조이스틱으로 진짜 방향 조종 + SW(D7) 누르면 ⚡부스트.
+// 입력: 방향(키보드 방향키/WASD · 화면 조이스틱) + 부스트(실물 조이스틱 꺾기/버튼).
+//  └ 디지털 포트 키트 한계: X·Y(아날로그 전압)를 ADC 없는 디지털 핀(D5/D6)에 꽂아
+//    0~1023 측정 불가 → 핀당 ON/OFF 1비트뿐. 중앙이 한쪽으로 굳어 읽히므로 연결 직후
+//    '쉬는 값'을 기준으로 보정하고, 그와 다르게 꺾이면(=꺾음 신호) 부스트로 사용.
+//    부드러운 방향 조종은 화면/키보드가 담당(아날로그 핀 A0·A1이면 진짜 2축 가능하나 이 키트는 디지털 전용).
 // 1차 별 지렁이 · 2차 운석 미로. 목표 길이 도달(또는 85%↑) → 🚀 조종 메달.
 import { sfx } from '../app/sfx.js';
 import { bgm } from '../app/bgm.js';
@@ -53,12 +53,12 @@ export function showJoystickGame(root, { onExit } = {}) {
                 <tbody>
                   <tr><td>GND</td><td>GND</td></tr>
                   <tr><td>VCC</td><td>5V</td></tr>
-                  <tr><td>X</td><td>D5 ↔ 좌우</td></tr>
-                  <tr><td>Y</td><td>D6 ↕ 상하</td></tr>
+                  <tr><td>X</td><td>D5 ⚡부스트</td></tr>
+                  <tr><td>Y</td><td>D6 ⚡부스트</td></tr>
                   <tr><td>SW(버튼)</td><td>D7 ⚡부스트</td></tr>
                 </tbody>
               </table>
-              <div class="prep-status">실물 조이스틱을 <b>꽉 꺾어</b> 방향을 조종해요! 버튼(SW)을 누르면 ⚡<b>부스트</b> · 가운데로 놓으면 직진 (방향키·화면 조이스틱도 OK)</div>
+              <div class="prep-status"><b>방향</b>은 방향키·화면 조이스틱으로 조종! 실물 조이스틱을 <b>꺾거나 버튼(SW)</b>을 누르면 ⚡<b>부스트</b> (디지털 포트라 X·Y는 ON/OFF 신호 — 방향은 화면으로)</div>
             </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
@@ -124,9 +124,9 @@ export function showJoystickGame(root, { onExit } = {}) {
     if (keys.has('arrowleft') || keys.has('a')) x -= 1; if (keys.has('arrowright') || keys.has('d')) x += 1;
     if (keys.has('arrowup') || keys.has('w')) y -= 1; if (keys.has('arrowdown') || keys.has('s')) y += 1;
     if (joy.x || joy.y) { x = joy.x; y = joy.y; }
-    if (hwDir.x || hwDir.y) { x = hwDir.x; y = -hwDir.y; }   // 실물 조이스틱 우선 (Y는 화면좌표 반전: 위로 꺾으면 위로)
-    return { x, y };
+    return { x, y };   // 방향은 키보드·화면 조이스틱(부드러운 360°). 실물 스틱 X/Y는 디지털이라 부스트로만.
   }
+  const boosting = () => swDown || hwDir.x !== 0 || hwDir.y !== 0;   // 버튼 누름 OR 스틱 꺾음 = ⚡부스트
 
   root.querySelector('#jy-connect').onclick = async () => { const b = root.querySelector('#jy-connect'); try { await board.connect(); b.textContent = '🔌 연결됨 ✓'; startHw(); } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
   board.connectAuto().then(() => startHw()).catch(() => {});
@@ -142,7 +142,7 @@ export function showJoystickGame(root, { onExit } = {}) {
   function showIntro() {
     bgm.setDuck(1); hud.hidden = true; pad.hidden = true;
     const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🐛 ${game.name}</h2>
-      <p class="prep-sub">별을 <b>${game.target}개</b> 먹어 우주뱀을 키워요! 꼬리가 길어질수록 빨라지고 — <b>자기 꼬리와 운석</b>에 부딪히면 크래시 ☄️<br>조이스틱을 <b>꽉 꺾어</b> 방향을 조종하고, <b>버튼(SW)</b>을 누르면 ⚡<b>부스트</b>!</p>
+      <p class="prep-sub">별을 <b>${game.target}개</b> 먹어 우주뱀을 키워요! 꼬리가 길어질수록 빨라지고 — <b>자기 꼬리와 운석</b>에 부딪히면 크래시 ☄️<br>방향키·화면으로 조종하고, 조이스틱을 <b>꺾거나 버튼(SW)</b>을 누르면 ⚡<b>부스트</b>!</p>
       <p class="lp-cond">⭐ <b>${Math.ceil(game.target * PASS_ACC)}개 이상</b>(A등급) 먹으면 통과!</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
   }
@@ -190,7 +190,7 @@ export function showJoystickGame(root, { onExit } = {}) {
       const turn = game.turn * dt * (0.8 + Math.min(1, mag) * 1.4); // 강하게 꺾을수록 빠르게 회전
       S.ang += Math.max(-turn, Math.min(turn, diff));
     }
-    const sp = (game.speed + state.collected * 0.09) * (swDown ? 1.8 : 1) * dt;
+    const sp = (game.speed + state.collected * 0.09) * (boosting() ? 1.8 : 1) * dt;
     S.x += Math.cos(S.ang) * sp; S.y += Math.sin(S.ang) * sp;
     if (S.x < 0) S.x += W; if (S.x > W) S.x -= W; if (S.y < 40) S.y += (H - 40); if (S.y > H) S.y -= (H - 40);
     S.hist.unshift({ x: S.x, y: S.y }); const maxh = S.len * GAP + 14; if (S.hist.length > maxh) S.hist.length = maxh;
@@ -219,7 +219,7 @@ export function showJoystickGame(root, { onExit } = {}) {
         ctx.save(); ctx.globalAlpha = 0.92; ctx.fillStyle = i <= game.selfAt ? '#9fe0ff' : '#ffd24a'; ctx.shadowColor = 'rgba(150,200,255,.7)'; ctx.shadowBlur = 8; star(ctx, seg.x, seg.y, Math.max(6, r), 5); ctx.fill(); ctx.restore();
       }
       // 머리(에디)
-      if (swDown && state.phase === 'play') { ctx.save(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#6fe0ff'; ctx.shadowColor = 'rgba(110,224,255,.95)'; ctx.shadowBlur = 28; ctx.beginPath(); ctx.arc(S.x, S.y, HEAD_R + 9, 0, 6.283); ctx.fill(); ctx.restore(); }
+      if (boosting() && state.phase === 'play') { ctx.save(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#6fe0ff'; ctx.shadowColor = 'rgba(110,224,255,.95)'; ctx.shadowBlur = 28; ctx.beginPath(); ctx.arc(S.x, S.y, HEAD_R + 9, 0, 6.283); ctx.fill(); ctx.restore(); }
       const img = ready(headImg) ? headImg : (ready(heroImg) ? heroImg : null);
       const s = HEAD_R * 2.7;
       if (img) { const w = s * (img.naturalWidth / img.naturalHeight); ctx.save(); ctx.translate(S.x, S.y); ctx.drawImage(img, -w / 2, -s / 2, w, s); ctx.restore(); }
