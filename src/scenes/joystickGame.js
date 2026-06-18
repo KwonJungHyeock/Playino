@@ -9,7 +9,7 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = { x: 0, y: 1 }, PASS_ACC = 0.85, GAP = 6;
+const PINS = { sw: 7 }, PASS_ACC = 0.85, GAP = 6;
 const GAMES = [
   { key: 'easy', no: 1, name: '별 지렁이', target: 12, speed: 2.7, turn: 0.10, rocks: 3, rockSpd: 1.2, selfAt: 8 },
   { key: 'hard', no: 2, name: '운석 미로', target: 18, speed: 3.5, turn: 0.12, rocks: 7, rockSpd: 2.2, selfAt: 6 },
@@ -47,14 +47,14 @@ export function showJoystickGame(root, { onExit } = {}) {
               <table class="prep-table">
                 <thead><tr><th>조이스틱 핀</th><th>아두이노</th></tr></thead>
                 <tbody>
-                  <tr><td>VCC</td><td>5V</td></tr>
                   <tr><td>GND</td><td>GND</td></tr>
-                  <tr><td>X</td><td>A0</td></tr>
-                  <tr><td>Y</td><td>A1</td></tr>
-                  <tr><td>SW(버튼)</td><td>D2</td></tr>
+                  <tr><td>VCC</td><td>5V</td></tr>
+                  <tr><td>X</td><td>D5</td></tr>
+                  <tr><td>Y</td><td>D6</td></tr>
+                  <tr><td>SW(버튼)</td><td>D7 ⚡부스트</td></tr>
                 </tbody>
               </table>
-              <div class="prep-status">조작: 화면 조이스틱(왼쪽 아래) · 방향키/WASD · 실물(X→A0·Y→A1)</div>
+              <div class="prep-status">방향은 <b>화면 조이스틱·방향키</b>로! 실물 조이스틱 <b>버튼(SW·D7)</b>을 누르면 ⚡부스트 (X·Y는 디지털 포트라 화면으로 조종)</div>
             </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
@@ -95,14 +95,15 @@ export function showJoystickGame(root, { onExit } = {}) {
   const jEnd = (e) => { if (joyId !== e.pointerId) return; joyId = null; joy.x = 0; joy.y = 0; knob.style.transform = 'translate(0,0)'; };
   pad.addEventListener('pointerdown', (e) => { e.preventDefault(); joyId = e.pointerId; const r = pad.getBoundingClientRect(); jcx = r.left + r.width / 2; jcy = r.top + r.height / 2; try { pad.setPointerCapture(e.pointerId); } catch (_) {} jMove(e); });
   pad.addEventListener('pointermove', jMove); pad.addEventListener('pointerup', jEnd); pad.addEventListener('pointercancel', jEnd);
-  let hwTimer = null, hw = { x: 0, y: 0 };
-  function startHw() { stopHw(); if (!board.connected) return; hwTimer = setInterval(async () => { const vx = await board.analogRead(PINS.x); const vy = await board.analogRead(PINS.y); if (vx != null) hw.x = Math.abs(vx - 512) < 90 ? 0 : (vx - 512) / 512; if (vy != null) hw.y = Math.abs(vy - 512) < 90 ? 0 : (vy - 512) / 512; }, 110); }
-  function stopHw() { if (hwTimer) { clearInterval(hwTimer); hwTimer = null; } hw.x = 0; hw.y = 0; }
+  // 실물 조이스틱 버튼(SW·D7) 디지털 읽기 → 부스트. (X/Y는 디지털 포트라 방향은 화면/키보드)
+  let hwTimer = null, swDown = false, swRest = null;
+  function startHw() { stopHw(); if (!board.connected) return; hwTimer = setInterval(async () => { const v = await board.digitalRead(PINS.sw); if (v == null) return; if (swRest === null) swRest = v; swDown = v !== swRest; }, 120); }
+  function stopHw() { if (hwTimer) { clearInterval(hwTimer); hwTimer = null; } swDown = false; swRest = null; }
   function inputVec() {
     let x = 0, y = 0;
     if (keys.has('arrowleft') || keys.has('a')) x -= 1; if (keys.has('arrowright') || keys.has('d')) x += 1;
     if (keys.has('arrowup') || keys.has('w')) y -= 1; if (keys.has('arrowdown') || keys.has('s')) y += 1;
-    if (joy.x || joy.y) { x = joy.x; y = joy.y; } else if (hw.x || hw.y) { x = hw.x; y = hw.y; }
+    if (joy.x || joy.y) { x = joy.x; y = joy.y; }
     return { x, y };
   }
 
@@ -120,7 +121,7 @@ export function showJoystickGame(root, { onExit } = {}) {
   function showIntro() {
     bgm.setDuck(1); hud.hidden = true; pad.hidden = true;
     const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🐛 ${game.name}</h2>
-      <p class="prep-sub">별을 <b>${game.target}개</b> 먹어 우주뱀을 키워요! 꼬리가 길어질수록 빨라지고 — <b>자기 꼬리와 운석</b>에 부딪히면 크래시 ☄️</p>
+      <p class="prep-sub">별을 <b>${game.target}개</b> 먹어 우주뱀을 키워요! 꼬리가 길어질수록 빨라지고 — <b>자기 꼬리와 운석</b>에 부딪히면 크래시 ☄️<br>실물 조이스틱 <b>버튼(SW)</b>을 누르면 ⚡<b>부스트</b>!</p>
       <p class="lp-cond">⭐ <b>${Math.ceil(game.target * PASS_ACC)}개 이상</b>(A등급) 먹으면 통과!</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
   }
@@ -166,7 +167,7 @@ export function showJoystickGame(root, { onExit } = {}) {
       while (diff > Math.PI) diff -= 2 * Math.PI; while (diff < -Math.PI) diff += 2 * Math.PI;
       const turn = game.turn * dt; S.ang += Math.max(-turn, Math.min(turn, diff));
     }
-    const sp = (game.speed + state.collected * 0.09) * dt;
+    const sp = (game.speed + state.collected * 0.09) * (swDown ? 1.8 : 1) * dt;
     S.x += Math.cos(S.ang) * sp; S.y += Math.sin(S.ang) * sp;
     if (S.x < 0) S.x += W; if (S.x > W) S.x -= W; if (S.y < 40) S.y += (H - 40); if (S.y > H) S.y -= (H - 40);
     S.hist.unshift({ x: S.x, y: S.y }); const maxh = S.len * GAP + 14; if (S.hist.length > maxh) S.hist.length = maxh;
@@ -195,6 +196,7 @@ export function showJoystickGame(root, { onExit } = {}) {
         ctx.save(); ctx.globalAlpha = 0.92; ctx.fillStyle = i <= game.selfAt ? '#9fe0ff' : '#ffd24a'; ctx.shadowColor = 'rgba(150,200,255,.7)'; ctx.shadowBlur = 8; star(ctx, seg.x, seg.y, Math.max(6, r), 5); ctx.fill(); ctx.restore();
       }
       // 머리(에디)
+      if (swDown && state.phase === 'play') { ctx.save(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#6fe0ff'; ctx.shadowColor = 'rgba(110,224,255,.95)'; ctx.shadowBlur = 28; ctx.beginPath(); ctx.arc(S.x, S.y, HEAD_R + 9, 0, 6.283); ctx.fill(); ctx.restore(); }
       const img = ready(headImg) ? headImg : (ready(heroImg) ? heroImg : null);
       const s = HEAD_R * 2.7;
       if (img) { const w = s * (img.naturalWidth / img.naturalHeight); ctx.save(); ctx.translate(S.x, S.y); ctx.drawImage(img, -w / 2, -s / 2, w, s); ctx.restore(); }
