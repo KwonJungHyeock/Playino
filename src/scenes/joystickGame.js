@@ -102,20 +102,23 @@ export function showJoystickGame(root, { onExit } = {}) {
   // 실물 조이스틱(디지털 포트 D5=X · D6=Y · D7=SW) 폴링.
   //  X/Y: 꺾으면 LOW/HIGH 또렷 · 중앙은 임계점이라 떨림 → 최근 RING 표본 다수결로
   //  '확실히 꺾은 방향'만 ±1, 애매하면 0(중립). SW: 기준값 대비 변하면 ⚡부스트.
-  let hwTimer = null, swDown = false, swRest = null;
+  // 디지털 포트라 조이스틱 중앙값(2.5V)이 보드에 따라 한쪽(보통 HIGH)으로 '굳어' 읽힌다.
+  //  → 연결 직후 '쉬는 값'을 기준(xRest/yRest)으로 잡고(중앙 보정), 그와 '다른 값'으로
+  //    확실히(만장일치) 꺾였을 때만 방향으로 인정. 쉬는 쪽과 같은 방향은 디지털론 구분 불가(한계).
+  let hwTimer = null, swDown = false, swRest = null, xRest = null, yRest = null;
   const hwDir = { x: 0, y: 0 };
-  const ringX = [], ringY = [], RING = 6, TH = 5;   // 6표본 중 5↑ 같은 값이면 방향 확정
-  const classify = (ring) => { if (ring.length < RING) return 0; let ones = 0; for (const v of ring) ones += v; if (ones >= TH) return 1; if (ones <= RING - TH) return -1; return 0; };
+  const ringX = [], ringY = [], RING = 5;
+  const unanim = (ring) => { if (ring.length < RING) return null; const a = ring[0]; for (const v of ring) if (v !== a) return null; return a; };
   function startHw() {
     stopHw(); if (!board.connected) return;
     hwTimer = setInterval(async () => {
       const [vx, vy, vs] = await Promise.all([board.digitalRead(PINS.x), board.digitalRead(PINS.y), board.digitalRead(PINS.sw)]);
-      if (vx != null) { ringX.push(vx); if (ringX.length > RING) ringX.shift(); hwDir.x = classify(ringX); }
-      if (vy != null) { ringY.push(vy); if (ringY.length > RING) ringY.shift(); hwDir.y = classify(ringY); }
       if (vs != null) { if (swRest === null) swRest = vs; swDown = vs !== swRest; }
-    }, 60);
+      if (vx != null) { ringX.push(vx); if (ringX.length > RING) ringX.shift(); const s = unanim(ringX); if (s != null) { if (xRest === null) xRest = s; hwDir.x = s === xRest ? 0 : (xRest ? -1 : 1); } }
+      if (vy != null) { ringY.push(vy); if (ringY.length > RING) ringY.shift(); const s = unanim(ringY); if (s != null) { if (yRest === null) yRest = s; hwDir.y = s === yRest ? 0 : (yRest ? -1 : 1); } }
+    }, 50);
   }
-  function stopHw() { if (hwTimer) { clearInterval(hwTimer); hwTimer = null; } swDown = false; swRest = null; ringX.length = 0; ringY.length = 0; hwDir.x = 0; hwDir.y = 0; }
+  function stopHw() { if (hwTimer) { clearInterval(hwTimer); hwTimer = null; } swDown = false; swRest = null; xRest = null; yRest = null; ringX.length = 0; ringY.length = 0; hwDir.x = 0; hwDir.y = 0; }
   function inputVec() {
     let x = 0, y = 0;
     if (keys.has('arrowleft') || keys.has('a')) x -= 1; if (keys.has('arrowright') || keys.has('d')) x += 1;
@@ -180,10 +183,12 @@ export function showJoystickGame(root, { onExit } = {}) {
   function update(dt) {
     if (state.phase !== 'play' || state.ended) return;
     const v = inputVec();
-    if (Math.hypot(v.x, v.y) > 0.25) {
+    const mag = Math.hypot(v.x, v.y);
+    if (mag > 0.18) {
       const tAng = Math.atan2(v.y, v.x); let diff = tAng - S.ang;
       while (diff > Math.PI) diff -= 2 * Math.PI; while (diff < -Math.PI) diff += 2 * Math.PI;
-      const turn = game.turn * dt; S.ang += Math.max(-turn, Math.min(turn, diff));
+      const turn = game.turn * dt * (0.8 + Math.min(1, mag) * 1.4); // 강하게 꺾을수록 빠르게 회전
+      S.ang += Math.max(-turn, Math.min(turn, diff));
     }
     const sp = (game.speed + state.collected * 0.09) * (swDown ? 1.8 : 1) * dt;
     S.x += Math.cos(S.ang) * sp; S.y += Math.sin(S.ang) * sp;

@@ -66,7 +66,7 @@ const ROOMS_CFG = {
     play: (root, opt) => showCdsGame(root, opt),
   },
   joystick: {
-    name: '우주 조종 훈련소', sensor: '조이스틱 · 2축 아날로그', icon: '🕹️', accent: '150,120,255',
+    name: '우주 조종 훈련소', sensor: '조이스틱 · X·Y·버튼', icon: '🕹️', accent: '150,120,255',
     room: 'room-joystick-bg', eddie: '/brand/eddie-pilot.webp', signL: '120,200,255', signR: '255,120,220',
     control: 'joystick', pins: { x: 5, y: 6, sw: 7 }, floor: 0.82,
     intro: '이론관에서 조종 원리를 배우고, 체험관에서 우주선으로 별을 모으자! 🚀',
@@ -411,16 +411,17 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       const end = (e) => { if (dragId !== e.pointerId) return; dragId = null; if (!board.connected) show(0, 0); };
       mon.addEventListener('pointerup', end); mon.addEventListener('pointercancel', end);
       // 디지털 포트(D5·D6·D7) 폴링: 꺾은 방향만 또렷이 읽힌다(중앙은 떨림 → 다수결로 중립).
-      const ringX = [], ringY = [], RING = 6, TH = 5;
-      const cls = (ring) => { if (ring.length < RING) return 0; let o = 0; for (const v of ring) o += v; return o >= TH ? 1 : o <= RING - TH ? -1 : 0; };
+      // 중앙 보정: 쉬는 값(보통 한쪽으로 굳음)을 기준으로 잡고, 그와 다르게 꺾일 때만 방향 인정.
+      const ringX = [], ringY = [], RING = 5; let xRest = null, yRest = null, hx = 0, hy = 0;
+      const una = (ring) => { if (ring.length < RING) return null; const a = ring[0]; for (const v of ring) if (v !== a) return null; return a; };
       function startPoll() {
         stopJoyPoll(); if (!board.connected) return;
-        ringX.length = 0; ringY.length = 0;
+        ringX.length = 0; ringY.length = 0; xRest = null; yRest = null; hx = 0; hy = 0;
         joyTimer = setInterval(async () => {
           const [vx, vy] = await Promise.all([board.digitalRead(P.x), board.digitalRead(P.y)]);
-          if (vx != null) { ringX.push(vx); if (ringX.length > RING) ringX.shift(); }
-          if (vy != null) { ringY.push(vy); if (ringY.length > RING) ringY.shift(); }
-          show(cls(ringX), -cls(ringY));   // 화면 Y 반전: 위로 꺾으면 위로
+          if (vx != null) { ringX.push(vx); if (ringX.length > RING) ringX.shift(); const s = una(ringX); if (s != null) { if (xRest === null) xRest = s; hx = s === xRest ? 0 : (xRest ? -1 : 1); } }
+          if (vy != null) { ringY.push(vy); if (ringY.length > RING) ringY.shift(); const s = una(ringY); if (s != null) { if (yRest === null) yRest = s; hy = s === yRest ? 0 : (yRest ? -1 : 1); } }
+          show(hx, -hy);   // 화면 Y 반전: 위로 꺾으면 위로
         }, 70);
       }
       startPoll();
