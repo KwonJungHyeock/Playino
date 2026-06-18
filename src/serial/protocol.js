@@ -16,6 +16,10 @@
 export const BAUD = 115200;
 export const LINE_TERMINATOR = '\n';
 
+// 번들된 펌웨어(playhouse-uno.hex)가 제공하는 기능 버전. 보드가 이보다 낮으면
+// 새 명령(예: 초음파 U)을 모르므로 재플래싱이 필요하다. (PING 응답 'PLAYHOUSE v<n>')
+export const FIRMWARE_VERSION = 4;
+
 // ---- 인코딩 (H -> B) -------------------------------------------------------
 
 /** 핸드셰이크 요청 */

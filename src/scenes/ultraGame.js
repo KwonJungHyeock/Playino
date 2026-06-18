@@ -56,7 +56,7 @@ export function showUltraGame(root, { onExit } = {}) {
                   <tr><td>Vcc</td><td>VCC(5V)</td></tr>
                 </tbody>
               </table>
-              <div class="prep-status">센서 앞에 손을 대고 <b>가까이=위로 ↑</b>, <b>멀리=아래로 ↓</b>! 초음파가 소리를 쏘고 메아리로 거리를 재요 📡</div>
+              <div class="prep-status" id="ug-pstat">센서 앞에 손을 대고 <b>가까이=위로 ↑</b>, <b>멀리=아래로 ↓</b>! 초음파가 소리를 쏘고 메아리로 거리를 재요 📡</div>
             </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
@@ -110,8 +110,10 @@ export function showUltraGame(root, { onExit } = {}) {
   const hwActive = () => hwCm != null && (performance.now() - hwAt) < 900;
   const hwNorm = () => clamp((hwCm - NEAR) / (FAR - NEAR), 0, 1);
 
-  root.querySelector('#ug-connect').onclick = async () => { const b = root.querySelector('#ug-connect'); try { await board.connect(); b.textContent = '🔌 연결됨 ✓'; startHw(); } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
-  board.connectAuto().then(() => startHw()).catch(() => {});
+  const pstat = root.querySelector('#ug-pstat');
+  function fwCheck() { if (board.connected && board.fwOutdated) { pstat.innerHTML = `⚠️ 보드 펌웨어가 옛날 버전(v${board.version})이라 초음파를 못 읽어요. <b>[설정 → 펌웨어 굽기]</b>로 업데이트하면 실제 거리로 동작! (지금은 마우스로 체험 가능)`; return true; } return false; }
+  root.querySelector('#ug-connect').onclick = async () => { const b = root.querySelector('#ug-connect'); try { await board.connect(); b.textContent = '🔌 연결됨 ✓'; startHw(); fwCheck(); } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
+  board.connectAuto().then(() => { startHw(); fwCheck(); }).catch(() => {});
   root.querySelector('#ug-start').onclick = () => { root.querySelector('#ug-prep').classList.add('hide'); skipBtn.hidden = false; startFlow(); };
 
   // ── 플로우 ──

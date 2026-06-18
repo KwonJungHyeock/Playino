@@ -473,7 +473,8 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       const drag = (e) => { if (board.connected) return; const r = mon.getBoundingClientRect(); const p = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)); show(NEAR + p * (FAR - NEAR)); };
       mon.addEventListener('pointerdown', (e) => { e.preventDefault(); if (board.connected) return; dragId = e.pointerId; try { mon.setPointerCapture(e.pointerId); } catch (_) {} drag(e); });
       mon.addEventListener('pointermove', (e) => { if (dragId === e.pointerId || e.pointerType === 'mouse') drag(e); });
-      function startPoll() { stopJoyPoll(); if (!board.connected) return; joyTimer = setInterval(async () => { const cm = await board.readUltrasonic({ trig: P.trig, echo: P.echo }); if (cm != null && cm > 0) show(cm); }, 120); }
+      function fwWarn() { if (board.connected && board.fwOutdated) { status.innerHTML = `⚠️ 보드 펌웨어가 옛날 버전(v${board.version})이라 거리를 못 읽어요. [설정 → 펌웨어 굽기]로 업데이트하면 실제 거리가 보여요. (지금은 마우스로 체험)`; return true; } return false; }
+      function startPoll() { stopJoyPoll(); if (!board.connected) return; if (fwWarn()) return; joyTimer = setInterval(async () => { const cm = await board.readUltrasonic({ trig: P.trig, echo: P.echo }); if (cm != null && cm > 0) show(cm); }, 120); }
       startPoll();
       const connBtn = bodyEl.querySelector('#dc-conn');
       connBtn.onclick = async () => { if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌'; try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '센서 앞에 손을 움직여봐! 📡'; startPoll(); } catch (e) { status.textContent = board.classify(e).note; } };

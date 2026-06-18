@@ -6,9 +6,9 @@
  * (playhouse-firmware.ino)와 완전히 동일하다. Arduino 코어 없이도
  * 오프라인 컴파일이 가능하도록 레지스터를 직접 다룬다.
  *
- *   H->B : PING / L<pin>:<0|1> / P<pin>:<0-255> / T<pin>:<freq>[,<ms>] / A<ch> / R<pin> / DHT
- *   B->H : READY (부팅) / PLAYHOUSE v3 (PING 응답) / OK / ERR:<msg>
- *          A<ch>:<0-1023> (아날로그) / R<pin>:<0|1> (디지털) / DHT:<t>,<h>
+ *   H->B : PING / L<pin>:<0|1> / P<pin>:<0-255> / T<pin>:<freq>[,<ms>] / A<ch> / R<pin> / U<trig>:<echo> / DHT
+ *   B->H : READY (부팅) / PLAYHOUSE v4 (PING 응답) / OK / ERR:<msg>
+ *          A<ch>:<0-1023> (아날로그) / R<pin>:<0|1> (디지털) / US:<cm> (초음파) / DHT:<t>,<h>
  *
  * 빌드:
  *   avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os -o fw.elf playhouse-uno.c
@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FW_ID "PLAYHOUSE v3"
+#define FW_ID "PLAYHOUSE v4"
 #define DHT_BIT 2   /* DHT-11 DATA = D2 (PD2) */
 
 /* ---- UART (115200 @ 16MHz, U2X) ---- */
@@ -132,6 +132,38 @@ static uint8_t pin_read(uint8_t pin) {
     uint8_t b = pin - 8; DDRB &= ~(1 << b); return (PINB >> b) & 1;
 }
 
+/* ---- 핀 레벨 읽기(빠른 in-loop 용; DDR 변경 없음) ---- */
+static uint8_t pin_level(uint8_t pin) {
+    if (pin <= 7) return (PIND >> pin) & 1;
+    return (PINB >> (pin - 8)) & 1;
+}
+
+/* ---- 초음파(HC-SR04): Trig 10us 펄스 → Echo HIGH 폭 측정 → 거리(cm) ----
+ * 측정 동안만 Timer1 을 normal/presc8(0.5us/tick)로 돌려 폭을 재고 PWM 설정 복구.
+ * cm = us/58 = (ticks*0.5)/58 = ticks/116.  에코 없음/범위밖 = -1 */
+static long ultrasonic_cm(uint8_t trig, uint8_t echo) {
+    /* echo 입력 설정 */
+    if (echo <= 7) DDRD &= ~(1 << echo); else DDRB &= ~(1 << (echo - 8));
+    /* trig 10us 펄스 */
+    pin_digital(trig, 0); _delay_us(2);
+    pin_digital(trig, 1); _delay_us(10);
+    pin_digital(trig, 0);
+    /* Timer1: normal, presc8 → 0.5us/tick (PWM 설정 백업 후 복구) */
+    uint8_t a = TCCR1A, b = TCCR1B;
+    TCCR1A = 0; TCCR1B = (1 << CS11);
+    /* echo 상승 대기 (≈30ms 타임아웃) */
+    TCNT1 = 0;
+    while (!pin_level(echo)) { if (TCNT1 > 60000) { TCCR1A = a; TCCR1B = b; return -1; } }
+    /* echo HIGH 폭 측정 */
+    TCNT1 = 0;
+    while (pin_level(echo)) { if (TCNT1 > 60000) { TCCR1A = a; TCCR1B = b; return -1; } }
+    uint16_t ticks = TCNT1;
+    TCCR1A = a; TCCR1B = b;
+    long cm = (long)ticks / 116;
+    if (cm <= 0 || cm > 400) return -1;
+    return cm;
+}
+
 /* ---- DHT-11 (1-wire, D2) ---- */
 static void uart_print_u8(uint8_t v) { char b[5]; itoa(v, b, 10); uart_print(b); }
 static void uart_print_u16(uint16_t v) { char b[7]; itoa(v, b, 10); uart_print(b); }
@@ -216,6 +248,12 @@ static void handle(char *line) {
         int ms = comma ? atoi(comma + 1) : 200;
         if (val < 0) val = 0; if (ms < 0) ms = 0; if (ms > 2000) ms = 2000;
         tone_pin((uint8_t)pin, (uint16_t)val, (uint16_t)ms); uart_println("OK");
+    }
+    else if (type == 'U') {            /* 초음파: U<trig>:<echo> → US:<cm> */
+        if (val < 0 || val > 13) { uart_println("ERR:pin"); return; }
+        long cm = ultrasonic_cm((uint8_t)pin, (uint8_t)val);
+        char b[8]; itoa((int)cm, b, 10);
+        uart_print("US:"); uart_print(b); uart_tx('\n');
     }
     else                  { uart_println("ERR:cmd"); }
 }

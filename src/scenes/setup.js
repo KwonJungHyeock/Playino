@@ -139,7 +139,8 @@ export function showSetup(root, { onDone }) {
   function onConnected(r) {
     connectHint = '';
     setStatus('connect', 'done');
-    if (r && r.ok) { setStatus('firmware', 'done'); speak('좋아, 보드랑 인사 끝! 이제 내장 LED를 깜빡여 보자 💡'); }
+    if (r && r.ok && board.fwOutdated) { setStatus('firmware', 'doing'); speak(`펌웨어가 옛날 버전(v${board.version})이야. 새 센서(초음파 등)를 쓰려면 업데이트가 필요해 — [펌웨어 굽기]를 눌러줘!`); }
+    else if (r && r.ok) { setStatus('firmware', 'done'); speak('좋아, 보드랑 인사 끝! 이제 내장 LED를 깜빡여 보자 💡'); }
     else { setStatus('firmware', 'doing'); speak('펌웨어가 없네. 내가 바로 구워줄게! [펌웨어 굽기]를 눌러줘.'); }
   }
   async function doConnect() {
@@ -183,7 +184,7 @@ export function showSetup(root, { onDone }) {
   // ---- 시작 ----
   if (board.isSupported()) {
     status.browser = 'done';
-    if (board.connected) { status.connect = 'done'; status.firmware = 'done'; }
+    if (board.connected) { status.connect = 'done'; status.firmware = board.fwOutdated ? 'doing' : 'done'; }
     else {
       board.connectAuto().then((a) => {
         if (a.ok) onConnected({ ok: true });

@@ -12,7 +12,7 @@
 //   P<pin>:<0-255>       analogWrite(PWM)    → "OK"
 //   U<trig>:<echo>       초음파(HC-SR04) 거리 → "US:<cm>"  (에코 없음/범위초과 = "US:-1")
 
-const char* FW_ID = "PLAYHOUSE v1";
+const char* FW_ID = "PLAYHOUSE v4";
 
 void setup() {
   Serial.begin(115200);

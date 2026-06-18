@@ -5,7 +5,7 @@
 
 import { SerialConnection, isSupported as _isSupported } from '../serial/webserial.js';
 import { handshake, flashFirmware } from '../serial/provisioning.js';
-import { encodeDigitalWrite, encodePwm, encodeTone, encodeAnalogRead, encodeDigitalRead, encodeUltrasonic, parseLine, RESPONSE } from '../serial/protocol.js';
+import { encodeDigitalWrite, encodePwm, encodeTone, encodeAnalogRead, encodeDigitalRead, encodeUltrasonic, parseLine, RESPONSE, FIRMWARE_VERSION } from '../serial/protocol.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const hex = (n) => (n == null ? '—' : '0x' + n.toString(16).toUpperCase().padStart(4, '0'));
@@ -37,6 +37,8 @@ export const board = {
   get connected() { return conn.isOpen && _version != null; },
   get isOpen() { return conn.isOpen; },
   get version() { return _version; },
+  /** 보드 펌웨어가 번들 버전보다 낮아 새 명령(초음파 등)을 모르는 상태인가. */
+  get fwOutdated() { return _version != null && _version < FIRMWARE_VERSION; },
   get info() { return conn.getInfo(); },
 
   /** 시리얼 라인(tx/rx/sys) 구독. 반환값 호출 시 해제. */
