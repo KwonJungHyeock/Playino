@@ -69,7 +69,7 @@ const ROOMS_CFG = {
     name: '우주 조종 훈련소', sensor: '조이스틱 · X·Y·버튼', icon: '🕹️', accent: '150,120,255',
     room: 'room-joystick-bg', eddie: '/brand/eddie-pilot.webp', signL: '120,200,255', signR: '255,120,220',
     control: 'joystick', pins: { x: 5, y: 6, sw: 7 }, floor: 0.82,
-    intro: '이론관에서 조종 원리를 배우고, 체험관에서 우주선으로 별을 모으자! 🚀',
+    intro: '이론관에서 조종 원리를 배우고, 체험관에서 우주선으로 미로를 탈출하자! 🚀',
     animTheory: 'joystick',
     captions: [
       '조이스틱은 X(좌우)·Y(상하) 두 개의 아날로그 값을 한 번에 읽어요 — 2축! 🕹️',

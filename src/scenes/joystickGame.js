@@ -1,22 +1,22 @@
-// joystickGame.js — 별 지렁이 대모험 (조이스틱 · 스네이크형)
-// 조이스틱으로 우주뱀(EDDIE)을 조종해 별을 먹는다. 별을 먹을수록 꼬리가 길어지고
-// 속도가 빨라져 점점 어려워진다(자기 꼬리·운석 충돌 = 크래시).
-// 입력: 방향(키보드 방향키/WASD · 화면 조이스틱) + 부스트(실물 조이스틱 꺾기/버튼).
+// joystickGame.js — 우주 미로 탈출 (조이스틱 방 · 미로형)
+// 우주선(EDDIE)으로 미로를 누벼 별을 모두 모으면 출구가 열린다. 제한시간 안에 탈출하면 통과.
+// 입력: 방향(키보드 방향키/WASD · 화면 조이스틱) + ⚡대시(실물 조이스틱 꺾기/버튼).
 //  └ 디지털 포트 키트 한계: X·Y(아날로그 전압)를 ADC 없는 디지털 핀(D5/D6)에 꽂아
-//    0~1023 측정 불가 → 핀당 ON/OFF 1비트뿐. 중앙이 한쪽으로 굳어 읽히므로 연결 직후
-//    '쉬는 값'을 기준으로 보정하고, 그와 다르게 꺾이면(=꺾음 신호) 부스트로 사용.
-//    부드러운 방향 조종은 화면/키보드가 담당(아날로그 핀 A0·A1이면 진짜 2축 가능하나 이 키트는 디지털 전용).
-// 1차 별 지렁이 · 2차 운석 미로. 목표 길이 도달(또는 85%↑) → 🚀 조종 메달.
+//    0~1023 측정 불가 → 핀당 ON/OFF 1비트뿐. 그래서 부드러운 방향은 화면/키보드가 맡고,
+//    실물 조이스틱은 '꺾음/버튼' 신호를 ⚡대시로 사용(중앙은 보드별로 굳어 읽혀 연결 직후 보정).
+//    (아날로그 핀 A0·A1이면 진짜 2축 가능하나 이 키트는 디지털 전용.)
+// 1차 별빛 미로 · 2차 운석 미로(움직이는 운석). 두 미로 탈출 → 🚀 조종 메달.
 import { sfx } from '../app/sfx.js';
 import { bgm } from '../app/bgm.js';
 import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = { x: 5, y: 6, sw: 7 }, PASS_ACC = 0.85, GAP = 6;
+const PINS = { x: 5, y: 6, sw: 7 };
+const PR = 0.30;   // 플레이어 반지름(타일 단위)
 const GAMES = [
-  { key: 'easy', no: 1, name: '별 지렁이', target: 12, speed: 2.7, turn: 0.10, rocks: 3, rockSpd: 1.2, selfAt: 8 },
-  { key: 'hard', no: 2, name: '운석 미로', target: 18, speed: 3.5, turn: 0.12, rocks: 7, rockSpd: 2.2, selfAt: 6 },
+  { key: 'easy', no: 1, name: '별빛 미로', cols: 7, rows: 6, stars: 5, time: 70, rocks: 0, speed: 0.105, rockSpd: 0.05 },
+  { key: 'hard', no: 2, name: '운석 미로', cols: 10, rows: 8, stars: 8, time: 95, rocks: 3, speed: 0.115, rockSpd: 0.06 },
 ];
 
 const bgImg = new Image(); bgImg.src = '/brand/stage-joystick-bg.webp';
@@ -24,7 +24,26 @@ const headImg = new Image(); headImg.src = '/brand/eddie-pilot.webp';
 const heroImg = new Image(); heroImg.src = '/brand/eddie/eddie-hero.webp';
 const ready = (im) => im.complete && im.naturalWidth > 0;
 const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >= 0.5 ? 'C' : 'D';
-const HEAD_R = 37;
+
+// 재귀 백트래킹 미로 생성 → 벽 그리드 g[j][i] (1=벽, 0=길)
+function genMaze(cols, rows) {
+  const gW = 2 * cols + 1, gH = 2 * rows + 1;
+  const g = Array.from({ length: gH }, () => new Array(gW).fill(1));
+  const vis = Array.from({ length: rows }, () => new Array(cols).fill(false));
+  const stack = [[0, 0]]; vis[0][0] = true; g[1][1] = 0;
+  const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+  while (stack.length) {
+    const [cx, cy] = stack[stack.length - 1];
+    const opts = [];
+    for (const [dx, dy] of dirs) { const nx = cx + dx, ny = cy + dy; if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !vis[ny][nx]) opts.push([nx, ny, dx, dy]); }
+    if (!opts.length) { stack.pop(); continue; }
+    const [nx, ny, dx, dy] = opts[Math.floor(Math.random() * opts.length)];
+    vis[ny][nx] = true; g[1 + cy * 2 + dy][1 + cx * 2 + dx] = 0; g[1 + ny * 2][1 + nx * 2] = 0;
+    stack.push([nx, ny]);
+  }
+  return { g, gW, gH };
+}
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
 export function showJoystickGame(root, { onExit } = {}) {
   root.innerHTML = `
@@ -38,13 +57,13 @@ export function showJoystickGame(root, { onExit } = {}) {
       <div class="led-hud" id="jy-hud" hidden>
         <span class="lh-item" id="jy-stage">1단계</span>
         <span class="lh-item">⭐ <b id="jy-star">0</b>/<span id="jy-tot">0</span></span>
-        <span class="lh-item">🐛 길이 <b id="jy-len">3</b></span>
+        <span class="lh-item">⏱ <b id="jy-time">0</b>초</span>
       </div>
       <div class="joy-pad" id="jy-pad" hidden><div class="joy-knob"></div></div>
       <div class="led-prep" id="jy-prep">
         <div class="prep-card" style="max-width:700px">
-          <h2>🚀 별 지렁이 대모험</h2>
-          <p class="prep-sub">조이스틱으로 우주뱀을 조종해 <b>별을 먹어요</b>! 먹을수록 <b>꼬리가 길어지고 빨라져요</b> — 자기 꼬리·운석을 피해 목표만큼 모으면 통과 ⭐</p>
+          <h2>🌀 우주 미로 탈출</h2>
+          <p class="prep-sub">우주선으로 미로를 누벼 <b>별을 모두 모으면 출구가 열려요</b>! 제한시간 안에 탈출하면 통과 🚀 — 방향키·화면으로 이동, 조이스틱 꺾기·버튼으로 ⚡대시!</p>
           <div class="prep-grid">
             <div class="prep-img" id="jy-wimg"><span class="prep-img-ph">🕹️ 결선 사진</span></div>
             <div class="prep-side">
@@ -53,12 +72,12 @@ export function showJoystickGame(root, { onExit } = {}) {
                 <tbody>
                   <tr><td>GND</td><td>GND</td></tr>
                   <tr><td>VCC</td><td>5V</td></tr>
-                  <tr><td>X</td><td>D5 ⚡부스트</td></tr>
-                  <tr><td>Y</td><td>D6 ⚡부스트</td></tr>
-                  <tr><td>SW(버튼)</td><td>D7 ⚡부스트</td></tr>
+                  <tr><td>X</td><td>D5 ⚡대시</td></tr>
+                  <tr><td>Y</td><td>D6 ⚡대시</td></tr>
+                  <tr><td>SW(버튼)</td><td>D7 ⚡대시</td></tr>
                 </tbody>
               </table>
-              <div class="prep-status"><b>방향</b>은 방향키·화면 조이스틱으로 조종! 실물 조이스틱을 <b>꺾거나 버튼(SW)</b>을 누르면 ⚡<b>부스트</b> (디지털 포트라 X·Y는 ON/OFF 신호 — 방향은 화면으로)</div>
+              <div class="prep-status"><b>방향</b>은 방향키·화면 조이스틱으로! 실물 조이스틱을 <b>꺾거나 버튼(SW)</b>을 누르면 ⚡<b>대시</b> (디지털 포트라 X·Y는 ON/OFF 신호 — 방향은 화면으로)</div>
             </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
@@ -81,7 +100,7 @@ export function showJoystickGame(root, { onExit } = {}) {
   const ctx = canvas.getContext('2d');
   const snd = root.querySelector('#snd-toggle'); snd.onclick = () => { const m = sfx.toggle(); snd.textContent = m ? '🔇' : '🔊'; };
   root.querySelector('#jy-exit').onclick = () => { cleanup(); onExit?.(); };
-  const elStar = root.querySelector('#jy-star'), elTot = root.querySelector('#jy-tot'), elLen = root.querySelector('#jy-len'), elStage = root.querySelector('#jy-stage');
+  const elStar = root.querySelector('#jy-star'), elTot = root.querySelector('#jy-tot'), elTime = root.querySelector('#jy-time'), elStage = root.querySelector('#jy-stage');
   const hud = root.querySelector('#jy-hud'), pad = root.querySelector('#jy-pad'), skipBtn = root.querySelector('#jy-skip');
 
   let W = 0, H = 0;
@@ -94,17 +113,12 @@ export function showJoystickGame(root, { onExit } = {}) {
   const onKeyUp = (e) => keys.delete(e.key.toLowerCase());
   window.addEventListener('keydown', onKeyDown); window.addEventListener('keyup', onKeyUp);
   const joy = { x: 0, y: 0 }; const knob = pad.querySelector('.joy-knob');
-  const R = 48; let joyId = null, jcx = 0, jcy = 0;
-  const jMove = (e) => { if (joyId !== e.pointerId) return; let dx = e.clientX - jcx, dy = e.clientY - jcy; const d = Math.hypot(dx, dy); const m = d > 0 ? Math.min(1, d / R) / d : 0; joy.x = dx * m; joy.y = dy * m; knob.style.transform = `translate(${joy.x * R}px, ${joy.y * R}px)`; };
+  const RAD = 48; let joyId = null, jcx = 0, jcy = 0;
+  const jMove = (e) => { if (joyId !== e.pointerId) return; let dx = e.clientX - jcx, dy = e.clientY - jcy; const d = Math.hypot(dx, dy); const m = d > 0 ? Math.min(1, d / RAD) / d : 0; joy.x = dx * m; joy.y = dy * m; knob.style.transform = `translate(${joy.x * RAD}px, ${joy.y * RAD}px)`; };
   const jEnd = (e) => { if (joyId !== e.pointerId) return; joyId = null; joy.x = 0; joy.y = 0; knob.style.transform = 'translate(0,0)'; };
   pad.addEventListener('pointerdown', (e) => { e.preventDefault(); joyId = e.pointerId; const r = pad.getBoundingClientRect(); jcx = r.left + r.width / 2; jcy = r.top + r.height / 2; try { pad.setPointerCapture(e.pointerId); } catch (_) {} jMove(e); });
   pad.addEventListener('pointermove', jMove); pad.addEventListener('pointerup', jEnd); pad.addEventListener('pointercancel', jEnd);
-  // 실물 조이스틱(디지털 포트 D5=X · D6=Y · D7=SW) 폴링.
-  //  X/Y: 꺾으면 LOW/HIGH 또렷 · 중앙은 임계점이라 떨림 → 최근 RING 표본 다수결로
-  //  '확실히 꺾은 방향'만 ±1, 애매하면 0(중립). SW: 기준값 대비 변하면 ⚡부스트.
-  // 디지털 포트라 조이스틱 중앙값(2.5V)이 보드에 따라 한쪽(보통 HIGH)으로 '굳어' 읽힌다.
-  //  → 연결 직후 '쉬는 값'을 기준(xRest/yRest)으로 잡고(중앙 보정), 그와 '다른 값'으로
-  //    확실히(만장일치) 꺾였을 때만 방향으로 인정. 쉬는 쪽과 같은 방향은 디지털론 구분 불가(한계).
+  // 실물 조이스틱(디지털 D5=X · D6=Y · D7=SW) 폴링 — 중앙 보정 후 '꺾음/버튼'을 대시 신호로.
   let hwTimer = null, swDown = false, swRest = null, xRest = null, yRest = null;
   const hwDir = { x: 0, y: 0 };
   const ringX = [], ringY = [], RING = 5;
@@ -124,9 +138,9 @@ export function showJoystickGame(root, { onExit } = {}) {
     if (keys.has('arrowleft') || keys.has('a')) x -= 1; if (keys.has('arrowright') || keys.has('d')) x += 1;
     if (keys.has('arrowup') || keys.has('w')) y -= 1; if (keys.has('arrowdown') || keys.has('s')) y += 1;
     if (joy.x || joy.y) { x = joy.x; y = joy.y; }
-    return { x, y };   // 방향은 키보드·화면 조이스틱(부드러운 360°). 실물 스틱 X/Y는 디지털이라 부스트로만.
+    return { x, y };   // 방향은 키보드·화면(부드러운 360°). 실물 스틱 X/Y는 디지털이라 대시로만.
   }
-  const boosting = () => swDown || hwDir.x !== 0 || hwDir.y !== 0;   // 버튼 누름 OR 스틱 꺾음 = ⚡부스트
+  const dashing = () => swDown || hwDir.x !== 0 || hwDir.y !== 0;   // 버튼 OR 스틱 꺾음 = ⚡대시
 
   root.querySelector('#jy-connect').onclick = async () => { const b = root.querySelector('#jy-connect'); try { await board.connect(); b.textContent = '🔌 연결됨 ✓'; startHw(); } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
   board.connectAuto().then(() => startHw()).catch(() => {});
@@ -134,101 +148,144 @@ export function showJoystickGame(root, { onExit } = {}) {
 
   // ── 플로우 ──
   const cleared = { easy: false, hard: false };
-  let gi = 0, game = GAMES[0], S = null, stars = [], rocks = [], parts = [];
-  const state = { phase: 'prep', countT: 0, collected: 0, target: 0, ended: false };
+  let gi = 0, game = GAMES[0], maze = null, P = null, exitM = null, stars = [], rocks = [], parts = [];
+  const state = { phase: 'prep', countT: 0, collected: 0, target: 0, ended: false, timeLeft: 0 };
+
+  // 레이아웃(타일 픽셀 환산) — 매 프레임 갱신해 리사이즈에 안전
+  let tile = 0, originX = 0, originY = 0;
+  function layout() {
+    if (!maze) return;
+    const topPad = 48, botPad = 16, side = 14;
+    const availW = Math.max(40, W - side * 2), availH = Math.max(40, H - topPad - botPad);
+    tile = Math.min(availW / maze.gW, availH / maze.gH);
+    originX = (W - maze.gW * tile) / 2; originY = topPad + (availH - maze.gH * tile) / 2;
+  }
+  const pxX = (mx) => originX + mx * tile, pxY = (my) => originY + my * tile;
+
+  function collides(mx, my, r) {
+    const i0 = Math.floor(mx - r), i1 = Math.floor(mx + r), j0 = Math.floor(my - r), j1 = Math.floor(my + r);
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const wall = (j < 0 || i < 0 || j >= maze.gH || i >= maze.gW) || maze.g[j][i] === 1;
+      if (!wall) continue;
+      const nx = Math.max(i, Math.min(mx, i + 1)), ny = Math.max(j, Math.min(my, j + 1));
+      const dx = mx - nx, dy = my - ny; if (dx * dx + dy * dy < r * r) return true;
+    }
+    return false;
+  }
+  function tryMove(dmx, dmy) {
+    const dist = Math.hypot(dmx, dmy); if (dist === 0) return;
+    const steps = Math.max(1, Math.ceil(dist / 0.18)); const sx = dmx / steps, sy = dmy / steps;
+    for (let s = 0; s < steps; s++) { if (!collides(P.mx + sx, P.my, PR)) P.mx += sx; if (!collides(P.mx, P.my + sy, PR)) P.my += sy; }
+  }
+
   function panel(html) { const el = document.createElement('div'); el.className = 'led-panel'; el.innerHTML = `<div class="prep-card led-pcard">${html}</div>`; scene.appendChild(el); return el; }
   function startFlow() { gi = 0; nextGame(); }
   function nextGame() { if (gi >= GAMES.length) { finishAll(); return; } game = GAMES[gi]; showIntro(); }
   function showIntro() {
     bgm.setDuck(1); hud.hidden = true; pad.hidden = true;
-    const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🐛 ${game.name}</h2>
-      <p class="prep-sub">별을 <b>${game.target}개</b> 먹어 우주뱀을 키워요! 꼬리가 길어질수록 빨라지고 — <b>자기 꼬리와 운석</b>에 부딪히면 크래시 ☄️<br>방향키·화면으로 조종하고, 조이스틱을 <b>꺾거나 버튼(SW)</b>을 누르면 ⚡<b>부스트</b>!</p>
-      <p class="lp-cond">⭐ <b>${Math.ceil(game.target * PASS_ACC)}개 이상</b>(A등급) 먹으면 통과!</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
+    const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🌀 ${game.name}</h2>
+      <p class="prep-sub">우주선으로 미로를 누벼 <b>별 ${game.stars}개</b>를 모두 모으면 <b>출구 🌀</b>가 열려요! ${game.rocks ? '움직이는 운석 ☄️을 피해 ' : ''}<b>${game.time}초</b> 안에 탈출하면 통과 🚀<br>방향키·화면으로 이동, <b>꺾기/버튼</b>으로 ⚡대시!</p>
+      <p class="lp-cond">⏱ 시간 안에 ⭐ 다 모으고 출구 도착 = 통과!</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
-  }
-  function spawnStar() {
-    let x, y, ok, tries = 0;
-    do { x = 50 + Math.random() * (W - 100); y = 70 + Math.random() * (H - 130); ok = !S || Math.hypot(S.x - x, S.y - y) > 120; } while (!ok && ++tries < 20);
-    stars.push({ x, y, t: performance.now() });
   }
   function beginPlay() {
     bgm.setDuck(0); pad.hidden = false;
-    S = { x: W / 2, y: H / 2, ang: 0, hist: [], len: 4 };
-    stars = []; rocks = []; parts = [];
-    for (let i = 0; i < game.rocks; i++) { const a = Math.random() * 6.283; rocks.push({ x: Math.random() * W, y: 80 + Math.random() * (H - 120), vx: Math.cos(a) * game.rockSpd, vy: Math.sin(a) * game.rockSpd, r: 20 + Math.random() * 14 }); }
-    Object.assign(state, { phase: 'count', countT: performance.now(), collected: 0, target: game.target, ended: false });
-    elTot.textContent = game.target; elStage.textContent = `${game.no}단계 · ${game.name}`; sync();
-    hud.hidden = false; spawnStar(); spawnStar();
+    maze = genMaze(game.cols, game.rows);
+    P = { mx: 1.5, my: 1.5, face: 1, inv: 0 };
+    exitM = { mx: maze.gW - 1.5, my: maze.gH - 1.5 };
+    const cells = [];
+    for (let cy = 0; cy < game.rows; cy++) for (let cx = 0; cx < game.cols; cx++) {
+      if ((cx === 0 && cy === 0) || (cx === game.cols - 1 && cy === game.rows - 1)) continue;
+      cells.push({ mx: 1 + cx * 2 + 0.5, my: 1 + cy * 2 + 0.5 });
+    }
+    shuffle(cells);
+    stars = cells.slice(0, game.stars).map((c) => ({ mx: c.mx, my: c.my, got: false, t: Math.random() * 6 }));
+    rocks = [];
+    const rcells = cells.slice(game.stars);
+    for (let i = 0; i < game.rocks; i++) { const c = rcells[i] || { mx: maze.gW / 2, my: maze.gH / 2 }; const d = [[1, 0], [-1, 0], [0, 1], [0, -1]][Math.floor(Math.random() * 4)]; rocks.push({ mx: c.mx, my: c.my, dx: d[0], dy: d[1] }); }
+    parts = [];
+    Object.assign(state, { phase: 'count', countT: performance.now(), collected: 0, target: game.stars, ended: false, timeLeft: game.time });
+    elTot.textContent = game.stars; elStage.textContent = `${game.no}단계 · ${game.name}`; sync();
+    hud.hidden = false;
   }
   function showResult(grade, pass) {
-    bgm.setDuck(1); pad.hidden = true; const last = gi === GAMES.length - 1; const pct = Math.round(state.collected / state.target * 100);
-    const el = panel(`<div class="lp-grade lp-${grade}">${grade}<span>등급</span></div><h2>${pass ? '통과! 🎉' : '조금만 더!'}</h2>
-      <p class="prep-sub">${game.name} · 별 ${state.collected}/${state.target} (${pct}%) · 꼬리 길이 ${S ? S.len : 0}</p>
-      <p class="lp-cond">${pass ? (last ? '두 미션 완성! 메달을 받자 🏅' : '다음 미션으로 ▶') : 'A등급(85%↑)이어야 통과! 다시 도전!'}</p>
-      <button class="cel-go" id="lp-next">${pass ? (last ? '메달 받기 🏅' : '다음 미션 ▶') : '다시 도전 ▶'}</button>`);
+    bgm.setDuck(1); pad.hidden = true; const last = gi === GAMES.length - 1;
+    const el = panel(`<div class="lp-grade lp-${grade}">${grade}<span>등급</span></div><h2>${pass ? '미로 탈출! 🎉' : '시간 초과 ☄️'}</h2>
+      <p class="prep-sub">${game.name} · ⭐ ${state.collected}/${state.target} · ⏱ ${Math.ceil(state.timeLeft)}초 남음</p>
+      <p class="lp-cond">${pass ? (last ? '두 미로 클리어! 메달을 받자 🏅' : '다음 미로로 ▶') : '별을 다 모아 출구로! 다시 도전 ⏱'}</p>
+      <button class="cel-go" id="lp-next">${pass ? (last ? '메달 받기 🏅' : '다음 미로 ▶') : '다시 도전 ▶'}</button>`);
     el.querySelector('#lp-next').onclick = () => { el.remove(); if (pass) { cleared[game.key] = true; gi++; nextGame(); } else beginPlay(); };
   }
   function finishAll() {
     cleanup();
-    if (cleared.easy && cleared.hard) { progress.mark('joystick'); celebrateRoom({ title: '우주 파일럿! 🚀', message: '조이스틱으로 우주뱀을 키우며 별을 모았어요 — 🚀 조종 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
+    if (cleared.easy && cleared.hard) { progress.mark('joystick'); celebrateRoom({ title: '우주 파일럿! 🚀', message: '우주선으로 미로를 누비며 별을 모아 탈출했어요 — 🚀 조종 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
     else onExit?.();
   }
   skipBtn.onclick = () => { document.querySelectorAll('.led-panel').forEach((e) => e.remove()); cleared[game.key] = true; state.ended = true; state.phase = 'result'; bgm.setDuck(1); gi++; nextGame(); };
-  function sync() { elStar.textContent = state.collected; elLen.textContent = S ? S.len : 3; }
-  function burst(x, y, c, n = 12) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = 1 + Math.random() * 4; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 34, color: c }); } }
-  function endPlay() { if (state.ended) return; state.ended = true; state.phase = 'result'; const acc = state.collected / state.target; showResult(gradeOf(acc), acc >= PASS_ACC); }
-  function crash(x, y) { burst(x, y, '255,140,140', 22); sfx.no(); endPlay(); }
+  function sync() { elStar.textContent = state.collected; }
+  function burstAt(mx, my, c, n = 12) { const x = pxX(mx), y = pxY(my); for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = 1 + Math.random() * 4; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 34, color: c }); } }
+  function endPlay(win) { if (state.ended) return; state.ended = true; state.phase = 'result'; const tf = state.timeLeft / game.time; showResult(win ? gradeOf(0.55 + tf * 0.45) : 'D', win); }
 
   let lastT = performance.now();
   function update(dt) {
-    if (state.phase !== 'play' || state.ended) return;
-    const v = inputVec();
-    const mag = Math.hypot(v.x, v.y);
-    if (mag > 0.18) {
-      const tAng = Math.atan2(v.y, v.x); let diff = tAng - S.ang;
-      while (diff > Math.PI) diff -= 2 * Math.PI; while (diff < -Math.PI) diff += 2 * Math.PI;
-      const turn = game.turn * dt * (0.8 + Math.min(1, mag) * 1.4); // 강하게 꺾을수록 빠르게 회전
-      S.ang += Math.max(-turn, Math.min(turn, diff));
+    if (state.ended || state.phase !== 'play') return;
+    state.timeLeft -= dt / 60;
+    if (state.timeLeft <= 0) { state.timeLeft = 0; endPlay(false); return; }
+    let { x: vx, y: vy } = inputVec(); const m = Math.hypot(vx, vy);
+    if (m > 1) { vx /= m; vy /= m; }
+    if (m > 0.05) { const sp = game.speed * (dashing() ? 1.7 : 1) * dt; if (Math.abs(vx) > 0.01) P.face = vx < 0 ? -1 : 1; tryMove(vx * sp, vy * sp); }
+    if (P.inv > 0) P.inv -= dt;
+    // 별 수집
+    for (const s of stars) { if (!s.got && Math.hypot(P.mx - s.mx, P.my - s.my) < 0.55) { s.got = true; state.collected++; sfx.note(560 + Math.min(10, state.collected) * 28, 150); burstAt(s.mx, s.my, '255,220,90', 10); sync(); } }
+    // 운석(움직임 + 충돌 시 시간 페널티)
+    for (const k of rocks) {
+      const nmx = k.mx + k.dx * game.rockSpd * dt, nmy = k.my + k.dy * game.rockSpd * dt;
+      if (collides(nmx, nmy, 0.30)) { const opts = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter((d) => !collides(k.mx + d[0] * 0.55, k.my + d[1] * 0.55, 0.30)); const d = opts[Math.floor(Math.random() * opts.length)] || [-k.dx, -k.dy]; k.dx = d[0]; k.dy = d[1]; }
+      else { k.mx = nmx; k.my = nmy; }
+      if (P.inv <= 0 && Math.hypot(P.mx - k.mx, P.my - k.my) < 0.30 + PR) {
+        state.timeLeft = Math.max(0, state.timeLeft - 3); P.inv = 60;
+        const a = Math.atan2(P.my - k.my, P.mx - k.mx), bx = Math.cos(a) * 0.45, by = Math.sin(a) * 0.45;
+        if (!collides(P.mx + bx, P.my, PR)) P.mx += bx; if (!collides(P.mx, P.my + by, PR)) P.my += by;
+        burstAt(P.mx, P.my, '255,140,140', 16); sfx.no();
+      }
     }
-    const sp = (game.speed + state.collected * 0.09) * (boosting() ? 1.8 : 1) * dt;
-    S.x += Math.cos(S.ang) * sp; S.y += Math.sin(S.ang) * sp;
-    if (S.x < 0) S.x += W; if (S.x > W) S.x -= W; if (S.y < 40) S.y += (H - 40); if (S.y > H) S.y -= (H - 40);
-    S.hist.unshift({ x: S.x, y: S.y }); const maxh = S.len * GAP + 14; if (S.hist.length > maxh) S.hist.length = maxh;
-    // 별
-    for (const s of stars) { if (s.got) continue; if (Math.hypot(S.x - s.x, S.y - s.y) < HEAD_R + 13) { s.got = true; state.collected++; S.len += 2; sfx.note(540 + Math.min(10, state.collected) * 30, 150); burst(s.x, s.y, '255,220,90', 10); sync(); if (state.collected >= state.target) { endPlay(); return; } spawnStar(); } }
-    stars = stars.filter((s) => !s.got);
-    // 운석
-    for (const k of rocks) { k.x += k.vx * dt; k.y += k.vy * dt; if (k.x < k.r || k.x > W - k.r) k.vx *= -1; if (k.y < k.r + 40 || k.y > H - k.r) k.vy *= -1; if (Math.hypot(S.x - k.x, S.y - k.y) < k.r + HEAD_R - 6) { crash(S.x, S.y); return; } }
-    // 자기 꼬리
-    for (let i = game.selfAt; i < S.len; i++) { const seg = S.hist[i * GAP]; if (seg && Math.hypot(S.x - seg.x, S.y - seg.y) < 18) { crash(S.x, S.y); return; } }
+    // 출구(별 다 모으면 활성)
+    if (state.collected >= state.target && Math.hypot(P.mx - exitM.mx, P.my - exitM.my) < 0.6) { sfx.perfect(); burstAt(exitM.mx, exitM.my, '95,255,168', 22); endPlay(true); }
   }
   function draw(now) {
     ctx.clearRect(0, 0, W, H);
     if (!ready(bgImg)) { const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1640'); g.addColorStop(1, '#0a0820'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
-    else { ctx.fillStyle = 'rgba(10,8,26,0.22)'; ctx.fillRect(0, 0, W, H); }
-    if (state.phase === 'count') { const el = (now - state.countT) / 1000, n = 3 - Math.floor(el); ctx.fillStyle = '#fff'; ctx.font = '900 90px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(n > 0 ? String(n) : 'GO!', W / 2, H * 0.5); if (el >= 3) { state.phase = 'play'; } }
-    // 먹을 별
-    for (const s of stars) { if (s.got) continue; const tw = 0.7 + 0.3 * Math.sin(now * 0.006 + s.t); ctx.save(); ctx.globalAlpha = tw; ctx.fillStyle = '#ffe066'; ctx.shadowColor = 'rgba(255,220,90,.9)'; ctx.shadowBlur = 16; star(ctx, s.x, s.y, 15, 5); ctx.fill(); ctx.restore(); }
-    // 운석
-    for (const k of rocks) { ctx.save(); ctx.fillStyle = '#8a8496'; ctx.strokeStyle = '#5a5568'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(k.x, k.y, k.r, 0, 6.283); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#6f6a7e'; ctx.beginPath(); ctx.arc(k.x - k.r * 0.3, k.y - k.r * 0.2, k.r * 0.22, 0, 6.283); ctx.fill(); ctx.restore(); }
-    // 꼬리(별)
-    if (S) {
-      for (let i = S.len; i >= 1; i--) {
-        const seg = S.hist[Math.min(S.hist.length - 1, i * GAP)]; if (!seg) continue;
-        const r = 15 - Math.min(7, i * 0.4);
-        ctx.save(); ctx.globalAlpha = 0.92; ctx.fillStyle = i <= game.selfAt ? '#9fe0ff' : '#ffd24a'; ctx.shadowColor = 'rgba(150,200,255,.7)'; ctx.shadowBlur = 8; star(ctx, seg.x, seg.y, Math.max(6, r), 5); ctx.fill(); ctx.restore();
+    else { ctx.fillStyle = 'rgba(10,8,26,0.34)'; ctx.fillRect(0, 0, W, H); }
+    if (maze && tile > 0) {
+      // 벽
+      ctx.save(); ctx.beginPath();
+      for (let j = 0; j < maze.gH; j++) for (let i = 0; i < maze.gW; i++) if (maze.g[j][i] === 1) ctx.rect(originX + i * tile + 1, originY + j * tile + 1, tile - 2, tile - 2);
+      ctx.fillStyle = 'rgba(52,38,98,0.82)'; ctx.shadowColor = 'rgba(150,120,255,0.55)'; ctx.shadowBlur = 7; ctx.fill();
+      ctx.shadowBlur = 0; ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(175,150,255,0.45)'; ctx.stroke(); ctx.restore();
+      // 출구
+      const open = state.collected >= state.target, ex = pxX(exitM.mx), ey = pxY(exitM.my), pr = tile * 0.42, pulse = 0.7 + 0.3 * Math.sin(now * 0.006);
+      ctx.save(); ctx.globalAlpha = open ? pulse : 0.6; ctx.fillStyle = open ? '#5fffa8' : '#ff6f8a'; ctx.shadowColor = open ? 'rgba(95,255,168,.95)' : 'rgba(255,111,138,.8)'; ctx.shadowBlur = open ? 26 : 12; ctx.beginPath(); ctx.arc(ex, ey, pr, 0, 6.283); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.font = `${Math.round(tile * 0.66)}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(open ? '🌀' : '🔒', ex, ey); ctx.restore();
+      // 별
+      for (const s of stars) { if (s.got) continue; const tw = 0.7 + 0.3 * Math.sin(now * 0.006 + s.t); ctx.save(); ctx.globalAlpha = tw; ctx.fillStyle = '#ffe066'; ctx.shadowColor = 'rgba(255,220,90,.9)'; ctx.shadowBlur = 14; star(ctx, pxX(s.mx), pxY(s.my), tile * 0.32, 5); ctx.fill(); ctx.restore(); }
+      // 운석
+      for (const k of rocks) { const rx = pxX(k.mx), ry = pxY(k.my), rr = tile * 0.3; ctx.save(); ctx.fillStyle = '#8a8496'; ctx.strokeStyle = '#5a5568'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, 6.283); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#6f6a7e'; ctx.beginPath(); ctx.arc(rx - rr * 0.3, ry - rr * 0.2, rr * 0.24, 0, 6.283); ctx.fill(); ctx.restore(); }
+      // 플레이어(에디 우주선)
+      if (P) {
+        const px = pxX(P.mx), py = pxY(P.my);
+        if (dashing() && state.phase === 'play') { ctx.save(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#6fe0ff'; ctx.shadowColor = 'rgba(110,224,255,.95)'; ctx.shadowBlur = 26; ctx.beginPath(); ctx.arc(px, py, tile * 0.62, 0, 6.283); ctx.fill(); ctx.restore(); }
+        const img = ready(headImg) ? headImg : (ready(heroImg) ? heroImg : null), s = tile * 1.5;
+        if (img) { const w = s * (img.naturalWidth / img.naturalHeight); ctx.save(); ctx.translate(px, py); if (P.face < 0) ctx.scale(-1, 1); ctx.globalAlpha = P.inv > 0 ? 0.4 + 0.4 * Math.abs(Math.sin(now * 0.03)) : 1; ctx.drawImage(img, -w / 2, -s / 2, w, s); ctx.restore(); }
+        else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(px, py, tile * 0.36, 0, 6.283); ctx.fill(); }
       }
-      // 머리(에디)
-      if (boosting() && state.phase === 'play') { ctx.save(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#6fe0ff'; ctx.shadowColor = 'rgba(110,224,255,.95)'; ctx.shadowBlur = 28; ctx.beginPath(); ctx.arc(S.x, S.y, HEAD_R + 9, 0, 6.283); ctx.fill(); ctx.restore(); }
-      const img = ready(headImg) ? headImg : (ready(heroImg) ? heroImg : null);
-      const s = HEAD_R * 2.7;
-      if (img) { const w = s * (img.naturalWidth / img.naturalHeight); ctx.save(); ctx.translate(S.x, S.y); ctx.drawImage(img, -w / 2, -s / 2, w, s); ctx.restore(); }
-      else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(S.x, S.y, HEAD_R, 0, 6.283); ctx.fill(); }
+      // 카운트다운
+      if (state.phase === 'count') { const el = (now - state.countT) / 1000, n = 3 - Math.floor(el); ctx.fillStyle = '#fff'; ctx.font = '900 90px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(n > 0 ? String(n) : 'GO!', W / 2, H * 0.5); if (el >= 3) state.phase = 'play'; }
     }
     // 파티클
     for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; p.life--; ctx.globalAlpha = Math.max(0, p.life / 34); ctx.fillStyle = `rgb(${p.color})`; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; if (p.life <= 0) parts.splice(i, 1); }
+    if (hud && !hud.hidden) elTime.textContent = Math.ceil(state.timeLeft);
   }
-  function loop(now) { const dt = Math.min(2.4, (now - lastT) / 16.67); lastT = now; update(dt); draw(now); raf = requestAnimationFrame(loop); }
+  function loop(now) { const dt = Math.min(2.4, (now - lastT) / 16.67); lastT = now; layout(); update(dt); draw(now); raf = requestAnimationFrame(loop); }
   let raf = requestAnimationFrame(loop);
   function cleanup() { bgm.setDuck(1); cancelAnimationFrame(raf); stopHw(); window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('resize', resize); }
 }
