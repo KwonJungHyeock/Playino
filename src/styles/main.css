@@ -1467,6 +1467,17 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .bx-exit { position: absolute; top: 18px; right: 20px; z-index: 6; padding: 8px 14px; border-radius: 12px;
   background: rgba(16,20,34,.55); border: 1px solid rgba(255,255,255,.16); color: #eaf1ff; font-weight: 700; font-size: 13px; cursor: pointer; }
 .bx-exit:hover { background: rgba(16,20,34,.78); }
+
+/* 전역 뒤로가기 버튼 — 모든 화면 좌상단 통일(루트에선 숨김). 기기/브라우저 뒤로·ESC 와 동일 동작 */
+.nav-back { position: fixed; top: 16px; left: 18px; z-index: 70; display: none; align-items: center; gap: 5px;
+  padding: 9px 16px 9px 13px; border-radius: 999px; background: rgba(16,20,34,.62); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.2); color: #eaf1ff; font-weight: 800; font-size: 14px; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.32); transition: background .15s, transform .12s; }
+.nav-back:hover { background: rgba(16,20,34,.85); transform: translateX(-2px); }
+.nav-back:active { transform: translateX(-2px) scale(.96); }
+.nav-back-arrow { font-size: 17px; line-height: 1; }
+body[data-canback="1"] .nav-back { display: inline-flex; }
+body[data-canback="1"] .brand-badge { left: 116px; }   /* 뒤로 버튼과 겹치지 않게 우측으로 */
 .bx-inner { position: relative; z-index: 1; width: min(1120px, 94%); display: flex; align-items: center; gap: 30px; }
 .bx-hero { position: relative; flex: 0 0 clamp(220px, 26vw, 320px); display: grid; place-items: center; }
 .bx-speech { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); max-width: 250px;

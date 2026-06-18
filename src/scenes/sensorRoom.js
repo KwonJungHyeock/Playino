@@ -11,6 +11,7 @@ import { showBuzzerGame } from './buzzerGame.js';
 import { showRgbGame } from './rgbGame.js';
 import { showCdsGame } from './cdsGame.js';
 import { showJoystickGame } from './joystickGame.js';
+import { nav } from '../app/nav.js';
 
 const roomCache = {};
 function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.webp`; roomCache[key] = im; } return roomCache[key]; }
@@ -146,7 +147,8 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     sfx.start(); world.pause(); fade.classList.add('on');
     setTimeout(() => {
       if (idTrig === 'theory') { openTheory(); fade.classList.remove('on'); entering = false; }
-      else { destroyAll(); cfg.play(root, { onExit: () => showSensorRoom(root, { id, onExit }) }); }
+      // 체험관(게임)은 nav 프레임으로 push → 게임에서 뒤로(기기/ESC/버튼) 시 복도로 복귀.
+      else { destroyAll(); nav.push(() => cfg.play(root, { onExit: () => nav.back() })); }
     }, 480);
   }
   function onFrame(state) {

@@ -20,45 +20,42 @@ import { showEscapeRoom } from './scenes/escapeRoom.js';
 import { progress } from './app/progress.js';
 import { getRoom } from './content/curriculum.js';
 import { bgm } from './app/bgm.js';
+import { nav } from './app/nav.js';
 
 const app = () => document.getElementById('app');
 
 let lastChapter = null;   // HUB 복귀 시 들어갔던 게이트 앞
 let lastRoom = null;      // 챕터 복귀 시 나온 방 앞
 
-function scenePlatformIntro() { showPlatformIntro(app(), { onDone: sceneModeSelect }); }     // ① 플랫폼 스튜디오 인트로
-function sceneModeSelect() { showModeSelect(app(), { onDone: sceneProductMain }); }   // ①-b 기기 모드 선택(테스트 중: 매번 표시)
-function sceneProductMain() { showProductMain(app(), { onDone: sceneKits }); }                // ② 상품 메인페이지
-function sceneKits() { showKits(app(), { onDone: sceneLogin }); }                              // ②-b 호환 키트 안내
-function sceneLogin() { showLogin(app(), { onDone: sceneSetup }); }
-function sceneSetup() {
-  showSetup(app(), { onDone: () => { progress.mark('setup'); sceneHub(); } });   // CH1 클리어
-}
+// 모든 전환은 nav 를 통과 → 기기/브라우저 뒤로·ESC·통일 버튼이 한 단계씩 되돌아감.
+function scenePlatformIntro() { showPlatformIntro(app(), { onDone: () => nav.push(sceneModeSelect) }); }     // ① 플랫폼 스튜디오 인트로
+function sceneModeSelect() { showModeSelect(app(), { onDone: () => nav.push(sceneProductMain) }); }   // ①-b 기기 모드 선택
+function sceneProductMain() { showProductMain(app(), { onDone: () => nav.push(sceneKits) }); }                // ② 상품 메인페이지
+function sceneKits() { showKits(app(), { onDone: () => nav.push(sceneLogin) }); }                              // ②-b 호환 키트 안내
+function sceneLogin() { showLogin(app(), { onDone: () => nav.push(sceneSetup) }); }
+function sceneSetup() { showSetup(app(), { onDone: () => { progress.mark('setup'); nav.push(sceneHub); } }); }   // CH1 클리어
 
-function sceneHub() { showHub(app(), { onEnter: enterChapter, spawnAt: lastChapter }); }
+function sceneHub() { showHub(app(), { onEnter: (chId) => nav.push(() => enterChapter(chId)), spawnAt: lastChapter }); }
 
 function enterChapter(chId) {
   lastChapter = chId;
-  showChapter(app(), { chapter: chId, onRoom: enterRoom, onExit: sceneHub, onChapter: enterChapter, spawnAt: lastRoom });
-}
-
-function backToChapter(roomId) {
-  const ch = getRoom(roomId)?.chapter || lastChapter;
-  lastRoom = roomId; lastChapter = ch;
-  showChapter(app(), { chapter: ch, onRoom: enterRoom, onExit: sceneHub, onChapter: enterChapter, spawnAt: roomId });
+  showChapter(app(), {
+    chapter: chId,
+    onRoom: (roomId) => nav.push(() => enterRoom(roomId)),
+    onExit: () => nav.back(),
+    onChapter: (id) => nav.push(() => enterChapter(id)),
+    spawnAt: lastRoom,
+  });
 }
 
 function enterRoom(roomId) {
   lastRoom = roomId;
-  const back = () => backToChapter(roomId);
+  const back = () => nav.back();
   switch (roomId) {
-    case 'basics': showBasics(app(), { onExit: back, onComplete: () => sceneHub() }); break;
-    case 'led': showSensorRoom(app(), { id: 'led', onExit: back }); break;
-    case 'buzzer': showSensorRoom(app(), { id: 'buzzer', onExit: back }); break;
-    case 'rgb': showSensorRoom(app(), { id: 'rgb', onExit: back }); break;
-    case 'cds': showSensorRoom(app(), { id: 'cds', onExit: back }); break;
-    case 'joystick': showSensorRoom(app(), { id: 'joystick', onExit: back }); break;
-    case 'dht11': dhtCoding(back); break;
+    case 'basics': showBasics(app(), { onExit: back, onComplete: back }); break;
+    case 'led': case 'buzzer': case 'rgb': case 'cds': case 'joystick':
+      showSensorRoom(app(), { id: roomId, onExit: back }); break;
+    case 'dht11': showDhtCoding(app(), { onDone: () => nav.push(dhtRoomRender), onExit: back }); break;
     case 'relay': showRelay(app(), { onExit: back }); break;
     case 'setup': showSetup(app(), { onDone: () => { progress.mark('setup'); back(); } }); break;
     default:
@@ -68,10 +65,10 @@ function enterRoom(roomId) {
   }
 }
 
-// DHT-11: 코딩 → 모니터링 방 → 미니게임 (모두 onExit 은 챕터로 복귀)
-function dhtCoding(back) { showDhtCoding(app(), { onDone: () => dhtRoom(back), onExit: back }); }
-function dhtRoom(back) { showDht11Room(app(), { onPlay: () => dhtGame(back), onExit: back, onCode: () => dhtCoding(back) }); }
-function dhtGame(back) { showDht11(app(), { onQuit: () => dhtRoom(back) }); }
+// DHT-11 하위 플로우: 코딩 → (실행) 모니터링 방 → (플레이) 미니게임.
+//  코딩은 dht11 방 프레임 그 자체, 모니터링/게임은 그 위로 push → 뒤로가 한 단계씩 자연스럽게.
+function dhtRoomRender() { showDht11Room(app(), { onPlay: () => nav.push(dhtGameRender), onExit: () => nav.back(2), onCode: () => nav.back() }); }
+function dhtGameRender() { showDht11(app(), { onQuit: () => nav.back() }); }
 
 // 다음 장면 배경을 미리 받아두면(인트로 4초 동안) 전환 시 '남색 물방울' 플레이스홀더가 안 보인다.
 function preloadAssets() {
@@ -79,4 +76,4 @@ function preloadAssets() {
     .forEach((n) => { const im = new Image(); im.src = `/brand/${n}.webp`; });
 }
 
-window.addEventListener('DOMContentLoaded', () => { bgm.armAutostart(); preloadAssets(); scenePlatformIntro(); });
+window.addEventListener('DOMContentLoaded', () => { bgm.armAutostart(); preloadAssets(); nav.start(scenePlatformIntro); });
