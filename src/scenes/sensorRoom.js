@@ -12,6 +12,7 @@ import { showRgbGame } from './rgbGame.js';
 import { showCdsGame } from './cdsGame.js';
 import { showJoystickGame } from './joystickGame.js';
 import { showUltraGame } from './ultraGame.js';
+import { showButtonGame } from './buttonGame.js';
 import { nav } from '../app/nav.js';
 
 const roomCache = {};
@@ -92,6 +93,19 @@ const ROOMS_CFG = {
       '주차 센서·로봇 장애물 감지·자동문… 거리로 세상을 봐요 🤖',
     ],
     play: (root, opt) => showUltraGame(root, opt),
+  },
+  button: {
+    name: '두더지 잡기', sensor: '버튼(택트스위치) · 디지털 입력', icon: '🔨', accent: '255,170,90',
+    room: 'room-button-bg', eddie: null, signL: '255,170,90', signR: '150,210,120',
+    control: 'button', pins: { b1: 5, b2: 6, b3: 7 }, floor: 0.82,
+    intro: '이론관에서 버튼(디지털 입력)을 배우고,<br>체험관에서 두더지를 잡아보자! 🔨',
+    animTheory: 'button',
+    captions: [
+      '버튼은 누름(1)/안 누름(0) 두 값만 있는 디지털 입력이에요 — 켜짐/꺼짐! 🔘',
+      '누르는 순간이 또렷하게 0↔1로 바뀌어요. 그 변화를 읽어 반응해요 ⚡',
+      '키보드·게임패드·엘리베이터 버튼… 누름 신호로 명령을 전해요 🎮',
+    ],
+    play: (root, opt) => showButtonGame(root, opt),
   },
 };
 
@@ -188,7 +202,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       <div class="prep-card tv-card">
         <div class="tv-tabs">
           <button class="tv-tab on" data-t="info">📚 자료</button>
-          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : cfg.control === 'cds' ? '🔆 빛 측정' : cfg.control === 'joystick' ? '🕹️ 조종 모니터' : cfg.control === 'ultra' ? '📡 거리 측정' : '🎛️ LED 제어'}</button>
+          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : cfg.control === 'cds' ? '🔆 빛 측정' : cfg.control === 'joystick' ? '🕹️ 조종 모니터' : cfg.control === 'ultra' ? '📡 거리 측정' : cfg.control === 'button' ? '🔘 버튼 입력' : '🎛️ LED 제어'}</button>
           <button class="tv-x" id="tv-x">✕ 나가기</button>
         </div>
         <div class="tv-body" id="tv-body"></div>
@@ -210,12 +224,12 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume();
     }
     function stopRaf() { if (theoryRaf) { cancelAnimationFrame(theoryRaf); theoryRaf = null; } }
-    function renderTab() { stopRaf(); stopCdsPoll(); stopJoyPoll(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : cfg.control === 'joystick' ? renderJoystick() : cfg.control === 'ultra' ? renderUltra() : renderControl()); }
+    function renderTab() { stopRaf(); stopCdsPoll(); stopJoyPoll(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : cfg.control === 'joystick' ? renderJoystick() : cfg.control === 'ultra' ? renderUltra() : cfg.control === 'button' ? renderButton() : renderControl()); }
 
     // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
     function renderAnim() {
       ew.hidden = false;
-      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : cfg.animTheory === 'joystick' ? joystickTheory() : cfg.animTheory === 'ultra' ? ultraTheory() : buzzerTheory();
+      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : cfg.animTheory === 'joystick' ? joystickTheory() : cfg.animTheory === 'ultra' ? ultraTheory() : cfg.animTheory === 'button' ? buttonTheory() : buzzerTheory();
       bodyEl.innerHTML = `
         <div class="tv-slider">
           <button class="tv-arrow" id="tv-prev">◀</button>
@@ -496,6 +510,42 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       stateUnsub = board.onState(() => { const c = board.connected; connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 센서)'; startPoll(); });
     }
 
+    // 버튼 입력 모니터: 버튼을 누르면 램프 ON. 연결 전엔 화면 버튼을 눌러 체험.
+    function renderButton() {
+      showEddie('버튼을 눌러봐! 누름(1)/안 누름(0)이 또렷하게 바뀌어요 🔘 (보드 없으면 화면 버튼으로 체험)');
+      const P = cfg.pins, pins = [P.b1, P.b2, P.b3];
+      bodyEl.innerHTML = `
+        <div class="dash joy-dash">
+          <div class="dash-led">
+            <div class="btn-lamps" id="btn-lamps">${[1, 2, 3].map((n) => `<button class="btn-lamp" data-i="${n - 1}"><span></span><em>${n}</em></button>`).join('')}</div>
+            <div class="dl-pin">🔘 버튼을 누르면 그 핀이 <b>0 ↔ 1</b>로 바뀌어요<br><span>(버튼1=D5 · 버튼2=D6 · 버튼3=D7, 디지털 입력)</span></div>
+          </div>
+          <div class="dash-cards">
+            <div class="dcard"><div class="dc-h">📟 입력 상태 <span>눌림 = 1(ON)</span></div>
+              <div class="joy-read"><span>1 <b id="bs0">0</b></span><span>2 <b id="bs1">0</b></span><span>3 <b id="bs2">0</b></span></div></div>
+            <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 버튼)'}</button>
+            <div class="dc-status" id="dc-status">${board.connected ? '버튼을 눌러봐! 🔘' : '화면 버튼을 누르거나, 연결하면 실물 버튼이 켜져요.'}</div>
+          </div>
+        </div>`;
+      const lamps = [...bodyEl.querySelectorAll('.btn-lamp')], readEls = [0, 1, 2].map((i) => bodyEl.querySelector('#bs' + i)), status = bodyEl.querySelector('#dc-status');
+      const setLamp = (i, on) => { lamps[i].classList.toggle('on', on); readEls[i].textContent = on ? 1 : 0; };
+      lamps.forEach((l, i) => { const d = (e) => { if (board.connected) return; e.preventDefault(); setLamp(i, true); }, u = () => { if (board.connected) return; setLamp(i, false); }; l.addEventListener('pointerdown', d); l.addEventListener('pointerup', u); l.addEventListener('pointerleave', u); });
+      const rings = [[], [], []], rest = [null, null, null], RING = 4;
+      const un = (r) => { if (r.length < RING) return null; const a = r[0]; for (const v of r) if (v !== a) return null; return a; };
+      function startPoll() {
+        stopJoyPoll(); if (!board.connected) return; for (let i = 0; i < 3; i++) { rings[i].length = 0; rest[i] = null; }
+        joyTimer = setInterval(async () => {
+          const vals = await Promise.all(pins.map((p) => board.digitalRead(p)));
+          for (let i = 0; i < 3; i++) { const v = vals[i]; if (v == null) continue; const r = rings[i]; r.push(v); if (r.length > RING) r.shift(); const s = un(r); if (s == null) continue; if (rest[i] === null) rest[i] = s; setLamp(i, s !== rest[i]); }
+        }, 60);
+      }
+      startPoll();
+      const connBtn = bodyEl.querySelector('#dc-conn');
+      connBtn.onclick = async () => { if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌'; try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '버튼을 눌러봐! 🔘'; startPoll(); } catch (e) { status.textContent = board.classify(e).note; } };
+      if (stateUnsub) stateUnsub();
+      stateUnsub = board.onState(() => { const c = board.connected; connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 버튼)'; startPoll(); });
+    }
+
     // 자료: 큰 슬라이드 + 흰 박스 밖(여백)의 EDDIE가 설명
     function renderInfo() {
       if (stateUnsub) { stateUnsub(); stateUnsub = null; }
@@ -738,6 +788,36 @@ function ultraTheory() {
         <div class="rt-use u-swing"><span>🚪</span>자동문</div>
         <div class="rt-use u-beep"><span>📏</span>키 재기</div>
       </div><div class="ba-flow">거리를 숫자로 아니까 <b>부딪히기 전에</b> 멈추고, 열고, 재요! 🤖</div></div>` },
+  ];
+}
+
+// ───────── 버튼 이론 애니메이션(코드로 직접) ─────────
+function buttonTheory() {
+  return [
+    { // ① 0/1 디지털
+      html: `<div class="ba">
+        <div style="font-size:44px;letter-spacing:6px;margin:6px 0">🔘 → <b style="color:#7fd6a0">1</b> / <b style="color:#ff9a9a">0</b></div>
+        <div class="ba-flow">버튼은 <b>누름(1)</b> · <b>안 누름(0)</b> 두 값만 있는 <b>디지털 입력</b>이에요 — 켜짐/꺼짐! 🔘</div>
+      </div>` },
+    { // ② 눌러보기(인터랙티브)
+      html: `<div class="ba">
+        <button id="bth" class="bth-btn">여기를 꾹 눌러봐 🔘</button>
+        <div class="ct-read">지금 상태 <b id="bthv">0</b></div>
+        <div class="ba-flow">누르는 순간 또렷하게 <b>0 ↔ 1</b>로 바뀌어요 — 이 변화를 읽어 반응! ⚡</div>
+      </div>`,
+      init: (stage) => {
+        const b = stage.querySelector('#bth'), v = stage.querySelector('#bthv');
+        const set = (s) => { v.textContent = s; b.classList.toggle('on', !!s); };
+        b.addEventListener('pointerdown', (e) => { e.preventDefault(); set(1); sfx.note(560, 80); });
+        b.addEventListener('pointerup', () => set(0)); b.addEventListener('pointerleave', () => set(0)); set(0);
+      } },
+    { // ③ 활용
+      html: `<div class="ba"><div class="rt-uses">
+        <div class="rt-use u-bounce"><span>⌨️</span>키보드</div>
+        <div class="rt-use u-shake"><span>🎮</span>게임 패드</div>
+        <div class="rt-use u-swing"><span>🛗</span>엘리베이터</div>
+        <div class="rt-use u-beep"><span>🔔</span>초인종</div>
+      </div><div class="ba-flow">누름 신호 하나로 <b>명령</b>을 전해요 — 세상은 버튼투성이! 🎮</div></div>` },
   ];
 }
 

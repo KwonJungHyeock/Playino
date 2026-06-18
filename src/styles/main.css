@@ -1489,6 +1489,19 @@ body:has(.app-header) .nav-back { top: 72px; left: 18px; }
 .ult-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
   background: linear-gradient(180deg, rgba(127,230,255,.55), rgba(127,230,255,.18)); transition: height .12s ease; }
 .ult-hand { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 28px; transition: top .12s ease; }
+
+/* 버튼 입력 모니터(이론관 코드 탭) + 이론 인터랙티브 버튼 */
+.btn-lamps { display: flex; gap: 16px; justify-content: center; margin: 12px 0 6px; }
+.btn-lamp { width: 76px; height: 76px; border-radius: 16px; border: 2px solid rgba(255,170,90,.5);
+  background: rgba(255,255,255,.06); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 5px; cursor: pointer; transition: transform .08s, background .12s, box-shadow .12s; touch-action: none; }
+.btn-lamp span { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,170,90,.28); transition: all .1s; }
+.btn-lamp em { font-style: normal; font-weight: 800; font-size: 13px; color: var(--muted); }
+.btn-lamp.on { background: rgba(255,170,90,.22); box-shadow: 0 0 22px rgba(255,170,90,.6); transform: translateY(2px) scale(.97); }
+.btn-lamp.on span { background: #ffaa5a; box-shadow: 0 0 16px rgba(255,170,90,.95); }
+.bth-btn { padding: 16px 28px; border-radius: 16px; border: 0; font-weight: 800; font-size: 17px; cursor: pointer;
+  background: #4a5468; color: #fff; box-shadow: 0 6px 0 #2c3340; transition: all .07s; touch-action: none; }
+.bth-btn.on { background: #5ade7a; color: #133; transform: translateY(5px); box-shadow: 0 1px 0 #2c3340; }
 .bx-inner { position: relative; z-index: 1; width: min(1120px, 94%); display: flex; align-items: center; gap: 30px; }
 .bx-hero { position: relative; flex: 0 0 clamp(220px, 26vw, 320px); display: grid; place-items: center; }
 .bx-speech { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); max-width: 250px;
