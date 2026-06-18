@@ -11,6 +11,7 @@ import { showBuzzerGame } from './buzzerGame.js';
 import { showRgbGame } from './rgbGame.js';
 import { showCdsGame } from './cdsGame.js';
 import { showJoystickGame } from './joystickGame.js';
+import { showUltraGame } from './ultraGame.js';
 import { nav } from '../app/nav.js';
 
 const roomCache = {};
@@ -78,6 +79,19 @@ const ROOMS_CFG = {
       '스틱을 밀면 우주선이 그 방향으로 — 조종간이 되는 거예요 🚀',
     ],
     play: (root, opt) => showJoystickGame(root, opt),
+  },
+  ultra: {
+    name: '메아리 동굴', sensor: '초음파 센서 · HC-SR04', icon: '📡', accent: '120,210,230',
+    room: 'room-bg', eddie: null, signL: '120,210,230', signR: '180,160,255',
+    control: 'ultra', pins: { trig: 3, echo: 4 }, floor: 0.82,
+    intro: '이론관에서 초음파(거리) 센서를 배우고, 체험관에서 손 거리로 동굴을 비행하자! 📡',
+    animTheory: 'ultra',
+    captions: [
+      '초음파 센서는 사람이 못 듣는 높은 소리를 쏘고, 부딪혀 돌아오는 메아리를 들어요 📡',
+      '소리가 갔다 오는 시간 ÷ 2 로 거리를 계산! 가까우면 빨리, 멀면 늦게 돌아와요 ⏱️',
+      '주차 센서·로봇 장애물 감지·자동문… 거리로 세상을 봐요 🤖',
+    ],
+    play: (root, opt) => showUltraGame(root, opt),
   },
 };
 
@@ -174,7 +188,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       <div class="prep-card tv-card">
         <div class="tv-tabs">
           <button class="tv-tab on" data-t="info">📚 자료</button>
-          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : cfg.control === 'cds' ? '🔆 빛 측정' : cfg.control === 'joystick' ? '🕹️ 조종 모니터' : '🎛️ LED 제어'}</button>
+          <button class="tv-tab" data-t="code">${cfg.control === 'keys' ? '🎹 연주판' : cfg.control === 'rgb' ? '🎨 색 섞기' : cfg.control === 'cds' ? '🔆 빛 측정' : cfg.control === 'joystick' ? '🕹️ 조종 모니터' : cfg.control === 'ultra' ? '📡 거리 측정' : '🎛️ LED 제어'}</button>
           <button class="tv-x" id="tv-x">✕ 나가기</button>
         </div>
         <div class="tv-body" id="tv-body"></div>
@@ -196,12 +210,12 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume();
     }
     function stopRaf() { if (theoryRaf) { cancelAnimationFrame(theoryRaf); theoryRaf = null; } }
-    function renderTab() { stopRaf(); stopCdsPoll(); stopJoyPoll(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : cfg.control === 'joystick' ? renderJoystick() : renderControl()); }
+    function renderTab() { stopRaf(); stopCdsPoll(); stopJoyPoll(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : cfg.control === 'joystick' ? renderJoystick() : cfg.control === 'ultra' ? renderUltra() : renderControl()); }
 
     // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
     function renderAnim() {
       ew.hidden = false;
-      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : cfg.animTheory === 'joystick' ? joystickTheory() : buzzerTheory();
+      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : cfg.animTheory === 'joystick' ? joystickTheory() : cfg.animTheory === 'ultra' ? ultraTheory() : buzzerTheory();
       bodyEl.innerHTML = `
         <div class="tv-slider">
           <button class="tv-arrow" id="tv-prev">◀</button>
@@ -433,6 +447,40 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       stateUnsub = board.onState(() => { const c = board.connected; connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 조이스틱)'; startPoll(); if (!c) show(0, 0); });
     }
 
+    // 초음파 거리 모니터: 손을 가까이/멀리 → 거리(cm) 실시간. 연결 전엔 마우스 상하로 체험.
+    function renderUltra() {
+      showEddie('센서 앞에 손을 가까이/멀리 해봐! 거리(cm)가 실시간으로 📡 (연결 안 하면 마우스로 체험)');
+      const P = cfg.pins, NEAR = 5, FAR = 40, cl = (v) => Math.max(NEAR, Math.min(FAR, v));
+      bodyEl.innerHTML = `
+        <div class="dash joy-dash">
+          <div class="dash-led">
+            <div class="ult-mon" id="ult-mon"><div class="ult-fill" id="ult-fill"></div><div class="ult-hand" id="ult-hand">🖐️</div></div>
+            <div class="dl-pin">📡 소리를 쏘고 메아리가 오는 시간으로 거리를 재요<br><span>(Trig=D3 펄스 → Echo=D4 폭 측정)</span></div>
+          </div>
+          <div class="dash-cards">
+            <div class="dcard">
+              <div class="dc-h">📏 거리 <span>가까울수록 작은 cm</span></div>
+              <div class="joy-read"><span class="joy-dir" id="ult-cm">— cm</span></div>
+            </div>
+            <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 센서)'}</button>
+            <div class="dc-status" id="dc-status">${board.connected ? '센서 앞에 손을 움직여봐! 📡' : '마우스를 위/아래로 움직여 체험하거나, 연결하면 실제 거리가 보여요.'}</div>
+          </div>
+        </div>`;
+      const mon = bodyEl.querySelector('#ult-mon'), fill = bodyEl.querySelector('#ult-fill'), hand = bodyEl.querySelector('#ult-hand'), cmEl = bodyEl.querySelector('#ult-cm'), status = bodyEl.querySelector('#dc-status');
+      const show = (cm) => { const c = cl(cm), p = (c - NEAR) / (FAR - NEAR); fill.style.height = Math.round((1 - p) * 100) + '%'; hand.style.top = Math.round(p * 100) + '%'; cmEl.textContent = Math.round(cm) + ' cm'; };
+      show(20);
+      let dragId = null;
+      const drag = (e) => { if (board.connected) return; const r = mon.getBoundingClientRect(); const p = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)); show(NEAR + p * (FAR - NEAR)); };
+      mon.addEventListener('pointerdown', (e) => { e.preventDefault(); if (board.connected) return; dragId = e.pointerId; try { mon.setPointerCapture(e.pointerId); } catch (_) {} drag(e); });
+      mon.addEventListener('pointermove', (e) => { if (dragId === e.pointerId || e.pointerType === 'mouse') drag(e); });
+      function startPoll() { stopJoyPoll(); if (!board.connected) return; joyTimer = setInterval(async () => { const cm = await board.readUltrasonic({ trig: P.trig, echo: P.echo }); if (cm != null && cm > 0) show(cm); }, 120); }
+      startPoll();
+      const connBtn = bodyEl.querySelector('#dc-conn');
+      connBtn.onclick = async () => { if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌'; try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '센서 앞에 손을 움직여봐! 📡'; startPoll(); } catch (e) { status.textContent = board.classify(e).note; } };
+      if (stateUnsub) stateUnsub();
+      stateUnsub = board.onState(() => { const c = board.connected; connBtn.textContent = c ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 센서)'; startPoll(); });
+    }
+
     // 자료: 큰 슬라이드 + 흰 박스 밖(여백)의 EDDIE가 설명
     function renderInfo() {
       if (stateUnsub) { stateUnsub(); stateUnsub = null; }
@@ -645,6 +693,36 @@ function joystickTheory() {
         <div class="rt-use u-shake"><span>🎮</span>게임 컨트롤</div>
         <div class="rt-use u-beep"><span>🚁</span>드론</div>
       </div><div class="ba-flow">스틱을 밀면 그 방향으로 — 무엇이든 <b>조종</b>할 수 있어요! 🚀</div></div>` },
+  ];
+}
+
+// ───────── 초음파 이론 애니메이션(코드로 직접) ─────────
+function ultraTheory() {
+  return [
+    { // ① 원리: 소리 쏘고 → 메아리 듣기
+      html: `<div class="ba">
+        <div style="font-size:46px;letter-spacing:10px;margin:8px 0 4px">📡 〰️〰️〰️ 🖐️</div>
+        <div class="ba-flow">초음파 센서는 사람이 못 듣는 <b>높은 소리</b>를 쏘고, 손·벽에 부딪혀 <b>돌아오는 메아리</b>를 들어요 📡</div>
+      </div>` },
+    { // ② 시간 → 거리 (인터랙티브)
+      html: `<div class="ba">
+        <div class="ct-meter"><div class="ct-meter-fill" id="utf"></div></div>
+        <div class="ct-read">거리 <b id="utv">20</b> cm</div>
+        <div class="ct-slider"><span>가까이 🖐️</span><input type="range" id="utl" min="3" max="40" value="20"><span>멀리</span></div>
+        <div class="ba-flow">소리가 <b>갔다 오는 시간 ÷ 2</b> 로 거리 계산! 가까우면 메아리가 <b>빨리</b>, 멀면 <b>늦게</b> 돌아와요 ⏱️</div>
+      </div>`,
+      init: (stage) => {
+        const l = stage.querySelector('#utl'), f = stage.querySelector('#utf'), v = stage.querySelector('#utv');
+        const upd = () => { const n = +l.value; v.textContent = n; f.style.width = Math.round((n - 3) / 37 * 100) + '%'; };
+        l.oninput = upd; upd();
+      } },
+    { // ③ 활용
+      html: `<div class="ba"><div class="rt-uses">
+        <div class="rt-use u-bounce"><span>🚗</span>주차 센서</div>
+        <div class="rt-use u-shake"><span>🤖</span>로봇 장애물</div>
+        <div class="rt-use u-swing"><span>🚪</span>자동문</div>
+        <div class="rt-use u-beep"><span>📏</span>키 재기</div>
+      </div><div class="ba-flow">거리를 숫자로 아니까 <b>부딪히기 전에</b> 멈추고, 열고, 재요! 🤖</div></div>` },
   ];
 }
 

@@ -5,7 +5,7 @@
 
 import { SerialConnection, isSupported as _isSupported } from '../serial/webserial.js';
 import { handshake, flashFirmware } from '../serial/provisioning.js';
-import { encodeDigitalWrite, encodePwm, encodeTone, encodeAnalogRead, encodeDigitalRead, parseLine, RESPONSE } from '../serial/protocol.js';
+import { encodeDigitalWrite, encodePwm, encodeTone, encodeAnalogRead, encodeDigitalRead, encodeUltrasonic, parseLine, RESPONSE } from '../serial/protocol.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const hex = (n) => (n == null ? '—' : '0x' + n.toString(16).toUpperCase().padStart(4, '0'));
@@ -149,6 +149,24 @@ export const board = {
       const timer = setTimeout(() => finish(null), timeout);
       emitLine('tx', encodeDigitalRead(pin));
       conn.write(encodeDigitalRead(pin)).catch(() => finish(null));
+    });
+  },
+
+  /** 초음파(HC-SR04) 거리 1회 읽기 → cm(>0) 또는 null (펌웨어가 U 명령 지원 시) */
+  readUltrasonic({ trig, echo, timeout = 200 } = {}) {
+    if (!conn.isOpen) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (v) => { if (done) return; done = true; clearTimeout(timer); unsub(); resolve(v); };
+      const unsub = this.onLine((kind, text) => {
+        const m = /^US:(-?\d+)/.exec(text);
+        if (m) { const cm = Number(m[1]); finish(cm > 0 ? cm : null); }
+        else if (/^ERR:/.test(text)) finish(null);
+      });
+      const timer = setTimeout(() => finish(null), timeout);
+      const c = encodeUltrasonic(trig, echo);
+      emitLine('tx', c);
+      conn.write(c).catch(() => finish(null));
     });
   },
 

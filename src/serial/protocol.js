@@ -5,6 +5,7 @@
 //   PING                 핸드셰이크
 //   L<pin>:<0|1>         digitalWrite (예: L2:1)
 //   P<pin>:<0-255>       analogWrite(PWM)
+//   U<trig>:<echo>       초음파(HC-SR04) 거리 측정 → US:<cm>
 //
 // B -> H (보드 -> 호스트)
 //   READY                부팅 완료
@@ -47,6 +48,11 @@ export function encodeAnalogRead(ch) {
 /** digitalRead: R<pin> → 응답 R<pin>:<0|1> */
 export function encodeDigitalRead(pin) {
   return `R${pin}`;
+}
+
+/** 초음파(HC-SR04): U<trig>:<echo> → Trig 펄스 후 Echo 폭 측정 → 응답 US:<cm> (에코 없음 -1) */
+export function encodeUltrasonic(trig, echo) {
+  return `U${trig}:${echo}`;
 }
 
 // ---- 디코딩 (B -> H) -------------------------------------------------------

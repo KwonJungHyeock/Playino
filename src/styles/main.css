@@ -1478,6 +1478,13 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 .nav-back-arrow { font-size: 17px; line-height: 1; }
 body[data-canback="1"] .nav-back { display: inline-flex; }
 body[data-canback="1"] .brand-badge { left: 116px; }   /* 뒤로 버튼과 겹치지 않게 우측으로 */
+
+/* 초음파 거리 모니터(이론관 코드 탭) */
+.ult-mon { position: relative; width: 120px; height: 210px; margin: 10px auto; border-radius: 16px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(120,200,230,.45); overflow: hidden; }
+.ult-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
+  background: linear-gradient(180deg, rgba(127,230,255,.55), rgba(127,230,255,.18)); transition: height .12s ease; }
+.ult-hand { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 28px; transition: top .12s ease; }
 .bx-inner { position: relative; z-index: 1; width: min(1120px, 94%); display: flex; align-items: center; gap: 30px; }
 .bx-hero { position: relative; flex: 0 0 clamp(220px, 26vw, 320px); display: grid; place-items: center; }
 .bx-speech { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); max-width: 250px;

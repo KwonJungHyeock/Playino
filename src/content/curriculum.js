@@ -28,6 +28,7 @@ export const ROOMS = {
   button: R('button', 'ch2', '두더지 잡기', '🔘', '디지털 입력(버튼)', '택트스위치 반응·연타', '🔨 두더지 메달'),
   joystick: R('joystick', 'ch2', '우주 조종 훈련소', '🕹️', '디지털 입력 · 조이스틱', '우주선으로 미로 탈출', '🚀 조종 메달', 'joystick'),
   cds:    R('cds', 'ch2', '손그림자 마술', '🔆', '아날로그 입력(빛)', '조도센서로 빛 가리기 반응', '🔆 햇살 메달', 'cds'),
+  ultra:  R('ultra', 'ch2', '메아리 동굴', '📡', '초음파 거리 측정', '손 거리로 동굴 비행', '📡 메아리 메달', 'ultra'),
   servo:  R('servo', 'ch2', '행운의 룰렛', '⚙️', '서보 각도 제어', 'SG-90 룰렛 멈추기', '🎯 룰렛 메달'),
 
   // 🎭 응용 대극장 (2종 조합 · 4)
@@ -44,7 +45,7 @@ export const CHAPTERS = [
   { id: 'ch1', no: 1, label: '시작의 천막', short: '시작의 천막', act: '피지컬 코딩 기초', icon: '🎪',
     rooms: ['basics'] },
   { id: 'ch2', no: 2, label: '기초의 전당', short: '기초의 전당', act: '센서 개별 체험', icon: '🏛️',
-    rooms: ['led', 'buzzer', 'rgb', 'servo', 'cds', 'button', 'joystick'] },
+    rooms: ['led', 'buzzer', 'rgb', 'servo', 'cds', 'button', 'joystick', 'ultra'] },
   { id: 'ch3', no: 3, label: '응용 대극장', short: '응용 대극장', act: '2종 조합 응용', icon: '🎭',
     rooms: ['dotshoot', 'theremin', 'balance', 'visualizer'] },
   { id: 'ch4', no: 4, label: '마법의 돔', short: '마법의 돔', act: '종합 프로젝트', icon: '🕌',
