@@ -15,7 +15,7 @@ import { showUltraGame } from './ultraGame.js';
 import { nav } from '../app/nav.js';
 
 const roomCache = {};
-function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); im.src = `/brand/${key}.webp`; roomCache[key] = im; } return roomCache[key]; }
+function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) { const im = new Image(); let step = 0; im.onerror = () => { step++; if (step === 1) im.src = `/brand/${key}.png`; else if (step === 2 && key !== 'room-bg') im.src = '/brand/room-bg.webp'; }; im.src = `/brand/${key}.webp`; roomCache[key] = im; } return roomCache[key]; }
 
 const ROOMS_CFG = {
   led: {
@@ -82,7 +82,7 @@ const ROOMS_CFG = {
   },
   ultra: {
     name: '무궁화 꽃이 피었습니다', sensor: '초음파 센서 · HC-SR04', icon: '🌸', accent: '255,150,190',
-    room: 'room-bg', eddie: null, signL: '255,150,190', signR: '120,210,230',
+    room: 'room-ultra-bg', eddie: null, signL: '255,150,190', signR: '120,210,230',
     control: 'ultra', pins: { trig: 4, echo: 3 }, floor: 0.82,
     intro: '이론관에서 초음파(거리) 센서를 배우고, 체험관에서 술래(무궁화 꽃) 몰래 다가가자! 🌸',
     animTheory: 'ultra',

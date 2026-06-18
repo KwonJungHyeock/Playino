@@ -18,7 +18,7 @@ const GAMES = [
   { key: 'hard', no: 2, name: '두근두근 무궁화',        greenMin: 1.1, greenMax: 2.3, redMin: 1.2, redMax: 2.8, turn: 0.32, thresh: 0.13, lives: 3 },
 ];
 
-const bgImg = new Image(); bgImg.src = '/brand/stage-ultra-bg.webp';
+const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-ultra-bg.png'; } }; bgImg.src = '/brand/stage-ultra-bg.webp';
 const heroImg = new Image(); heroImg.src = '/brand/eddie/eddie-hero.webp';
 const ready = (im) => im.complete && im.naturalWidth > 0;
 const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >= 0.5 ? 'C' : 'D';
@@ -73,6 +73,7 @@ export function showUltraGame(root, { onExit } = {}) {
   if (ready(bgImg)) bg.style.backgroundImage = `url(${bgImg.src})`;
   const wImg = new Image();
   wImg.onload = () => { const e = root.querySelector('#ug-wimg'); if (e) { e.style.backgroundImage = `url(${wImg.src})`; e.classList.add('has-img'); } };
+  wImg.onerror = () => { if (!wImg._p) { wImg._p = 1; wImg.src = '/brand/wiring-sr04.png'; } };
   wImg.src = '/brand/wiring-sr04.webp';
   const host = root.querySelector('#ug-host');
   const canvas = document.createElement('canvas'); canvas.className = 'world-canvas'; host.appendChild(canvas);
