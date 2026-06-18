@@ -68,7 +68,7 @@ const ROOMS_CFG = {
   joystick: {
     name: '우주 조종 훈련소', sensor: '조이스틱 · 2축 아날로그', icon: '🕹️', accent: '150,120,255',
     room: 'room-joystick-bg', eddie: '/brand/eddie-pilot.webp', signL: '120,200,255', signR: '255,120,220',
-    control: 'joystick', pins: { x: 0, y: 1 }, floor: 0.82,
+    control: 'joystick', pins: { x: 5, y: 6, sw: 7 }, floor: 0.82,
     intro: '이론관에서 조종 원리를 배우고, 체험관에서 우주선으로 별을 모으자! 🚀',
     animTheory: 'joystick',
     captions: [
@@ -382,7 +382,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         <div class="dash joy-dash">
           <div class="dash-led">
             <div class="joy-mon" id="joy-mon"><div class="joy-cx"></div><div class="joy-cy"></div><div class="joy-dot" id="joy-dot"></div></div>
-            <div class="dl-pin">🕹️ 드래그해서 X·Y 원리를 익혀봐<br><span>(이 키트는 디지털 포트라 방향은 게임에서 화면/키보드로 조종)</span></div>
+            <div class="dl-pin">🕹️ 드래그해서 원리를 익히고, 실물을 연결해 꺾어봐<br><span>(디지털 포트 D5·D6 — 꺾은 방향을 또렷이 읽어요)</span></div>
           </div>
           <div class="dash-cards">
             <div class="dcard">
@@ -410,7 +410,19 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       mon.addEventListener('pointermove', drag);
       const end = (e) => { if (dragId !== e.pointerId) return; dragId = null; if (!board.connected) show(0, 0); };
       mon.addEventListener('pointerup', end); mon.addEventListener('pointercancel', end);
-      function startPoll() { stopJoyPoll(); /* 디지털 포트 키트라 실물 X/Y 읽기 불가 — 드래그로 원리 학습 */ }
+      // 디지털 포트(D5·D6·D7) 폴링: 꺾은 방향만 또렷이 읽힌다(중앙은 떨림 → 다수결로 중립).
+      const ringX = [], ringY = [], RING = 6, TH = 5;
+      const cls = (ring) => { if (ring.length < RING) return 0; let o = 0; for (const v of ring) o += v; return o >= TH ? 1 : o <= RING - TH ? -1 : 0; };
+      function startPoll() {
+        stopJoyPoll(); if (!board.connected) return;
+        ringX.length = 0; ringY.length = 0;
+        joyTimer = setInterval(async () => {
+          const [vx, vy] = await Promise.all([board.digitalRead(P.x), board.digitalRead(P.y)]);
+          if (vx != null) { ringX.push(vx); if (ringX.length > RING) ringX.shift(); }
+          if (vy != null) { ringY.push(vy); if (ringY.length > RING) ringY.shift(); }
+          show(cls(ringX), -cls(ringY));   // 화면 Y 반전: 위로 꺾으면 위로
+        }, 70);
+      }
       startPoll();
       const connBtn = bodyEl.querySelector('#dc-conn');
       connBtn.onclick = async () => { if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌'; try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '실물 조이스틱을 움직여봐! 🕹️'; startPoll(); } catch (e) { status.textContent = board.classify(e).note; } };

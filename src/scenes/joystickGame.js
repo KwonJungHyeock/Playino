@@ -1,7 +1,11 @@
 // joystickGame.js — 별 지렁이 대모험 (조이스틱 · 스네이크형)
 // 조이스틱으로 우주뱀(EDDIE)을 조종해 별을 먹는다. 별을 먹을수록 꼬리가 길어지고
 // 속도가 빨라져 점점 어려워진다(자기 꼬리·운석 충돌 = 크래시).
-// 입력: 키보드(방향키/WASD) · 화면 조이스틱(터치) · 실물 조이스틱(A0=X, A1=Y).
+// 입력: 키보드(방향키/WASD) · 화면 조이스틱(터치) · 실물 조이스틱(D5=X · D6=Y · D7=SW).
+//  └ 디지털 포트 키트 대응: 아두이노 입력 임계전압(≈2.5V)이 조이스틱 중앙값과 거의 같아
+//    한쪽으로 '꺾으면' digitalRead 가 그 방향(LOW/HIGH)을 또렷이 읽는다. 중앙(놓음)만
+//    임계점이라 값이 떨려 → 최근 표본 다수결로 '확실히 꺾은 방향'만 인정(떨림=중립).
+//    즉 실물 조이스틱으로 진짜 방향 조종 + SW(D7) 누르면 ⚡부스트.
 // 1차 별 지렁이 · 2차 운석 미로. 목표 길이 도달(또는 85%↑) → 🚀 조종 메달.
 import { sfx } from '../app/sfx.js';
 import { bgm } from '../app/bgm.js';
@@ -9,7 +13,7 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = { sw: 7 }, PASS_ACC = 0.85, GAP = 6;
+const PINS = { x: 5, y: 6, sw: 7 }, PASS_ACC = 0.85, GAP = 6;
 const GAMES = [
   { key: 'easy', no: 1, name: '별 지렁이', target: 12, speed: 2.7, turn: 0.10, rocks: 3, rockSpd: 1.2, selfAt: 8 },
   { key: 'hard', no: 2, name: '운석 미로', target: 18, speed: 3.5, turn: 0.12, rocks: 7, rockSpd: 2.2, selfAt: 6 },
@@ -49,12 +53,12 @@ export function showJoystickGame(root, { onExit } = {}) {
                 <tbody>
                   <tr><td>GND</td><td>GND</td></tr>
                   <tr><td>VCC</td><td>5V</td></tr>
-                  <tr><td>X</td><td>D5</td></tr>
-                  <tr><td>Y</td><td>D6</td></tr>
+                  <tr><td>X</td><td>D5 ↔ 좌우</td></tr>
+                  <tr><td>Y</td><td>D6 ↕ 상하</td></tr>
                   <tr><td>SW(버튼)</td><td>D7 ⚡부스트</td></tr>
                 </tbody>
               </table>
-              <div class="prep-status">방향은 <b>화면 조이스틱·방향키</b>로! 실물 조이스틱 <b>버튼(SW·D7)</b>을 누르면 ⚡부스트 (X·Y는 디지털 포트라 화면으로 조종)</div>
+              <div class="prep-status">실물 조이스틱을 <b>꽉 꺾어</b> 방향을 조종해요! 버튼(SW)을 누르면 ⚡<b>부스트</b> · 가운데로 놓으면 직진 (방향키·화면 조이스틱도 OK)</div>
             </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
@@ -95,15 +99,29 @@ export function showJoystickGame(root, { onExit } = {}) {
   const jEnd = (e) => { if (joyId !== e.pointerId) return; joyId = null; joy.x = 0; joy.y = 0; knob.style.transform = 'translate(0,0)'; };
   pad.addEventListener('pointerdown', (e) => { e.preventDefault(); joyId = e.pointerId; const r = pad.getBoundingClientRect(); jcx = r.left + r.width / 2; jcy = r.top + r.height / 2; try { pad.setPointerCapture(e.pointerId); } catch (_) {} jMove(e); });
   pad.addEventListener('pointermove', jMove); pad.addEventListener('pointerup', jEnd); pad.addEventListener('pointercancel', jEnd);
-  // 실물 조이스틱 버튼(SW·D7) 디지털 읽기 → 부스트. (X/Y는 디지털 포트라 방향은 화면/키보드)
+  // 실물 조이스틱(디지털 포트 D5=X · D6=Y · D7=SW) 폴링.
+  //  X/Y: 꺾으면 LOW/HIGH 또렷 · 중앙은 임계점이라 떨림 → 최근 RING 표본 다수결로
+  //  '확실히 꺾은 방향'만 ±1, 애매하면 0(중립). SW: 기준값 대비 변하면 ⚡부스트.
   let hwTimer = null, swDown = false, swRest = null;
-  function startHw() { stopHw(); if (!board.connected) return; hwTimer = setInterval(async () => { const v = await board.digitalRead(PINS.sw); if (v == null) return; if (swRest === null) swRest = v; swDown = v !== swRest; }, 120); }
-  function stopHw() { if (hwTimer) { clearInterval(hwTimer); hwTimer = null; } swDown = false; swRest = null; }
+  const hwDir = { x: 0, y: 0 };
+  const ringX = [], ringY = [], RING = 6, TH = 5;   // 6표본 중 5↑ 같은 값이면 방향 확정
+  const classify = (ring) => { if (ring.length < RING) return 0; let ones = 0; for (const v of ring) ones += v; if (ones >= TH) return 1; if (ones <= RING - TH) return -1; return 0; };
+  function startHw() {
+    stopHw(); if (!board.connected) return;
+    hwTimer = setInterval(async () => {
+      const [vx, vy, vs] = await Promise.all([board.digitalRead(PINS.x), board.digitalRead(PINS.y), board.digitalRead(PINS.sw)]);
+      if (vx != null) { ringX.push(vx); if (ringX.length > RING) ringX.shift(); hwDir.x = classify(ringX); }
+      if (vy != null) { ringY.push(vy); if (ringY.length > RING) ringY.shift(); hwDir.y = classify(ringY); }
+      if (vs != null) { if (swRest === null) swRest = vs; swDown = vs !== swRest; }
+    }, 60);
+  }
+  function stopHw() { if (hwTimer) { clearInterval(hwTimer); hwTimer = null; } swDown = false; swRest = null; ringX.length = 0; ringY.length = 0; hwDir.x = 0; hwDir.y = 0; }
   function inputVec() {
     let x = 0, y = 0;
     if (keys.has('arrowleft') || keys.has('a')) x -= 1; if (keys.has('arrowright') || keys.has('d')) x += 1;
     if (keys.has('arrowup') || keys.has('w')) y -= 1; if (keys.has('arrowdown') || keys.has('s')) y += 1;
     if (joy.x || joy.y) { x = joy.x; y = joy.y; }
+    if (hwDir.x || hwDir.y) { x = hwDir.x; y = -hwDir.y; }   // 실물 조이스틱 우선 (Y는 화면좌표 반전: 위로 꺾으면 위로)
     return { x, y };
   }
 
@@ -121,7 +139,7 @@ export function showJoystickGame(root, { onExit } = {}) {
   function showIntro() {
     bgm.setDuck(1); hud.hidden = true; pad.hidden = true;
     const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🐛 ${game.name}</h2>
-      <p class="prep-sub">별을 <b>${game.target}개</b> 먹어 우주뱀을 키워요! 꼬리가 길어질수록 빨라지고 — <b>자기 꼬리와 운석</b>에 부딪히면 크래시 ☄️<br>실물 조이스틱 <b>버튼(SW)</b>을 누르면 ⚡<b>부스트</b>!</p>
+      <p class="prep-sub">별을 <b>${game.target}개</b> 먹어 우주뱀을 키워요! 꼬리가 길어질수록 빨라지고 — <b>자기 꼬리와 운석</b>에 부딪히면 크래시 ☄️<br>조이스틱을 <b>꽉 꺾어</b> 방향을 조종하고, <b>버튼(SW)</b>을 누르면 ⚡<b>부스트</b>!</p>
       <p class="lp-cond">⭐ <b>${Math.ceil(game.target * PASS_ACC)}개 이상</b>(A등급) 먹으면 통과!</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
   }
