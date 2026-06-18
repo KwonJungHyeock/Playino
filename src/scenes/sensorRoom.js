@@ -81,10 +81,10 @@ const ROOMS_CFG = {
     play: (root, opt) => showJoystickGame(root, opt),
   },
   ultra: {
-    name: '메아리 동굴', sensor: '초음파 센서 · HC-SR04', icon: '📡', accent: '120,210,230',
-    room: 'room-bg', eddie: null, signL: '120,210,230', signR: '180,160,255',
+    name: '무궁화 꽃이 피었습니다', sensor: '초음파 센서 · HC-SR04', icon: '🌸', accent: '255,150,190',
+    room: 'room-bg', eddie: null, signL: '255,150,190', signR: '120,210,230',
     control: 'ultra', pins: { trig: 4, echo: 3 }, floor: 0.82,
-    intro: '이론관에서 초음파(거리) 센서를 배우고, 체험관에서 손 거리로 동굴을 비행하자! 📡',
+    intro: '이론관에서 초음파(거리) 센서를 배우고, 체험관에서 술래(무궁화 꽃) 몰래 다가가자! 🌸',
     animTheory: 'ultra',
     captions: [
       '초음파 센서는 사람이 못 듣는 높은 소리를 쏘고, 부딪혀 돌아오는 메아리를 들어요 📡',

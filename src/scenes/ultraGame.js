@@ -1,29 +1,29 @@
-// ultraGame.js — 메아리 동굴 (초음파 거리 센서 · 동굴 비행)
-// 손을 센서에 가까이/멀리 하며 EDDIE의 우주선 높이를 조절해 동굴 틈을 통과한다.
-//  └ 가까이(작은 cm) = 위로 ↑ · 멀리(큰 cm) = 아래로 ↓. 크리스털을 모으고 벽을 피해 끝까지!
-// 입력: 실물 초음파(HC-SR04, Trig=D3·Echo=D4)로 진짜 거리 측정. 보드/펌웨어가 없으면
-//        마우스 상하·화살표(↑↓)·터치로 거리를 흉내(폴백) → 항상 플레이 가능.
-//  ※ 실제 센서값은 펌웨어가 'U<trig>:<echo>' 명령(거리 cm 응답)을 지원해야 읽힌다.
+// ultraGame.js — 무궁화 꽃이 피었습니다 (초음파 거리 센서)
+// 손을 센서에 가까이 가져가면 EDDIE가 술래(무궁화 꽃)에게 다가간다.
+//  · 🟢 초록불(술래가 등 돌림): 자유롭게 다가가기(손을 가까이)
+//  · 🔴 빨간불(술래가 돌아봄): 그대로 멈추기! 움직이면(거리가 변하면) 딱 걸린다 😱
+// 초음파는 값이 조금 튀므로 '거리 변화량 + 임계값'으로 판정 → 흔들림에 강하다.
+// 입력: 실물 초음파(HC-SR04, Trig=D4·Echo=D3). 보드/펌웨어가 없으면 마우스 상하·↑↓·터치로 체험.
 import { sfx } from '../app/sfx.js';
 import { bgm } from '../app/bgm.js';
 import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = { trig: 4, echo: 3 };   // 결선상 Trig=D4, Echo=D3 (커넥터 GND/D3/D4/VCC ↔ 센서 Gnd/Echo/Trig/Vcc)
-const NEAR = 5, FAR = 40;       // 거리 매핑 범위(cm): 5cm=맨 위, 40cm=맨 아래
-const CRAFT_R = 22, WALL_W = 46, TOP = 70;
+const PINS = { trig: 4, echo: 3 };
+const NEAR = 8, FAR = 45;        // 거리 매핑(cm): 8cm=술래 코앞(도착) · 45cm=출발선
+const TOP = 70;
 const GAMES = [
-  { key: 'easy', no: 1, name: '메아리 동굴', speed: 2.7, gapFrac: 0.36, spacing: 340, goal: 12, hp: 3, moving: false, crystalRate: 0.6 },
-  { key: 'hard', no: 2, name: '깊은 메아리 동굴', speed: 3.5, gapFrac: 0.27, spacing: 300, goal: 16, hp: 3, moving: true, crystalRate: 0.7 },
+  { key: 'easy', no: 1, name: '무궁화 꽃이 피었습니다', greenMin: 1.9, greenMax: 3.4, redMin: 1.3, redMax: 2.1, turn: 0.55, thresh: 0.17, lives: 3 },
+  { key: 'hard', no: 2, name: '두근두근 무궁화',        greenMin: 1.1, greenMax: 2.3, redMin: 1.2, redMax: 2.8, turn: 0.32, thresh: 0.13, lives: 3 },
 ];
 
 const bgImg = new Image(); bgImg.src = '/brand/stage-ultra-bg.webp';
-const headImg = new Image(); headImg.src = '/brand/eddie-pilot.webp';
 const heroImg = new Image(); heroImg.src = '/brand/eddie/eddie-hero.webp';
 const ready = (im) => im.complete && im.naturalWidth > 0;
 const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >= 0.5 ? 'C' : 'D';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rand = (a, b) => a + Math.random() * (b - a);
 
 export function showUltraGame(root, { onExit } = {}) {
   root.innerHTML = `
@@ -36,14 +36,14 @@ export function showUltraGame(root, { onExit } = {}) {
       <div class="world-host" id="ug-host"></div>
       <div class="led-hud" id="ug-hud" hidden>
         <span class="lh-item" id="ug-stage">1단계</span>
-        <span class="lh-item">💎 <b id="ug-crys">0</b>/<span id="ug-tot">0</span></span>
+        <span class="lh-item" id="ug-light">🟢 초록불</span>
         <span class="lh-item">❤️ <b id="ug-hp">3</b></span>
         <span class="lh-item" id="ug-dist">📡 —</span>
       </div>
       <div class="led-prep" id="ug-prep">
         <div class="prep-card" style="max-width:720px">
-          <h2>📡 메아리 동굴</h2>
-          <p class="prep-sub">손을 초음파 센서에 <b>가까이/멀리</b> 하며 우주선 높이를 조절해요! 동굴 틈을 지나 <b>크리스털</b>을 모으고 벽을 피해 끝까지 가면 통과 🚀 (보드 없으면 마우스 상하·↑↓로도 가능)</p>
+          <h2>🌸 무궁화 꽃이 피었습니다</h2>
+          <p class="prep-sub">손을 센서에 <b>가까이</b> 하면 EDDIE가 술래에게 다가가요. <b>🟢 초록불</b>엔 다가가고, <b>🔴 빨간불</b>엔 <b>그대로 멈춰요!</b> 빨간불에 움직이면(거리가 변하면) 딱 걸려요 😱 (보드 없으면 마우스 상하·↑↓로도 가능)</p>
           <div class="prep-grid">
             <div class="prep-img" id="ug-wimg"><span class="prep-img-ph">📡 결선 사진</span></div>
             <div class="prep-side">
@@ -56,7 +56,7 @@ export function showUltraGame(root, { onExit } = {}) {
                   <tr><td>Vcc</td><td>VCC(5V)</td></tr>
                 </tbody>
               </table>
-              <div class="prep-status" id="ug-pstat">센서 앞에 손을 대고 <b>가까이=위로 ↑</b>, <b>멀리=아래로 ↓</b>! 초음파가 소리를 쏘고 메아리로 거리를 재요 📡</div>
+              <div class="prep-status" id="ug-pstat">초록불엔 <b>손을 천천히 가까이</b>, 빨간불엔 <b>손을 딱 멈춰요!</b> 초음파가 거리를 재서 움직임을 알아채요 📡</div>
             </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
@@ -79,36 +79,35 @@ export function showUltraGame(root, { onExit } = {}) {
   const ctx = canvas.getContext('2d');
   const snd = root.querySelector('#snd-toggle'); snd.onclick = () => { const m = sfx.toggle(); snd.textContent = m ? '🔇' : '🔊'; };
   root.querySelector('#ug-exit').onclick = () => { cleanup(); onExit?.(); };
-  const elCrys = root.querySelector('#ug-crys'), elTot = root.querySelector('#ug-tot'), elHp = root.querySelector('#ug-hp'), elStage = root.querySelector('#ug-stage'), elDist = root.querySelector('#ug-dist');
+  const elHp = root.querySelector('#ug-hp'), elStage = root.querySelector('#ug-stage'), elDist = root.querySelector('#ug-dist'), elLight = root.querySelector('#ug-light');
   const hud = root.querySelector('#ug-hud'), skipBtn = root.querySelector('#ug-skip');
 
   let W = 0, H = 0;
   function resize() { W = canvas.width = host.clientWidth || window.innerWidth; H = canvas.height = host.clientHeight || 600; }
   resize(); window.addEventListener('resize', resize);
-  const playTop = () => TOP, playH = () => Math.max(120, H - TOP);
 
-  // ── 입력 ──
+  // ── 입력: norm 0(멀리=출발) ~ 1(가까이=술래 앞) ──
   const keys = new Set();
   const onKeyDown = (e) => { const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'w', 's'].includes(k)) { e.preventDefault(); keys.add(k); } };
   const onKeyUp = (e) => keys.delete(e.key.toLowerCase());
   window.addEventListener('keydown', onKeyDown); window.addEventListener('keyup', onKeyUp);
-  let manualNorm = 0.5, manualAt = 0;
-  const onPointer = (e) => { const r = canvas.getBoundingClientRect(); manualNorm = clamp((e.clientY - r.top - playTop()) / playH(), 0, 1); manualAt = performance.now(); };
+  let manualNorm = 0;
+  const onPointer = (e) => { const r = canvas.getBoundingClientRect(); manualNorm = clamp((e.clientX - r.left) / r.width, 0, 1); };
   canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); onPointer(e); });
   canvas.addEventListener('pointermove', (e) => { if (e.pressure > 0 || e.pointerType === 'mouse') onPointer(e); });
 
-  // 실물 초음파(HC-SR04) 폴링 → 거리 cm. 펌웨어가 U 명령을 지원하면 값이 들어온다.
+  // 실물 초음파 폴링
   let hwTimer = null, hwCm = null, hwSmooth = null, hwAt = 0;
   function startHw() {
-    stopHw(); if (!board.connected) return;
+    stopHw(); if (!board.connected || board.fwOutdated) return;
     hwTimer = setInterval(async () => {
       const cm = await board.readUltrasonic({ trig: PINS.trig, echo: PINS.echo });
-      if (cm != null && cm > 0) { hwSmooth = hwSmooth == null ? cm : hwSmooth + (cm - hwSmooth) * 0.5; hwCm = hwSmooth; hwAt = performance.now(); }
-    }, 90);
+      if (cm != null && cm > 0) { hwSmooth = hwSmooth == null ? cm : hwSmooth + (cm - hwSmooth) * 0.45; hwCm = hwSmooth; hwAt = performance.now(); }
+    }, 80);
   }
   function stopHw() { if (hwTimer) { clearInterval(hwTimer); hwTimer = null; } hwCm = null; hwSmooth = null; }
   const hwActive = () => hwCm != null && (performance.now() - hwAt) < 900;
-  const hwNorm = () => clamp((hwCm - NEAR) / (FAR - NEAR), 0, 1);
+  const rawNorm = () => hwActive() ? clamp((FAR - hwCm) / (FAR - NEAR), 0, 1) : manualNorm;
 
   const pstat = root.querySelector('#ug-pstat');
   function fwCheck() {
@@ -120,9 +119,9 @@ export function showUltraGame(root, { onExit } = {}) {
       fb.disabled = true; stopHw(); fstat.textContent = ' 시작…';
       try {
         const r = await board.flash({ onProgress: (d, t) => { fstat.textContent = ` 굽는 중… ${Math.round(d / t * 100)}%`; }, onLog: (m) => { fstat.textContent = ' ' + m; } });
-        if (r.ok && !board.fwOutdated) { pstat.innerHTML = '✅ 펌웨어 업데이트 완료! 이제 센서 앞에서 손을 움직이면 실제 거리로 우주선을 조종해요 📡'; startHw(); }
+        if (r.ok && !board.fwOutdated) { pstat.innerHTML = '✅ 펌웨어 업데이트 완료! 이제 센서 앞에서 손을 움직이면 실제 거리로 EDDIE가 다가가요 📡'; startHw(); }
         else { fstat.textContent = ' 다 구웠는데 응답 확인이 필요해요 — 케이블을 확인하고 다시.'; fb.disabled = false; }
-      } catch (e) { fstat.textContent = ' 실패: ' + (e?.message ?? e) + ' — 케이블 다시 꽂고 시도'; fb.disabled = false; }
+      } catch (e) { fstat.textContent = ' 실패: ' + (e?.message ?? e); fb.disabled = false; }
     };
     return true;
   }
@@ -132,124 +131,170 @@ export function showUltraGame(root, { onExit } = {}) {
 
   // ── 플로우 ──
   const cleared = { easy: false, hard: false };
-  let gi = 0, game = GAMES[0], craft = null, obs = [], parts = [];
-  const state = { phase: 'prep', countT: 0, crystals: 0, crystalTot: 0, hp: 3, passed: 0, norm: 0.5, ended: false };
+  let gi = 0, game = GAMES[0];
+  const state = { phase: 'prep', countT: 0, hp: 3, ended: false,
+    smooth: 0, prev: 0, walkBob: 0,
+    light: 'green', lightUntil: 0, refNorm: 0, caughtFrames: 0, graceUntil: 0,
+    flash: 0, suleFace: 0, bubble: '' };
+  const parts = [];
+
   function panel(html) { const el = document.createElement('div'); el.className = 'led-panel'; el.innerHTML = `<div class="prep-card led-pcard">${html}</div>`; scene.appendChild(el); return el; }
   function startFlow() { gi = 0; nextGame(); }
   function nextGame() { if (gi >= GAMES.length) { finishAll(); return; } game = GAMES[gi]; showIntro(); }
   function showIntro() {
     bgm.setDuck(1); hud.hidden = true;
-    const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>📡 ${game.name}</h2>
-      <p class="prep-sub">손 거리로 우주선 높이를 맞춰 동굴 틈을 ${game.goal}개 통과해요! <b>가까이=위 ↑ · 멀리=아래 ↓</b>${game.moving ? ' · 움직이는 틈 주의 🌀' : ''}<br>💎 크리스털을 모으고 ❤️ 3번까지 부딪혀도 괜찮아요!</p>
-      <p class="lp-cond">끝까지 도달하면 통과! 크리스털을 많이 모을수록 높은 등급 🏅</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
+    const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🌸 ${game.name}</h2>
+      <p class="prep-sub"><b>🟢 초록불</b>엔 손을 천천히 가까이 해 다가가고, <b>🔴 빨간불</b>엔 손을 <b>딱 멈춰요!</b> 빨간불에 움직이면 술래에게 들켜요 😱<br>❤️ ${game.lives}번까지 들켜도 괜찮아요 — 술래 코앞까지 가면 성공!</p>
+      <p class="lp-cond">${game.no === 2 ? '빨간불이 더 자주·갑자기 와요. 더 침착하게! ' : ''}끝까지(술래 앞) 도착하면 통과 🏅</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
   }
   function beginPlay() {
-    bgm.setDuck(0);
-    craft = { x: W * 0.28, y: playTop() + playH() / 2, inv: 0 };
-    obs = []; parts = []; let cryTot = 0;
-    for (let i = 0; i < game.goal; i++) {
-      const c0 = 0.26 + Math.random() * 0.48;
-      const crystal = Math.random() < game.crystalRate ? { got: false } : null;
-      if (crystal) cryTot++;
-      obs.push({ x: W * 0.95 + i * game.spacing, c0, c: c0, crystal, moving: game.moving, ph: Math.random() * 6.283, passed: false });
-    }
-    Object.assign(state, { phase: 'count', countT: performance.now(), crystals: 0, crystalTot: cryTot, hp: game.hp, passed: 0, norm: 0.5, ended: false });
-    elTot.textContent = cryTot; elStage.textContent = `${game.no}단계 · ${game.name}`; sync();
+    bgm.setDuck(0); parts.length = 0;
+    const n0 = rawNorm();
+    Object.assign(state, { phase: 'count', countT: performance.now(), hp: game.lives, ended: false,
+      smooth: n0, prev: n0, walkBob: 0,
+      light: 'green', lightUntil: performance.now() + rand(game.greenMin, game.greenMax) * 1000,
+      refNorm: n0, caughtFrames: 0, graceUntil: 0, flash: 0, suleFace: 0, bubble: '무궁화 꽃이…' });
+    elStage.textContent = `${game.no}단계 · ${game.name}`; elHp.textContent = state.hp;
     hud.hidden = false;
   }
   function showResult(grade, pass) {
-    bgm.setDuck(1); const last = gi === GAMES.length - 1; const pct = state.crystalTot ? Math.round(state.crystals / state.crystalTot * 100) : 100;
-    const el = panel(`<div class="lp-grade lp-${grade}">${grade}<span>등급</span></div><h2>${pass ? '동굴 탈출! 🎉' : '추락! ☄️'}</h2>
-      <p class="prep-sub">${game.name} · 💎 ${state.crystals}/${state.crystalTot} (${pct}%) · ❤️ ${state.hp} 남음</p>
-      <p class="lp-cond">${pass ? (last ? '두 동굴 클리어! 메달을 받자 🏅' : '다음 동굴로 ▶') : '❤️를 다 잃었어요 — 다시 도전!'}</p>
-      <button class="cel-go" id="lp-next">${pass ? (last ? '메달 받기 🏅' : '다음 동굴 ▶') : '다시 도전 ▶'}</button>`);
+    bgm.setDuck(1); const last = gi === GAMES.length - 1;
+    const el = panel(`<div class="lp-grade lp-${grade}">${grade}<span>등급</span></div><h2>${pass ? '술래 코앞 도착! 🎉' : '다 들켰다! 😵'}</h2>
+      <p class="prep-sub">${game.name} · ❤️ ${state.hp} 남음</p>
+      <p class="lp-cond">${pass ? (last ? '두 판 모두 클리어! 메달을 받자 🏅' : '다음 판으로 ▶') : '❤️를 다 잃었어요 — 다시 도전!'}</p>
+      <button class="cel-go" id="lp-next">${pass ? (last ? '메달 받기 🏅' : '다음 판 ▶') : '다시 도전 ▶'}</button>`);
     el.querySelector('#lp-next').onclick = () => { el.remove(); if (pass) { cleared[game.key] = true; gi++; nextGame(); } else beginPlay(); };
   }
   function finishAll() {
     cleanup();
-    if (cleared.easy && cleared.hard) { progress.mark('ultra'); celebrateRoom({ title: '메아리 탐험가! 📡', message: '손 거리(초음파)로 우주선을 조종해 동굴을 빠져나왔어요 — 📡 메아리 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
+    if (cleared.easy && cleared.hard) { progress.mark('ultra'); celebrateRoom({ title: '무궁화 달인! 🌸', message: '초음파(거리)로 움직임을 알아채는 술래를 따돌리고 도착했어요 — 🌸 무궁화 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
     else onExit?.();
   }
   skipBtn.onclick = () => { document.querySelectorAll('.led-panel').forEach((e) => e.remove()); cleared[game.key] = true; state.ended = true; state.phase = 'result'; bgm.setDuck(1); gi++; nextGame(); };
-  function sync() { elCrys.textContent = state.crystals; elHp.textContent = state.hp; }
-  function burst(x, y, c, n = 12) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = 1 + Math.random() * 4; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 34, color: c }); } }
-  function endPlay(win) { if (state.ended) return; state.ended = true; state.phase = 'result'; const cr = state.crystalTot ? state.crystals / state.crystalTot : 1, hpR = state.hp / game.hp; showResult(win ? gradeOf(0.5 + cr * 0.4 + hpR * 0.1) : 'D', win); }
-  function hit(gapCenter) {
-    state.hp--; craft.inv = 78; craft.y += (gapCenter - craft.y) * 0.55; manualNorm = clamp((craft.y - playTop() - CRAFT_R) / (playH() - 2 * CRAFT_R), 0, 1);
-    burst(craft.x, craft.y, '255,140,140', 18); sfx.no(); sync();
+  function burst(x, y, c, n = 14) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = 1 + Math.random() * 4; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1, life: 36, color: c }); } }
+  function endPlay(win) { if (state.ended) return; state.ended = true; state.phase = 'result'; showResult(win ? gradeOf(0.55 + state.hp / game.lives * 0.45) : 'D', win); }
+  function caught() {
+    state.hp--; elHp.textContent = state.hp; state.flash = 1; state.graceUntil = performance.now() + 1100; state.caughtFrames = 0;
+    state.bubble = '딱 걸렸어! 😠'; state.suleFace = 2; sfx.no();
+    burst(W * 0.5, H * 0.5, '255,120,120', 20);
     if (state.hp <= 0) endPlay(false);
+  }
+
+  // 술래 신호등 전환
+  function tickLight(now) {
+    if (now < state.lightUntil) return;
+    if (state.light === 'green') { state.light = 'turning'; state.lightUntil = now + game.turn * 1000; state.bubble = '…핀'; }
+    else if (state.light === 'turning') { state.light = 'red'; state.lightUntil = now + rand(game.redMin, game.redMax) * 1000; state.refNorm = state.smooth; state.caughtFrames = 0; state.suleFace = 1; state.bubble = '꼼짝 마! 👀'; sfx.note(300, 120); }
+    else { state.light = 'green'; state.lightUntil = now + rand(game.greenMin, game.greenMax) * 1000; state.suleFace = 0; state.bubble = '무궁화 꽃이…'; }
   }
 
   let lastT = performance.now();
   function update(dt) {
-    if (state.phase !== 'play' || state.ended) return;
     const now = performance.now();
-    if (keys.has('arrowup') || keys.has('w')) { manualNorm -= 0.028 * dt; manualAt = now; }
-    if (keys.has('arrowdown') || keys.has('s')) { manualNorm += 0.028 * dt; manualAt = now; }
+    if (state.phase === 'count') { if ((now - state.countT) / 1000 >= 3) state.phase = 'play'; }
+    if (state.phase !== 'play' || state.ended) { if (state.flash > 0) state.flash = Math.max(0, state.flash - 0.05 * dt); return; }
+    // 입력(부드럽게)
+    if (keys.has('arrowup') || keys.has('w')) manualNorm += 0.02 * dt;
+    if (keys.has('arrowdown') || keys.has('s')) manualNorm -= 0.02 * dt;
     manualNorm = clamp(manualNorm, 0, 1);
-    const norm = hwActive() ? hwNorm() : manualNorm;
-    state.norm = norm;
-    const targetY = playTop() + CRAFT_R + norm * (playH() - 2 * CRAFT_R);
-    craft.y += (targetY - craft.y) * Math.min(1, 0.22 * dt);
-    if (craft.inv > 0) craft.inv -= dt;
-    const sp = game.speed * dt, gapHpx = playH() * game.gapFrac;
-    for (const o of obs) {
-      o.x -= sp;
-      if (o.moving) o.c = clamp(o.c0 + Math.sin(now * 0.002 + o.ph) * 0.16, 0.2, 0.8);
-      const gapCenter = playTop() + o.c * playH();
-      if (!o.passed && o.x < craft.x) { o.passed = true; state.passed++; sfx.note(620, 90); }
-      if (o.crystal && !o.crystal.got && Math.abs(o.x - craft.x) < CRAFT_R + 12 && Math.abs(gapCenter - craft.y) < CRAFT_R + 16) {
-        o.crystal.got = true; state.crystals++; sfx.note(760 + Math.min(8, state.crystals) * 30, 150); burst(o.x, gapCenter, '150,230,255', 10); sync();
-      }
-      if (craft.inv <= 0 && Math.abs(o.x - craft.x) < WALL_W / 2 + CRAFT_R) {
-        const top = gapCenter - gapHpx / 2, bot = gapCenter + gapHpx / 2;
-        if (craft.y - CRAFT_R < top || craft.y + CRAFT_R > bot) { hit(gapCenter); if (state.ended) return; }
-      }
+    const raw = rawNorm();
+    state.prev = state.smooth;
+    state.smooth += (raw - state.smooth) * Math.min(1, 0.28 * dt);
+    state.walkBob += Math.abs(state.smooth - state.prev) * 60;
+    if (state.flash > 0) state.flash = Math.max(0, state.flash - 0.05 * dt);
+    // 신호등
+    tickLight(now);
+    // 빨간불 판정(전환 직후·들킨 직후 유예 제외)
+    if (state.light === 'red' && now > state.graceUntil) {
+      if (Math.abs(state.smooth - state.refNorm) > game.thresh) { state.caughtFrames += dt; if (state.caughtFrames > 2.5) caught(); }
+      else state.caughtFrames = Math.max(0, state.caughtFrames - dt);
     }
-    if (state.passed >= game.goal) { endPlay(true); return; }
+    // 도착
+    if (state.smooth >= 0.96) { burst(W * 0.78, H * 0.62, '120,230,160', 22); endPlay(true); return; }
   }
+
+  function drawSule(x, y, s, now) {
+    // 무궁화 꽃 술래: 초록불=등(돌아섬), 빨간불=정면(눈). 캔버스로 직접 그림(이미지 불필요).
+    const facing = state.light === 'red' || state.light === 'turning';
+    ctx.save(); ctx.translate(x, y);
+    // 줄기
+    ctx.strokeStyle = '#3f9d52'; ctx.lineWidth = s * 0.12; ctx.beginPath(); ctx.moveTo(0, s * 0.9); ctx.lineTo(0, s * 0.2); ctx.stroke();
+    // 꽃잎 5장
+    ctx.fillStyle = facing ? '#ff7eb6' : '#e98bb6';
+    for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * (Math.PI * 2 / 5); ctx.beginPath(); ctx.ellipse(Math.cos(a) * s * 0.42, Math.sin(a) * s * 0.42, s * 0.3, s * 0.22, a, 0, 6.283); ctx.fill(); }
+    // 꽃 중심
+    ctx.fillStyle = facing ? '#ffd24a' : '#caa0c0'; ctx.beginPath(); ctx.arc(0, 0, s * 0.34, 0, 6.283); ctx.fill();
+    // 얼굴
+    if (facing) {
+      ctx.fillStyle = '#222'; const eo = s * 0.12, er = s * 0.06 + (state.suleFace === 2 ? s * 0.02 : 0);
+      ctx.beginPath(); ctx.arc(-eo, -s * 0.04, er, 0, 6.283); ctx.arc(eo, -s * 0.04, er, 0, 6.283); ctx.fill();
+      ctx.strokeStyle = '#7a3'; ctx.lineWidth = s * 0.04; ctx.beginPath();
+      if (state.suleFace === 2) { ctx.arc(0, s * 0.16, s * 0.1, Math.PI, 0); } else { ctx.moveTo(-s * 0.1, s * 0.12); ctx.lineTo(s * 0.1, s * 0.12); }
+      ctx.stroke();
+    } else { ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = `${s * 0.4}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('🎵', 0, 0); }
+    ctx.restore();
+  }
+
   function draw(now) {
     ctx.clearRect(0, 0, W, H);
-    if (!ready(bgImg)) { const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0d2230'); g.addColorStop(1, '#06121c'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
-    else { ctx.fillStyle = 'rgba(6,18,28,0.34)'; ctx.fillRect(0, 0, W, H); }
-    const pT = playTop(), pH = playH(), gapHpx = pH * game.gapFrac;
-    // 진행 바
-    if (state.phase !== 'prep') { ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(0, pT - 6, W, 4); ctx.fillStyle = 'rgba(150,230,255,.85)'; ctx.fillRect(0, pT - 6, W * (state.passed / game.goal), 4); }
-    // 동굴 벽 + 크리스털
-    for (const o of obs) {
-      if (o.x < -WALL_W || o.x > W + WALL_W) continue;
-      const gc = pT + o.c * pH, top = gc - gapHpx / 2, bot = gc + gapHpx / 2, x = o.x - WALL_W / 2;
-      ctx.save(); ctx.fillStyle = 'rgba(40,70,92,0.92)'; ctx.strokeStyle = 'rgba(120,200,230,0.5)'; ctx.lineWidth = 2;
-      ctx.fillRect(x, pT, WALL_W, top - pT); ctx.strokeRect(x, pT - 2, WALL_W, top - pT + 2);
-      ctx.fillRect(x, bot, WALL_W, H - bot); ctx.strokeRect(x, bot, WALL_W, H - bot);
-      ctx.restore();
-      if (o.crystal && !o.crystal.got) { const tw = 0.7 + 0.3 * Math.sin(now * 0.006 + o.ph); ctx.save(); ctx.globalAlpha = tw; ctx.fillStyle = '#9fe8ff'; ctx.shadowColor = 'rgba(150,230,255,.9)'; ctx.shadowBlur = 14; gem(ctx, o.x, gc, 13); ctx.fill(); ctx.restore(); }
+    // 배경: 햇살 운동장(이미지 없으면 그라데이션)
+    if (!ready(bgImg)) {
+      const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#aee3ff'); g.addColorStop(0.62, '#cdeeff'); g.addColorStop(0.63, '#cdeba0'); g.addColorStop(1, '#9fd277'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    } else { ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(0, 0, W, H); }
+    const groundY = H * 0.74, startX = W * 0.12, finishX = W * 0.8;
+    // 출발선/결승선
+    ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.setLineDash([10, 8]); ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(finishX, groundY - 90); ctx.lineTo(finishX, groundY + 20); ctx.stroke(); ctx.setLineDash([]);
+    // 술래(꽃)
+    if (state.phase !== 'prep') drawSule(finishX + W * 0.06, groundY - 60, Math.min(120, H * 0.18), now);
+    // 진행 트랙
+    ctx.fillStyle = 'rgba(0,0,0,.10)'; ctx.fillRect(startX, groundY + 30, finishX - startX, 6);
+    // EDDIE(플레이어)
+    const px = startX + state.smooth * (finishX - startX);
+    const moving = state.phase === 'play' && Math.abs(state.smooth - state.prev) > 0.002;
+    const bob = moving ? Math.sin(state.walkBob * 0.5) * 5 : 0;
+    const blink = state.flash > 0 && Math.floor(now * 0.02) % 2 === 0;
+    if (!blink) {
+      const img = ready(heroImg) ? heroImg : null, hgt = Math.min(150, H * 0.26);
+      if (img) { const w = hgt * (img.naturalWidth / img.naturalHeight); ctx.drawImage(img, px - w / 2, groundY - hgt + bob, w, hgt); }
+      else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(px, groundY - 40 + bob, 30, 0, 6.283); ctx.fill(); }
     }
-    // 우주선(에디) + 소나 핑
-    if (craft) {
-      if (state.phase === 'play') { const pr = (now * 0.05) % 60; ctx.save(); ctx.globalAlpha = Math.max(0, 1 - pr / 60) * 0.4; ctx.strokeStyle = '#7fe6ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(craft.x, craft.y, CRAFT_R + pr, 0, 6.283); ctx.stroke(); ctx.restore(); }
-      const img = ready(headImg) ? headImg : (ready(heroImg) ? heroImg : null), s = CRAFT_R * 2.7;
-      if (img) { const w = s * (img.naturalWidth / img.naturalHeight); ctx.save(); ctx.translate(craft.x, craft.y); ctx.globalAlpha = craft.inv > 0 ? 0.4 + 0.4 * Math.abs(Math.sin(now * 0.03)) : 1; ctx.drawImage(img, -w / 2, -s / 2, w, s); ctx.restore(); }
-      else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(craft.x, craft.y, CRAFT_R, 0, 6.283); ctx.fill(); }
-    }
-    // 거리 게이지(좌측)
+    // 신호등 표시(상단 중앙)
     if (state.phase !== 'prep') {
-      const gx = 22, gy = pT + 6, gh = pH - 12;
-      ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fillRect(gx, gy, 6, gh);
-      const my = gy + state.norm * gh; ctx.fillStyle = hwActive() ? '#7fe6ff' : '#ffd24a'; ctx.beginPath(); ctx.arc(gx + 3, my, 8, 0, 6.283); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = '700 11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('가까이↑', gx + 14, gy + 10); ctx.fillText('멀리↓', gx + 14, gy + gh);
+      const lx = W / 2, ly = TOP + 16, on = state.light;
+      ctx.fillStyle = 'rgba(20,24,34,.78)'; roundRect(ctx, lx - 92, ly - 14, 184, 40, 12); ctx.fill();
+      ctx.fillStyle = on === 'red' ? '#ff5a5a' : 'rgba(120,40,40,.4)'; ctx.beginPath(); ctx.arc(lx - 64, ly + 6, 11, 0, 6.283); ctx.fill();
+      ctx.fillStyle = on === 'turning' ? '#ffd24a' : 'rgba(120,100,40,.4)'; ctx.beginPath(); ctx.arc(lx - 36, ly + 6, 11, 0, 6.283); ctx.fill();
+      ctx.fillStyle = on === 'green' ? '#5ade7a' : 'rgba(40,120,60,.4)'; ctx.beginPath(); ctx.arc(lx - 8, ly + 6, 11, 0, 6.283); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '700 14px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(on === 'red' ? '멈춰!' : on === 'turning' ? '돌아본다…' : '다가가!', lx + 12, ly + 11);
+    }
+    // 술래 말풍선
+    if (state.phase === 'play' && state.bubble) {
+      ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.font = '700 18px sans-serif'; ctx.textAlign = 'center';
+      const bw = ctx.measureText(state.bubble).width + 28, bx = finishX + W * 0.06, by = groundY - 60 - Math.min(120, H * 0.18) - 18;
+      ctx.fillStyle = 'rgba(20,24,34,.82)'; roundRect(ctx, bx - bw / 2, by - 22, bw, 32, 10); ctx.fill();
+      ctx.fillStyle = state.light === 'red' ? '#ff9a9a' : '#fff'; ctx.fillText(state.bubble, bx, by);
+    }
+    // 빨간불 비네트
+    if (state.light === 'red' && state.phase === 'play') { ctx.fillStyle = `rgba(255,40,40,${0.06 + (state.flash > 0 ? 0.18 * state.flash : 0)})`; ctx.fillRect(0, 0, W, H); }
+    // 거리 게이지(하단)
+    if (state.phase !== 'prep') {
+      const gx = startX, gw = finishX - startX, gy = H - 26;
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; roundRect(ctx, gx, gy, gw, 8, 4); ctx.fill();
+      ctx.fillStyle = hwActive() ? '#7fe6ff' : '#ffd24a'; const mx = gx + state.smooth * gw; ctx.beginPath(); ctx.arc(mx, gy + 4, 8, 0, 6.283); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.font = '700 11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('멀리(출발)', gx, gy - 6); ctx.textAlign = 'right'; ctx.fillText('가까이(도착)', gx + gw, gy - 6);
     }
     // 파티클
-    for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; p.life--; ctx.globalAlpha = Math.max(0, p.life / 34); ctx.fillStyle = `rgb(${p.color})`; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; if (p.life <= 0) parts.splice(i, 1); }
+    for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life--; ctx.globalAlpha = Math.max(0, p.life / 36); ctx.fillStyle = `rgb(${p.color})`; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; if (p.life <= 0) parts.splice(i, 1); }
     // 카운트다운
-    if (state.phase === 'count') { const el = (now - state.countT) / 1000, n = 3 - Math.floor(el); ctx.fillStyle = '#fff'; ctx.font = '900 90px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(n > 0 ? String(n) : 'GO!', W / 2, H * 0.5); if (el >= 3) state.phase = 'play'; }
-    // HUD 거리 표시
-    if (!hud.hidden) elDist.textContent = hwActive() ? `📡 ${Math.round(hwCm)}cm` : '🖱️ 화면';
+    if (state.phase === 'count') { const el = (now - state.countT) / 1000, n = 3 - Math.floor(el); ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 6; ctx.font = '900 90px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; const txt = n > 0 ? String(n) : '출발!'; ctx.strokeText(txt, W / 2, H * 0.5); ctx.fillText(txt, W / 2, H * 0.5); }
+    // HUD 텍스트
+    if (!hud.hidden) { elDist.textContent = hwActive() ? `📡 ${Math.round(hwCm)}cm` : '🖱️ 화면'; elLight.textContent = state.light === 'red' ? '🔴 빨간불' : state.light === 'turning' ? '🟡 돌아본다' : '🟢 초록불'; }
   }
   function loop(now) { const dt = Math.min(2.4, (now - lastT) / 16.67); lastT = now; update(dt); draw(now); raf = requestAnimationFrame(loop); }
   let raf = requestAnimationFrame(loop);
   function cleanup() { bgm.setDuck(1); cancelAnimationFrame(raf); stopHw(); window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('resize', resize); }
 }
 
-function gem(ctx, cx, cy, r) { ctx.beginPath(); ctx.moveTo(cx, cy - r); ctx.lineTo(cx + r * 0.8, cy); ctx.lineTo(cx, cy + r); ctx.lineTo(cx - r * 0.8, cy); ctx.closePath(); }
+function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
