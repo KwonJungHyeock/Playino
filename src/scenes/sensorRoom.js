@@ -83,7 +83,7 @@ const ROOMS_CFG = {
   ultra: {
     name: '메아리 동굴', sensor: '초음파 센서 · HC-SR04', icon: '📡', accent: '120,210,230',
     room: 'room-bg', eddie: null, signL: '120,210,230', signR: '180,160,255',
-    control: 'ultra', pins: { trig: 3, echo: 4 }, floor: 0.82,
+    control: 'ultra', pins: { trig: 4, echo: 3 }, floor: 0.82,
     intro: '이론관에서 초음파(거리) 센서를 배우고, 체험관에서 손 거리로 동굴을 비행하자! 📡',
     animTheory: 'ultra',
     captions: [
@@ -455,7 +455,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         <div class="dash joy-dash">
           <div class="dash-led">
             <div class="ult-mon" id="ult-mon"><div class="ult-fill" id="ult-fill"></div><div class="ult-hand" id="ult-hand">🖐️</div></div>
-            <div class="dl-pin">📡 소리를 쏘고 메아리가 오는 시간으로 거리를 재요<br><span>(Trig=D3 펄스 → Echo=D4 폭 측정)</span></div>
+            <div class="dl-pin">📡 소리를 쏘고 메아리가 오는 시간으로 거리를 재요<br><span>(Trig=D4 펄스 → Echo=D3 폭 측정)</span></div>
           </div>
           <div class="dash-cards">
             <div class="dcard">

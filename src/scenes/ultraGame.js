@@ -10,7 +10,7 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = { trig: 3, echo: 4 };
+const PINS = { trig: 4, echo: 3 };   // 결선상 Trig=D4, Echo=D3 (커넥터 GND/D3/D4/VCC ↔ 센서 Gnd/Echo/Trig/Vcc)
 const NEAR = 5, FAR = 40;       // 거리 매핑 범위(cm): 5cm=맨 위, 40cm=맨 아래
 const CRAFT_R = 22, WALL_W = 46, TOP = 70;
 const GAMES = [
@@ -51,8 +51,8 @@ export function showUltraGame(root, { onExit } = {}) {
                 <thead><tr><th>HC-SR04</th><th>아두이노 (12번 포트)</th></tr></thead>
                 <tbody>
                   <tr><td>Gnd</td><td>GND</td></tr>
-                  <tr><td>Trig</td><td>D3</td></tr>
-                  <tr><td>Echo</td><td>D4</td></tr>
+                  <tr><td>Trig</td><td>D4</td></tr>
+                  <tr><td>Echo</td><td>D3</td></tr>
                   <tr><td>Vcc</td><td>VCC(5V)</td></tr>
                 </tbody>
               </table>
