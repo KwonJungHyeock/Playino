@@ -14,8 +14,8 @@ const PINS = { trig: 4, echo: 3 };
 const GO_LO = 8, GO_HI = 35;     // GO존(cm): 이 안이면 걷기, 밖이면(너무 가깝거나 멀거나/없음) 멈춤
 const TOP = 70;
 const GAMES = [
-  { key: 'easy', no: 1, name: '무궁화 꽃이 피었습니다', speed: 0.16, greenMin: 1.9, greenMax: 3.4, redMin: 1.3, redMax: 2.2, turn: 0.6, lives: 3 },
-  { key: 'hard', no: 2, name: '두근두근 무궁화',        speed: 0.22, greenMin: 1.1, greenMax: 2.3, redMin: 1.3, redMax: 2.9, turn: 0.34, lives: 3 },
+  { key: 'easy', no: 1, name: '무궁화 꽃이 피었습니다', speed: 0.21, greenMin: 1.9, greenMax: 3.4, redMin: 1.3, redMax: 2.2, turn: 0.6, lives: 3 },
+  { key: 'hard', no: 2, name: '두근두근 무궁화',        speed: 0.28, greenMin: 1.1, greenMax: 2.3, redMin: 1.3, redMax: 2.9, turn: 0.34, lives: 3 },
 ];
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-ultra-bg.png'; } }; bgImg.src = '/brand/stage-ultra-bg.webp';
@@ -146,6 +146,7 @@ export function showUltraGame(root, { onExit } = {}) {
     light: 'green', lightUntil: 0, caughtFrames: 0, graceUntil: 0,
     flash: 0, suleFace: 0, bubble: '' };
   const parts = [];
+  let bubbleStr = '', bubbleW = 0;   // 말풍선 폭 캐시(매 프레임 measureText 회피)
 
   function panel(html) { const el = document.createElement('div'); el.className = 'led-panel'; el.innerHTML = `<div class="prep-card led-pcard">${html}</div>`; scene.appendChild(el); return el; }
   function startFlow() { gi = 0; nextGame(); }
@@ -258,7 +259,8 @@ export function showUltraGame(root, { onExit } = {}) {
     // 말풍선
     if (state.phase === 'play' && state.bubble) {
       ctx.font = '700 18px sans-serif'; ctx.textAlign = 'center';
-      const bw = ctx.measureText(state.bubble).width + 28, bx = finishX + W * 0.06, by = groundY - 60 - Math.min(120, H * 0.18) - 18;
+      if (state.bubble !== bubbleStr) { bubbleStr = state.bubble; bubbleW = ctx.measureText(state.bubble).width + 28; }
+      const bw = bubbleW, bx = finishX + W * 0.06, by = groundY - 60 - Math.min(120, H * 0.18) - 18;
       ctx.fillStyle = 'rgba(20,24,34,.82)'; roundRect(ctx, bx - bw / 2, by - 22, bw, 32, 10); ctx.fill();
       ctx.fillStyle = state.light === 'red' ? '#ff9a9a' : '#fff'; ctx.fillText(state.bubble, bx, by);
     }

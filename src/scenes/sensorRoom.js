@@ -84,7 +84,7 @@ const ROOMS_CFG = {
     name: '무궁화 꽃이 피었습니다', sensor: '초음파 센서 · HC-SR04', icon: '🌸', accent: '255,150,190',
     room: 'room-ultra-bg', eddie: null, signL: '255,150,190', signR: '120,210,230',
     control: 'ultra', pins: { trig: 4, echo: 3 }, floor: 0.82,
-    intro: '이론관에서 초음파(거리) 센서를 배우고, 체험관에서 술래(무궁화 꽃) 몰래 다가가자! 🌸',
+    intro: '이론관에서 초음파(거리) 센서를 배우고,<br>체험관에서 술래(무궁화 꽃) 몰래 다가가자! 🌸',
     animTheory: 'ultra',
     captions: [
       '초음파 센서는 사람이 못 듣는 높은 소리를 쏘고, 부딪혀 돌아오는 메아리를 들어요 📡',
