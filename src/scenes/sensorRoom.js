@@ -382,7 +382,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         <div class="dash joy-dash">
           <div class="dash-led">
             <div class="joy-mon" id="joy-mon"><div class="joy-cx"></div><div class="joy-cy"></div><div class="joy-dot" id="joy-dot"></div></div>
-            <div class="dl-pin">🕹️ 테스트: <b>X→A0 · Y→A1</b><br><span>(Grove 조이스틱을 A0 포트에)</span></div>
+            <div class="dl-pin">🕹️ 드래그해서 X·Y 원리를 익혀봐<br><span>(이 키트는 디지털 포트라 방향은 게임에서 화면/키보드로 조종)</span></div>
           </div>
           <div class="dash-cards">
             <div class="dcard">
@@ -410,7 +410,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       mon.addEventListener('pointermove', drag);
       const end = (e) => { if (dragId !== e.pointerId) return; dragId = null; if (!board.connected) show(0, 0); };
       mon.addEventListener('pointerup', end); mon.addEventListener('pointercancel', end);
-      function startPoll() { stopJoyPoll(); if (!board.connected) return; joyTimer = setInterval(async () => { const vx = await board.analogRead(P.x); const vy = await board.analogRead(P.y); if (vx != null && vy != null) show((vx - 512) / 512, (vy - 512) / 512); }, 140); }
+      function startPoll() { stopJoyPoll(); /* 디지털 포트 키트라 실물 X/Y 읽기 불가 — 드래그로 원리 학습 */ }
       startPoll();
       const connBtn = bodyEl.querySelector('#dc-conn');
       connBtn.onclick = async () => { if (board.connected) return; status.textContent = '연결 중… 포트를 골라주세요 🔌'; try { await board.connect(); connBtn.textContent = '🔌 보드 연결됨 ✓'; status.textContent = '실물 조이스틱을 움직여봐! 🕹️'; startPoll(); } catch (e) { status.textContent = board.classify(e).note; } };
