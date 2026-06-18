@@ -38,20 +38,28 @@ export function showJoystickGame(root, { onExit } = {}) {
       </div>
       <div class="joy-pad" id="jy-pad" hidden><div class="joy-knob"></div></div>
       <div class="led-prep" id="jy-prep">
-        <div class="prep-card" style="max-width:600px;text-align:center">
+        <div class="prep-card" style="max-width:700px">
           <h2>🚀 별 지렁이 대모험</h2>
-          <p class="prep-sub">조이스틱으로 우주뱀을 조종해 <b>별을 먹어요</b>! 먹을수록 <b>꼬리가 길어지고 빨라져요</b> — 자기 꼬리와 운석을 피하면서 목표만큼 모으면 통과 ⭐</p>
-          <p class="prep-sub">조작: <b>화면 조이스틱</b>(왼쪽 아래) · 방향키/WASD · 실물 조이스틱(A0·A1)</p>
-          <div class="prep-wire"><b>🔌 결선</b>
-            <table class="prep-table prep-wire-t"><tbody>
-              <tr><td>🕹️ X(좌우)</td><td><b>A0</b></td></tr>
-              <tr><td>🕹️ Y(상하)</td><td><b>A1</b></td></tr>
-            </tbody></table>
-            <span class="prep-wire-note">Grove 조이스틱을 A0 포트에 (X→A0 · Y→A1)</span>
+          <p class="prep-sub">조이스틱으로 우주뱀을 조종해 <b>별을 먹어요</b>! 먹을수록 <b>꼬리가 길어지고 빨라져요</b> — 자기 꼬리·운석을 피해 목표만큼 모으면 통과 ⭐</p>
+          <div class="prep-grid">
+            <div class="prep-img" id="jy-wimg"><span class="prep-img-ph">🕹️ 결선 사진</span></div>
+            <div class="prep-side">
+              <table class="prep-table">
+                <thead><tr><th>조이스틱 핀</th><th>아두이노</th></tr></thead>
+                <tbody>
+                  <tr><td>VCC</td><td>5V</td></tr>
+                  <tr><td>GND</td><td>GND</td></tr>
+                  <tr><td>X</td><td>A0</td></tr>
+                  <tr><td>Y</td><td>A1</td></tr>
+                  <tr><td>SW(버튼)</td><td>D2</td></tr>
+                </tbody>
+              </table>
+              <div class="prep-status">조작: 화면 조이스틱(왼쪽 아래) · 방향키/WASD · 실물(X→A0·Y→A1)</div>
+            </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
             <button class="prep-btn" id="jy-connect">🔌 보드 연결(선택)</button>
-            <button class="cel-go" id="jy-start">시작 ▶</button>
+            <button class="cel-go" id="jy-start">결선 완료 · 시작 ▶</button>
           </div>
         </div>
       </div>
@@ -61,6 +69,9 @@ export function showJoystickGame(root, { onExit } = {}) {
   const bg = root.querySelector('#jy-bg');
   bgImg.onload = () => { bg.style.backgroundImage = `url(${bgImg.src})`; };
   if (ready(bgImg)) bg.style.backgroundImage = `url(${bgImg.src})`;
+  const wImg = new Image();
+  wImg.onload = () => { const e = root.querySelector('#jy-wimg'); if (e) { e.style.backgroundImage = `url(${wImg.src})`; e.classList.add('has-img'); } };
+  wImg.src = '/brand/wiring-joystick.webp';
   const host = root.querySelector('#jy-host');
   const canvas = document.createElement('canvas'); canvas.className = 'world-canvas'; host.appendChild(canvas);
   const ctx = canvas.getContext('2d');

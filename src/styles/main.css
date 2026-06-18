@@ -2173,3 +2173,8 @@ html, body { overflow-x: hidden; }
   touch-action: none; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .joy-pad .joy-knob { width: 58px; height: 58px; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle at 38% 34%, #d7c2ff, #9a7aff); box-shadow: 0 5px 16px rgba(0,0,0,.45); }
+
+/* 결선 이미지 placeholder(사진 없을 때) */
+.prep-img { position: relative; }
+.prep-img.has-img .prep-img-ph { display: none; }
+.prep-img-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9aa3bd; font-weight: 700; font-size: 13px; }
