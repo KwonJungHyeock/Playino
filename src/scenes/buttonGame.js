@@ -1,7 +1,7 @@
 // buttonGame.js — 두더지 잡기 (버튼/택트스위치 방 · 디지털 입력)
-// 구멍 3개에서 두더지가 불쑥! 해당 버튼(또는 화면 클릭·1·2·3 키)을 눌러 잡으면 점수.
-// 입력: 실물 버튼 3개(D5·D6·D7, 디지털) — 연결 직후 쉬는 값을 기준으로 보정해 '눌림(변화)'을 감지.
-//        보드가 없으면 화면 클릭/터치·키보드(1·2·3)로 플레이.
+// 구멍 2개에서 두더지가 불쑥! 해당 버튼(또는 화면 클릭·1·2 키)을 눌러 잡으면 점수.
+// 입력: 실물 택트스위치 2개(D5·D6, 디지털) — 연결 직후 쉬는 값을 기준으로 보정해 '눌림(변화)'을 감지.
+//        보드가 없으면 화면 클릭/터치·키보드(1·2)로 플레이.
 // 1차 느긋한 들판 · 2차 빠른 들판. 두 판 통과 → 🔨 두더지 메달.
 import { sfx } from '../app/sfx.js';
 import { bgm } from '../app/bgm.js';
@@ -9,11 +9,11 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = [5, 6, 7];   // 구멍 0·1·2 ↔ 버튼 핀
-const HOLES = 3;
+const PINS = [5, 6];   // 구멍 0·1 ↔ 택트스위치 핀 (BOM: 택트 2개)
+const HOLES = PINS.length;
 const GAMES = [
-  { key: 'easy', no: 1, name: '느긋한 두더지 들판', time: 30, target: 10, upMin: 950, upMax: 1500, gapMin: 700, gapMax: 1100, golden: 0.16 },
-  { key: 'hard', no: 2, name: '번개 두더지 들판',   time: 30, target: 16, upMin: 650, upMax: 1050, gapMin: 460, gapMax: 820,  golden: 0.22 },
+  { key: 'easy', no: 1, name: '느긋한 두더지 들판', time: 30, target: 8,  upMin: 950, upMax: 1500, gapMin: 700, gapMax: 1100, golden: 0.16 },
+  { key: 'hard', no: 2, name: '번개 두더지 들판',   time: 30, target: 13, upMin: 650, upMax: 1050, gapMin: 460, gapMax: 820,  golden: 0.22 },
 ];
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-button-bg.png'; } }; bgImg.src = '/brand/stage-button-bg.webp';
@@ -40,20 +40,19 @@ export function showButtonGame(root, { onExit } = {}) {
       <div class="led-prep" id="bt-prep">
         <div class="prep-card" style="max-width:720px">
           <h2>🔨 두더지 잡기</h2>
-          <p class="prep-sub">구멍 3곳에서 두더지가 불쑥! 튀어나온 두더지의 <b>버튼(또는 화면 구멍·1·2·3 키)</b>을 재빨리 눌러 잡아요. 제한시간 안에 <b>목표 점수</b>를 넘으면 통과! ✨금두더지는 3점!</p>
+          <p class="prep-sub">구멍 2곳에서 두더지가 불쑥! 튀어나온 두더지의 <b>버튼(또는 화면 구멍·1·2 키)</b>을 재빨리 눌러 잡아요. 제한시간 안에 <b>목표 점수</b>를 넘으면 통과! ✨금두더지는 3점!</p>
           <div class="prep-grid">
             <div class="prep-img" id="bt-wimg"><span class="prep-img-ph">🔘 결선 사진</span></div>
             <div class="prep-side">
               <table class="prep-table">
-                <thead><tr><th>버튼</th><th>아두이노 (12번 포트)</th></tr></thead>
+                <thead><tr><th>택트스위치</th><th>아두이노</th></tr></thead>
                 <tbody>
                   <tr><td>버튼 1 (왼쪽)</td><td>D5</td></tr>
-                  <tr><td>버튼 2 (가운데)</td><td>D6</td></tr>
-                  <tr><td>버튼 3 (오른쪽)</td><td>D7</td></tr>
+                  <tr><td>버튼 2 (오른쪽)</td><td>D6</td></tr>
                   <tr><td>공통</td><td>GND · VCC(5V)</td></tr>
                 </tbody>
               </table>
-              <div class="prep-status" id="bt-pstat">버튼을 누르면 그 칸 두더지를 잡아요! 보드가 없으면 <b>화면 구멍 클릭</b>이나 <b>1·2·3 키</b>로도 OK 🔨</div>
+              <div class="prep-status" id="bt-pstat">버튼을 누르면 그 칸 두더지를 잡아요! 보드가 없으면 <b>화면 구멍 클릭</b>이나 <b>1·2 키</b>로도 OK 🔨</div>
             </div>
           </div>
           <div class="prep-actions" style="justify-content:center">
@@ -89,10 +88,10 @@ export function showButtonGame(root, { onExit } = {}) {
   // 배경(stage-button-bg, 1600×900)의 그려진 구멍 위치에 맞춰 두더지를 올린다.
   // background:center/cover 와 동일한 매핑으로 이미지 좌표 → 캔버스 좌표 변환.
   const IMG_W = 1600, IMG_H = 900;
+  // 두더지 구멍 2곳(좌·우). 배경(stage-button-bg)을 2구멍짜리로 교체하면 좌표만 맞추면 됨.
   const HOLE_UV = [
-    { u: 375 / IMG_W, v: 695 / IMG_H, rw: 76 },
-    { u: 785 / IMG_W, v: 672 / IMG_H, rw: 92 },
-    { u: 1190 / IMG_W, v: 690 / IMG_H, rw: 76 },
+    { u: 500 / IMG_W, v: 690 / IMG_H, rw: 86 },
+    { u: 1100 / IMG_W, v: 690 / IMG_H, rw: 86 },
   ];
   function geom() {
     const sc = Math.max(W / IMG_W, H / IMG_H), dw = IMG_W * sc, dh = IMG_H * sc, ox = (W - dw) / 2, oy = (H - dh) / 2;
@@ -100,7 +99,7 @@ export function showButtonGame(root, { onExit } = {}) {
   }
 
   // ── 입력 ──
-  const keys = ['1', '2', '3'];
+  const keys = ['1', '2'];
   const onKeyDown = (e) => { const i = keys.indexOf(e.key); if (i >= 0) { e.preventDefault(); bonk(i); } };
   window.addEventListener('keydown', onKeyDown);
   canvas.addEventListener('pointerdown', (e) => {
@@ -108,9 +107,9 @@ export function showButtonGame(root, { onExit } = {}) {
     for (let i = 0; i < HOLES; i++) if (Math.hypot(x - g[i].x, y - g[i].y) < g[i].r * 1.5) { bonk(i); return; }
   });
 
-  // 실물 버튼 폴링(D5·D6·D7): 쉬는 값 기준으로 '눌림(변화)' 에지 감지 → 해당 구멍 타격.
+  // 실물 택트스위치 폴링(D5·D6): 쉬는 값 기준으로 '눌림(변화)' 에지 감지 → 해당 구멍 타격.
   let hwTimer = null;
-  const rings = [[], [], []], rest = [null, null, null], pressed = [false, false, false], RING = 4;
+  const rings = Array.from({ length: HOLES }, () => []), rest = Array(HOLES).fill(null), pressed = Array(HOLES).fill(false), RING = 4;
   const unanim = (r) => { if (r.length < RING) return null; const a = r[0]; for (const v of r) if (v !== a) return null; return a; };
   function startHw() {
     stopHw(); if (!board.connected) return;
@@ -138,7 +137,7 @@ export function showButtonGame(root, { onExit } = {}) {
   const cleared = { easy: false, hard: false };
   let gi = 0, game = GAMES[0];
   const holes = Array.from({ length: HOLES }, () => ({ up: false, hit: false, golden: false, t: 0, dur: 0, pop: 0 }));
-  const whack = [0, 0, 0], parts = [];
+  const whack = Array(HOLES).fill(0), parts = [];
   const state = { phase: 'prep', countT: 0, score: 0, combo: 0, bestCombo: 0, target: 0, timeLeft: 0, ended: false, spawnAt: 0 };
 
   function panel(html) { const el = document.createElement('div'); el.className = 'led-panel'; el.innerHTML = `<div class="prep-card led-pcard">${html}</div>`; scene.appendChild(el); return el; }
