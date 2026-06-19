@@ -53,7 +53,7 @@ function enterRoom(roomId) {
   const back = () => nav.back();
   switch (roomId) {
     case 'basics': showBasics(app(), { onExit: back, onComplete: back }); break;
-    case 'led': case 'buzzer': case 'rgb': case 'cds': case 'joystick': case 'ultra': case 'button':
+    case 'led': case 'buzzer': case 'rgb': case 'cds': case 'button':
       showSensorRoom(app(), { id: roomId, onExit: back }); break;
     case 'dht11': showDhtCoding(app(), { onDone: () => nav.push(dhtRoomRender), onExit: back }); break;
     case 'relay': showRelay(app(), { onExit: back }); break;

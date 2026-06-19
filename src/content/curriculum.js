@@ -1,4 +1,4 @@
-// curriculum.js — Eduino AI : 미니게임천국 커리큘럼 단일 공급원(4무대 · 22 미니게임).
+// curriculum.js — Eduino AI : 미니게임천국 커리큘럼 단일 공급원(4무대 · 11 미니게임).
 // 학습 라벨(기초/응용 등)을 메인으로, '미니게임천국' 서사(무대 퍼포먼스)를 스토리 레이어로 얹는다.
 // 스토리: EDDIE가 4개 무대를 돌며 미니게임을 성공시켜 메달·티켓·별을 모으고,
 //         모두 모으면 👑 '천국의 왕관' = 학습 100% 완료(졸업).
@@ -19,35 +19,30 @@ export const ROOMS = {
   // 🎪 시작의 천막 (피지컬 코딩 기초)
   basics: R('basics', 'ch1', '피지컬 코딩 기초', '📘', '피지컬 컴퓨팅 개념', '기초 이론 + 퀴즈 + 분류 미션', '🎓 기초 수료증', 'basics'),
 
-  // 🏛️ 기초의 전당 (센서 개별 · 8) — 빛/소리/조작/반응
+  // 🏛️ 기초의 전당 (센서 개별 · 7) — 구성품 BOM 부품과 1:1 (LED/부저/RGB/조도/가변저항/택트2)
   led:    R('led', 'ch2', '반짝반짝 라이트쇼', '💡', '디지털 출력 · 타이밍', 'LED로 무대 조명 켜기·연주', '💡 조명 메달', 'led'),
   buzzer: R('buzzer', 'ch2', '멜로디 연주단', '🔊', 'tone · 주파수', '부저로 멜로디 연주', '🎵 리듬 메달', 'buzzer'),
   rgb:    R('rgb', 'ch2', '무지개 물감놀이', '🌈', 'PWM 색 혼합', '색을 섞어 정답 색 만들기', '🌈 무지개 메달', 'rgb'),
-  seg:    R('seg', 'ch2', '번개 점수판', '🔢', '7세그먼트 제어', '숫자 반응속도 게임', '🔢 숫자 메달'),
-  pot:    R('pot', 'ch2', '볼륨 다이얼쇼', '🎚️', '아날로그 입력', '가변저항 다이얼 맞추기', '🎚️ 다이얼 메달'),
-  button: R('button', 'ch2', '두더지 잡기', '🔘', '디지털 입력(버튼)', '택트스위치 반응·연타', '🔨 두더지 메달', 'button'),
-  joystick: R('joystick', 'ch2', '우주 조종 훈련소', '🕹️', '디지털 입력 · 조이스틱', '우주선으로 미로 탈출', '🚀 조종 메달', 'joystick'),
   cds:    R('cds', 'ch2', '손그림자 마술', '🔆', '아날로그 입력(빛)', '조도센서로 빛 가리기 반응', '🔆 햇살 메달', 'cds'),
-  ultra:  R('ultra', 'ch2', '무궁화 꽃이 피었습니다', '🌸', '초음파 거리 측정', '초록불엔 다가가고 빨간불엔 멈추기', '🌸 무궁화 메달', 'ultra'),
-  servo:  R('servo', 'ch2', '행운의 룰렛', '⚙️', '서보 각도 제어', 'SG-90 룰렛 멈추기', '🎯 룰렛 메달'),
+  pot:    R('pot', 'ch2', '볼륨 다이얼쇼', '🎚️', '아날로그 입력', '가변저항 다이얼 맞추기', '🎚️ 다이얼 메달'),
+  button: R('button', 'ch2', '두더지 잡기', '🔘', '디지털 입력(버튼 2개)', '택트스위치 2개로 두더지 잡기', '🔨 두더지 메달', 'button'),
+  flag:   R('flag', 'ch2', '청기백기', '🚩', '디지털 입력(버튼 2개)', '명령 따라 청기·백기 버튼 누르기', '🚩 깃발 메달'),
 
-  // 🎭 응용 대극장 (2종 조합 · 4)
-  dotshoot:   R('dotshoot', 'ch3', '도트 슈팅', '🕹️', '조이스틱 + 8×8 매트릭스', '조이스틱으로 도트 조작', '🎮 조작 스타'),
-  theremin:   R('theremin', 'ch3', '비접촉 테레민', '📏', '초음파 + 부저', '손 거리로 음정 연주', '🎼 사운드 스타'),
-  balance:    R('balance', 'ch3', '균형 줄타기', '⚖️', '기울기 + LED', '기울여 균형 잡기', '⚖️ 균형 스타'),
-  visualizer: R('visualizer', 'ch3', '함성 비주얼라이저', '🎤', '소리감지 + RGB', '함성으로 빛 쇼 만들기', '🎉 함성 스타'),
+  // 🎭 응용 대극장 (2종 조합 · 2) — BOM 부품만으로 신규 설계
+  lamp:   R('lamp', 'ch3', '빛 마법 램프', '🪔', '조도센서 + RGB (입력→색 출력)', '손 그림자로 빛을 조절해 마법 램프 색 맞추기', '🪔 램프 스타'),
+  bomb:   R('bomb', 'ch3', '폭탄 해체반', '💣', '가변저항 + LED (정밀 제어)', '다이얼로 주파수 맞춰 폭탄 해체', '💣 해체 스타'),
 
-  // 🕌 마법의 돔 (3종 종합)
-  final: R('final', 'ch4', '나만의 인터랙티브 쇼', '🏆', '3종 종합 프로젝트', '배운 센서를 모아 작품 완성', '👑 천국의 왕관'),
+  // 🕌 마법의 돔 (종합)
+  final: R('final', 'ch4', '나만의 인터랙티브 쇼', '🏆', '종합 프로젝트(다이얼·RGB·부저·버튼)', '배운 부품을 모아 빛·소리 인터랙티브 쇼 완성', '👑 천국의 왕관'),
 };
 
 export const CHAPTERS = [
   { id: 'ch1', no: 1, label: '시작의 천막', short: '시작의 천막', act: '피지컬 코딩 기초', icon: '🎪',
     rooms: ['basics'] },
   { id: 'ch2', no: 2, label: '기초의 전당', short: '기초의 전당', act: '센서 개별 체험', icon: '🏛️',
-    rooms: ['led', 'buzzer', 'rgb', 'servo', 'cds', 'button', 'joystick', 'ultra'] },
+    rooms: ['led', 'buzzer', 'rgb', 'cds', 'pot', 'button', 'flag'] },
   { id: 'ch3', no: 3, label: '응용 대극장', short: '응용 대극장', act: '2종 조합 응용', icon: '🎭',
-    rooms: ['dotshoot', 'theremin', 'balance', 'visualizer'] },
+    rooms: ['lamp', 'bomb'] },
   { id: 'ch4', no: 4, label: '마법의 돔', short: '마법의 돔', act: '종합 프로젝트', icon: '🕌',
     rooms: ['final'] },
 ];
@@ -72,7 +67,7 @@ export function chapterUnlocked(id) {
 }
 
 export const allRoomIds = () => CHAPTERS.flatMap((c) => c.rooms);
-export const overallTotal = () => allRoomIds().length;                 // 22
+export const overallTotal = () => allRoomIds().length;                 // 11
 export const overallCleared = () => allRoomIds().filter((id) => progress.isCleared(id)).length;
 export const overallPercent = () => Math.round((overallCleared() / overallTotal()) * 100);
 export const allDone = () => overallCleared() >= overallTotal();
