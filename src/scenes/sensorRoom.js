@@ -97,7 +97,7 @@ const ROOMS_CFG = {
   button: {
     name: '두더지 잡기', sensor: '버튼(택트스위치) · 디지털 입력', icon: '🔨', accent: '255,170,90',
     room: 'room-button-bg', eddie: null, signL: '255,170,90', signR: '150,210,120',
-    control: 'button', pins: { b1: 5, b2: 6, b3: 7 }, floor: 0.82,
+    control: 'button', pins: { b1: 5, b2: 6 }, floor: 0.82,
     intro: '이론관에서 버튼(디지털 입력)을 배우고,<br>체험관에서 두더지를 잡아보자! 🔨',
     animTheory: 'button',
     captions: [
@@ -513,30 +513,30 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     // 버튼 입력 모니터: 버튼을 누르면 램프 ON. 연결 전엔 화면 버튼을 눌러 체험.
     function renderButton() {
       showEddie('버튼을 눌러봐! 누름(1)/안 누름(0)이 또렷하게 바뀌어요 🔘 (보드 없으면 화면 버튼으로 체험)');
-      const P = cfg.pins, pins = [P.b1, P.b2, P.b3];
+      const P = cfg.pins, pins = [P.b1, P.b2];
       bodyEl.innerHTML = `
         <div class="dash joy-dash">
           <div class="dash-led">
-            <div class="btn-lamps" id="btn-lamps">${[1, 2, 3].map((n) => `<button class="btn-lamp" data-i="${n - 1}"><span></span><em>${n}</em></button>`).join('')}</div>
-            <div class="dl-pin">🔘 버튼을 누르면 그 핀이 <b>0 ↔ 1</b>로 바뀌어요<br><span>(버튼1=D5 · 버튼2=D6 · 버튼3=D7, 디지털 입력)</span></div>
+            <div class="btn-lamps" id="btn-lamps">${[1, 2].map((n) => `<button class="btn-lamp" data-i="${n - 1}"><span></span><em>${n}</em></button>`).join('')}</div>
+            <div class="dl-pin">🔘 버튼을 누르면 그 핀이 <b>0 ↔ 1</b>로 바뀌어요<br><span>(버튼1=D5 · 버튼2=D6, 디지털 입력)</span></div>
           </div>
           <div class="dash-cards">
             <div class="dcard"><div class="dc-h">📟 입력 상태 <span>눌림 = 1(ON)</span></div>
-              <div class="joy-read"><span>1 <b id="bs0">0</b></span><span>2 <b id="bs1">0</b></span><span>3 <b id="bs2">0</b></span></div></div>
+              <div class="joy-read"><span>1 <b id="bs0">0</b></span><span>2 <b id="bs1">0</b></span></div></div>
             <button class="dbtn ghost dc-conn" id="dc-conn">${board.connected ? '🔌 보드 연결됨 ✓' : '🔌 보드 연결(실물 버튼)'}</button>
             <div class="dc-status" id="dc-status">${board.connected ? '버튼을 눌러봐! 🔘' : '화면 버튼을 누르거나, 연결하면 실물 버튼이 켜져요.'}</div>
           </div>
         </div>`;
-      const lamps = [...bodyEl.querySelectorAll('.btn-lamp')], readEls = [0, 1, 2].map((i) => bodyEl.querySelector('#bs' + i)), status = bodyEl.querySelector('#dc-status');
+      const lamps = [...bodyEl.querySelectorAll('.btn-lamp')], readEls = [0, 1].map((i) => bodyEl.querySelector('#bs' + i)), status = bodyEl.querySelector('#dc-status');
       const setLamp = (i, on) => { lamps[i].classList.toggle('on', on); readEls[i].textContent = on ? 1 : 0; };
       lamps.forEach((l, i) => { const d = (e) => { if (board.connected) return; e.preventDefault(); setLamp(i, true); }, u = () => { if (board.connected) return; setLamp(i, false); }; l.addEventListener('pointerdown', d); l.addEventListener('pointerup', u); l.addEventListener('pointerleave', u); });
-      const rings = [[], [], []], rest = [null, null, null], RING = 4;
+      const rings = [[], []], rest = [null, null], RING = 4;
       const un = (r) => { if (r.length < RING) return null; const a = r[0]; for (const v of r) if (v !== a) return null; return a; };
       function startPoll() {
-        stopJoyPoll(); if (!board.connected) return; for (let i = 0; i < 3; i++) { rings[i].length = 0; rest[i] = null; }
+        stopJoyPoll(); if (!board.connected) return; for (let i = 0; i < 2; i++) { rings[i].length = 0; rest[i] = null; }
         joyTimer = setInterval(async () => {
           const vals = await Promise.all(pins.map((p) => board.digitalRead(p)));
-          for (let i = 0; i < 3; i++) { const v = vals[i]; if (v == null) continue; const r = rings[i]; r.push(v); if (r.length > RING) r.shift(); const s = un(r); if (s == null) continue; if (rest[i] === null) rest[i] = s; setLamp(i, s !== rest[i]); }
+          for (let i = 0; i < 2; i++) { const v = vals[i]; if (v == null) continue; const r = rings[i]; r.push(v); if (r.length > RING) r.shift(); const s = un(r); if (s == null) continue; if (rest[i] === null) rest[i] = s; setLamp(i, s !== rest[i]); }
         }, 60);
       }
       startPoll();
