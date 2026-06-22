@@ -1491,7 +1491,18 @@ body[data-canback="1"] .led-hud { left: 116px !important; }   /* 게임 HUD도 �
 /* 상단 헤더 바(허브·챕터·미니게임)에선 로고와 겹치지 않게 버튼을 한 칸 아래로 */
 body:has(.curr-header) .nav-back,
 body:has(.hud-top) .nav-back,
-body:has(.app-header) .nav-back { top: 72px; left: 18px; }
+body:has(.app-header) .nav-back { top: 90px; left: 18px; }
+
+/* HTML 브랜드 인트로(첫 화면) */
+.video-intro { position: fixed; inset: 0; z-index: 80; background: #faf9f5; opacity: 1; }
+.video-intro.out { opacity: 0; transition: opacity .38s ease; pointer-events: none; }
+.vi-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+.vi-loading { position: absolute; inset: 0; display: grid; place-items: center; color: #6b6478; font: 700 15px "Space Grotesk", sans-serif; letter-spacing: .3px; }
+.vi-skip { position: fixed; bottom: 24px; right: 24px; z-index: 2; padding: 11px 22px; border-radius: 999px;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,.08); color: #2c2440; font-weight: 800; font-size: 14px; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(50,40,90,.18); transition: background .15s, transform .12s; }
+.vi-skip:hover { background: #fff; transform: translateY(-1px); }
 
 /* 초음파 거리 모니터(이론관 코드 탭) */
 .ult-mon { position: relative; width: 120px; height: 210px; margin: 10px auto; border-radius: 16px;

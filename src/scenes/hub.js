@@ -162,7 +162,7 @@ function drawPath(ctx, gates, t, s) {
 
 // 레벨 노드 메달: 바닥 풋라이트 + 글로시 디스크(번호/자물쇠/✓) + 리본 이름표
 function drawNode(ctx, g, i, active, t, s) {
-  const R = 30 * s, cx = g.gx;
+  const R = 34 * s, cx = g.gx;
   const unlocked = chapterUnlocked(g.id), done = chapterDone(g.id);
   const [c1, c2] = unlocked ? PAL[i % PAL.length] : ['170,176,186', '120,126,138'];
   const bounce = active && unlocked ? Math.abs(Math.sin(t * 0.16)) * 7 * s : 0;
@@ -186,22 +186,27 @@ function drawNode(ctx, g, i, active, t, s) {
   }
 
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
-  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, R + 4 * s, 0, 6.283); ctx.fill();
+  ctx.shadowColor = `rgba(${c1},${active ? 0.85 : 0.6})`; ctx.shadowBlur = (active ? 28 : 18) * s; ctx.shadowOffsetY = 5 * s;
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, R + 7 * s, 0, 6.283); ctx.fill();
   ctx.restore();
+  // 컬러 림(테두리) — 밝은 배경에서 또렷하게 분리
+  ctx.lineWidth = 4 * s; ctx.strokeStyle = `rgb(${c1})`;
+  ctx.beginPath(); ctx.arc(cx, cy, R + 5 * s, 0, 6.283); ctx.stroke();
   const disc = ctx.createLinearGradient(cx, cy - R, cx, cy + R);
   disc.addColorStop(0, `rgb(${c1})`); disc.addColorStop(1, `rgb(${c2})`);
   ctx.fillStyle = disc; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.fill();
   const gloss = ctx.createLinearGradient(cx, cy - R, cx, cy);
-  gloss.addColorStop(0, 'rgba(255,255,255,0.55)'); gloss.addColorStop(1, 'rgba(255,255,255,0)');
+  gloss.addColorStop(0, 'rgba(255,255,255,0.6)'); gloss.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = gloss; ctx.beginPath(); ctx.ellipse(cx, cy - R * 0.32, R * 0.74, R * 0.5, 0, 0, 6.283); ctx.fill();
 
   if (!unlocked) {
-    ctx.font = `${24 * s}px sans-serif`; ctx.fillStyle = '#eef0f4'; ctx.fillText('🔒', cx, cy + 8 * s);
+    ctx.font = `${26 * s}px sans-serif`; ctx.fillStyle = '#eef0f4'; ctx.fillText('🔒', cx, cy + 9 * s);
   } else {
-    ctx.font = `800 ${26 * s}px "Space Grotesk", sans-serif`; ctx.fillStyle = '#fff';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 4;
-    ctx.fillText(String(g.no), cx, cy + 9 * s); ctx.shadowBlur = 0;
+    // 번호 — 크고 굵게 + 어두운 외곽선으로 팝
+    ctx.font = `900 ${32 * s}px "Space Grotesk", sans-serif`;
+    ctx.lineWidth = 5 * s; ctx.lineJoin = 'round'; ctx.strokeStyle = `rgba(${c2},0.85)`;
+    ctx.strokeText(String(g.no), cx, cy + 11 * s);
+    ctx.fillStyle = '#fff'; ctx.fillText(String(g.no), cx, cy + 11 * s);
     if (done) {
       const bx = cx + R - 4 * s, by = cy - R + 6 * s, br = 11 * s;
       ctx.fillStyle = '#3ad07a'; ctx.beginPath(); ctx.arc(bx, by, br, 0, 6.283); ctx.fill();
