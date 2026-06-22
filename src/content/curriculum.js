@@ -36,13 +36,13 @@ export const ROOMS = {
 };
 
 export const CHAPTERS = [
-  { id: 'ch1', no: 1, label: '시작의 천막', short: '시작의 천막', act: '피지컬 코딩 기초', icon: '🎪',
+  { id: 'ch1', no: 1, label: '스타트 게이트', short: '스타트 게이트', act: '피지컬 코딩 기초', icon: '🎪',
     rooms: ['basics'] },
-  { id: 'ch2', no: 2, label: '기초의 전당', short: '기초의 전당', act: '센서 개별 체험', icon: '🏛️',
+  { id: 'ch2', no: 2, label: '비기너 아케이드', short: '비기너 아케이드', act: '센서 개별 체험', icon: '🕹️',
     rooms: ['led', 'buzzer', 'rgb', 'cds', 'pot', 'button'] },
-  { id: 'ch3', no: 3, label: '응용 대극장', short: '응용 대극장', act: '2종 조합 응용', icon: '🎭',
+  { id: 'ch3', no: 3, label: '마스터 아케이드', short: '마스터 아케이드', act: '2종 조합 응용', icon: '🎯',
     rooms: ['lamp', 'bomb'] },
-  { id: 'ch4', no: 4, label: '마법의 돔', short: '마법의 돔', act: '종합 프로젝트', icon: '🕌',
+  { id: 'ch4', no: 4, label: '챔피언 홀', short: '챔피언 홀', act: '종합 프로젝트', icon: '🏆',
     rooms: ['final'] },
 ];
 

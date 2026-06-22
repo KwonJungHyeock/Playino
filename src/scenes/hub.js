@@ -153,7 +153,7 @@ function drawPath(ctx, gates, t, s) {
   ctx.strokeStyle = 'rgba(255,255,255,0.55)';
   ctx.beginPath();
   for (let i = 0; i < gates.length; i++) {
-    const x = gates[i].gx, y = gates[i].gy + R + 16 * s;
+    const x = gates[i].gx, y = gates[i].gy;   // 노드 원 중앙을 통과
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   }
   ctx.stroke();

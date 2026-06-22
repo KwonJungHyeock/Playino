@@ -1083,12 +1083,12 @@ html, body {
 
 /* 플랫폼 로고 배지(둥근 박스, 고정) — 좌상단 공용 */
 /* 브랜드 뱃지 — 텍스트 대신 실제 로고(흰 칩이라 밝은/어두운 화면 모두 또렷) */
-.brand-badge { position: absolute; top: 18px; left: 22px; z-index: 4;
-  display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 14px;
+.brand-badge { position: absolute; top: 16px; left: 22px; z-index: 4;
+  display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 999px;
   background: rgba(255,255,255,.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,.75); box-shadow: 0 6px 18px rgba(50,40,90,.22); font-size: 0; }
 .brand-badge .brand-dot, .brand-badge b { display: none; }
-.brand-badge::before { content: ''; display: block; width: 112px; height: 25px;
+.brand-badge::before { content: ''; display: block; width: 108px; height: 24px;
   background: url(/brand/logo.webp) left center / contain no-repeat; }
 
 .pm-title { font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; line-height: 1.02;
@@ -1479,7 +1479,7 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 
 /* 전역 뒤로가기 버튼 — 모든 화면 좌상단 통일(루트에선 숨김). 기기/브라우저 뒤로·ESC 와 동일 동작 */
 .nav-back { position: fixed; top: 16px; left: 18px; z-index: 70; display: none; align-items: center; gap: 5px;
-  padding: 9px 16px 9px 13px; border-radius: 999px; background: rgba(255,255,255,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  height: 44px; padding: 0 18px 0 15px; border-radius: 999px; background: rgba(255,255,255,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,.75); color: #2c2440; font-weight: 800; font-size: 14px; cursor: pointer;
   box-shadow: 0 6px 18px rgba(50,40,90,.22); transition: background .15s, transform .12s; }
 .nav-back:hover { background: #fff; transform: translateX(-2px); }
