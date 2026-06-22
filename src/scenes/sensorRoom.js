@@ -987,12 +987,16 @@ function drawSign(ctx, s, active, t) {
   ctx.beginPath(); ctx.ellipse(cx, baseY, active ? 100 : 84, active ? 22 : 17, 0, 0, 6.283); ctx.fill();
   ctx.restore();
 
-  // 이미지 사인이 준비돼 있으면 그걸로(텍스트·디자인 고정)
+  // 이미지 사인(빈 마퀴 판)이 준비돼 있으면 그 위에 글자를 또렷하게 얹는다
   const im = SIGN_IMG[s.id];
   if (im && im.complete && im.naturalWidth) {
-    const iw = 262, ih = iw * (im.naturalHeight / im.naturalWidth);
+    const iw = 268, ih = iw * (im.naturalHeight / im.naturalWidth);
     ctx.save(); if (active) { ctx.shadowColor = `rgba(${acc},0.6)`; ctx.shadowBlur = 28; ctx.shadowOffsetY = 6; }
     ctx.drawImage(im, cx - iw / 2, by - ih / 2, iw, ih); ctx.restore();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#2a2438'; ctx.font = '900 26px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by + 6);
+    ctx.fillStyle = `rgb(${acc})`; ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 26);
+    ctx.textAlign = 'start';
     signArrow(ctx, cx, by, dir, acc, active, t, iw / 2);
     return;
   }
