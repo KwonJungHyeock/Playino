@@ -960,45 +960,53 @@ function doorGlow(ctx, x, VH, acc, k) {
 // 둥근 사각형 path
 function signRR(ctx, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
-// 입구 안내 — 떠 있는 글로시 파스텔 배너(말뚝 제거) + 방향 뱃지
+// 입구 안내 — 아케이드 마퀴 사인(전구 테두리·글로시 플라크) + 방향 뱃지. 역할 색 고정.
 function drawSign(ctx, s, active, t) {
   const dir = s.dir, cx = s.cx;
-  const acc = s.color || (s.id === 'play' ? '255,140,90' : '120,225,255');
+  const acc = s.id === 'play' ? '80,205,140' : '90,180,255';   // 체험관=초록 / 이론관=파랑 (모든 방 동일)
   const bob = Math.sin(t * 0.1 + (dir > 0 ? 1 : 0)) * (active ? 5 : 2.5);
   const by = s.signY + bob, baseY = s.postY;
-  const bw = 226, bh = 86, top = by - bh / 2;
+  const bw = 234, bh = 94, top = by - bh / 2, left = cx - bw / 2;
 
-  // 바닥 소프트 그림자(말뚝 대신 자연스럽게 지면에 앉힘)
+  // 바닥 소프트 그림자
   ctx.save();
   ctx.fillStyle = `rgba(40,28,52,${active ? 0.2 : 0.13})`;
-  ctx.beginPath(); ctx.ellipse(cx, baseY, active ? 98 : 82, active ? 22 : 17, 0, 0, 6.283); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx, baseY, active ? 100 : 84, active ? 22 : 17, 0, 0, 6.283); ctx.fill();
   ctx.restore();
 
-  // 배너 본체(흰→파스텔 그라데이션 + 드롭섀도)
+  // 플라크 본체(흰→파스텔 + 드롭섀도/글로우)
   ctx.save();
-  ctx.shadowColor = active ? `rgba(${acc},0.55)` : 'rgba(30,20,42,0.28)';
-  ctx.shadowBlur = active ? 30 : 20; ctx.shadowOffsetY = 9;
+  ctx.shadowColor = active ? `rgba(${acc},0.6)` : 'rgba(30,20,42,0.3)';
+  ctx.shadowBlur = active ? 32 : 20; ctx.shadowOffsetY = 9;
   const g = ctx.createLinearGradient(0, top, 0, top + bh);
-  g.addColorStop(0, 'rgba(255,255,255,0.97)'); g.addColorStop(1, `rgba(${acc},0.24)`);
-  ctx.fillStyle = g; signRR(ctx, cx - bw / 2, top, bw, bh, 26); ctx.fill();
+  g.addColorStop(0, 'rgba(255,255,255,0.98)'); g.addColorStop(1, `rgba(${acc},0.26)`);
+  ctx.fillStyle = g; signRR(ctx, left, top, bw, bh, 22); ctx.fill();
   ctx.restore();
-  // 컬러 테두리
-  ctx.strokeStyle = `rgba(${acc},0.95)`; ctx.lineWidth = 3.5; signRR(ctx, cx - bw / 2 + 2, top + 2, bw - 4, bh - 4, 23); ctx.stroke();
-  // 상단 글로시 하이라이트
-  ctx.fillStyle = 'rgba(255,255,255,0.55)'; signRR(ctx, cx - bw / 2 + 12, top + 9, bw - 24, bh * 0.3, 16); ctx.fill();
+  // 아케이드 컬러 프레임
+  ctx.strokeStyle = `rgb(${acc})`; ctx.lineWidth = 4; signRR(ctx, left + 2.5, top + 2.5, bw - 5, bh - 5, 19); ctx.stroke();
 
-  // 텍스트
+  // 마퀴 전구(상단 테두리) — 체이스 점등으로 아케이드 느낌
+  const nb = 9, pad = 18, span = bw - pad * 2;
+  for (let i = 0; i < nb; i++) {
+    const bx = left + pad + (span * i) / (nb - 1), byb = top + 12;
+    const lit = (Math.floor(t * 0.12) + i) % 2 === 0;
+    if (lit) { ctx.save(); ctx.shadowColor = `rgba(${acc},0.9)`; ctx.shadowBlur = 8; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bx, byb, 3.6, 0, 6.283); ctx.fill(); ctx.restore(); }
+    else { ctx.fillStyle = `rgba(${acc},0.5)`; ctx.beginPath(); ctx.arc(bx, byb, 3.2, 0, 6.283); ctx.fill(); }
+  }
+
+  // 텍스트(아이콘+이름, 부제)
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#2c2438'; ctx.font = '900 25px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by - 1);
-  ctx.fillStyle = `rgb(${acc})`; ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 20);
+  ctx.fillStyle = '#2a2438'; ctx.font = '900 26px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by + 8);
+  ctx.fillStyle = `rgb(${acc})`; ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 28);
 
-  // 방향 뱃지(문 쪽 원형 + 셰브론, 살짝 통통 튐)
-  const ax = cx + dir * (bw / 2 + 20) + dir * Math.abs(Math.sin(t * 0.16)) * 6, ay = by;
+  // 방향 뱃지(문 쪽 원형 + 셰브론, 통통 튐)
+  const ax = cx + dir * (bw / 2 + 22) + dir * Math.abs(Math.sin(t * 0.16)) * 6, ay = by;
   ctx.save();
-  if (active) { ctx.shadowColor = `rgba(${acc},0.9)`; ctx.shadowBlur = 18; }
-  ctx.fillStyle = `rgb(${acc})`; ctx.beginPath(); ctx.arc(ax, ay, 19, 0, 6.283); ctx.fill();
+  if (active) { ctx.shadowColor = `rgba(${acc},0.95)`; ctx.shadowBlur = 20; }
+  ctx.fillStyle = `rgb(${acc})`; ctx.beginPath(); ctx.arc(ax, ay, 20, 0, 6.283); ctx.fill();
   ctx.restore();
-  ctx.fillStyle = '#fff'; ctx.font = '900 21px "Space Grotesk", sans-serif'; ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ax, ay, 20, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = '900 22px "Space Grotesk", sans-serif'; ctx.textBaseline = 'middle';
   ctx.fillText(dir > 0 ? '▶' : '◀', ax, ay + 1);
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'start';
 }
