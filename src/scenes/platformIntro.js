@@ -51,8 +51,9 @@ export function showPlatformIntro(root, { onDone } = {}) {
     img.src = probe.src; img.hidden = false;
     el.querySelector('.pi-mark').hidden = true;
     el.querySelector('.pi-word').hidden = true;
+    el.querySelector('.pi-tag').hidden = true;   // 로고에 이미 태그라인 포함
   };
-  probe.src = '/brand/eduino-ai-logo.webp';
+  probe.src = '/brand/logo.webp';
 
   // 모드(카드 vs 로고)를 '먼저' 결정한 뒤에 화면을 띄운다.
   // → 로고 인트로가 떴다가 카드로 휙 바뀌는(이전 배경처럼 보이는) 전환 제거.

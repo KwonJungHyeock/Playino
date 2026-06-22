@@ -1023,8 +1023,9 @@ html, body {
 
 .pi-mark { width: 92px; height: 92px; margin: 0 auto 20px; animation: pi-pulse 3.4s ease-in-out infinite; }
 .pi-mark svg { width: 100%; height: 100%; display: block; }
-.pi-logo-img { max-width: min(440px, 74vw); margin: 0 auto 6px; display: block;
-  filter: drop-shadow(0 0 30px rgba(120,140,255,.35)); }
+.pi-logo-img { width: min(420px, 72vw); margin: 0 auto; display: block;
+  background: #fff; padding: 26px 38px; border-radius: 22px; box-sizing: border-box;
+  box-shadow: 0 18px 50px rgba(0,0,0,.5), 0 0 60px rgba(120,140,255,.3); }
 
 .pi-word { font-family: "Orbitron", "Space Grotesk", sans-serif; font-weight: 800;
   font-size: clamp(34px, 6vw, 58px); letter-spacing: 1px; margin: 0; line-height: 1; }
@@ -1081,12 +1082,14 @@ html, body {
 }
 
 /* 플랫폼 로고 배지(둥근 박스, 고정) — 좌상단 공용 */
+/* 브랜드 뱃지 — 텍스트 대신 실제 로고(흰 칩이라 밝은/어두운 화면 모두 또렷) */
 .brand-badge { position: absolute; top: 18px; left: 22px; z-index: 4;
-  display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 14px;
-  background: rgba(10,14,24,.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,.16); box-shadow: 0 6px 20px rgba(0,0,0,.35);
-  font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; font-size: 18px; letter-spacing: .3px; color: #eef3ff; }
-.brand-badge b { background: linear-gradient(92deg,#6fb7ff,#a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 14px;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.75); box-shadow: 0 6px 18px rgba(50,40,90,.22); font-size: 0; }
+.brand-badge .brand-dot, .brand-badge b { display: none; }
+.brand-badge::before { content: ''; display: block; width: 112px; height: 25px;
+  background: url(/brand/logo.webp) left center / contain no-repeat; }
 
 .pm-title { font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 800; line-height: 1.02;
   font-size: clamp(46px, 7.2vw, 92px); margin: 0; color: #fff; white-space: nowrap; letter-spacing: -.5px;
@@ -1300,10 +1303,10 @@ html, body {
 
 /* 사운드 토글 */
 .snd-toggle { position: fixed; bottom: 20px; right: 22px; z-index: 9; width: 44px; height: 44px; border-radius: 12px;
-  background: rgba(10,14,24,.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,.16); color: #fff; font-size: 18px; cursor: pointer;
-  display: grid; place-items: center; transition: transform .15s, background .15s; }
-.snd-toggle:hover { background: rgba(20,28,44,.72); transform: scale(1.06); }
+  background: rgba(255,255,255,.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.7); color: #2c2440; font-size: 18px; cursor: pointer;
+  box-shadow: 0 5px 16px rgba(50,40,90,.2); display: grid; place-items: center; transition: transform .15s, background .15s; }
+.snd-toggle:hover { background: #fff; transform: scale(1.06); }
 
 /* EDDIE 말풍선(메인) */
 .pm-eddie-say { position: absolute; z-index: 3; top: -8%; left: 50%; transform: translateX(-50%);
@@ -1468,16 +1471,18 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 
 /* ===== 시작의 천막 · 피지컬 코딩 기초(basics) ===== */
 .bx { position: relative; min-height: 100dvh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.bx-exit { position: absolute; top: 18px; right: 20px; z-index: 6; padding: 8px 14px; border-radius: 12px;
-  background: rgba(16,20,34,.55); border: 1px solid rgba(255,255,255,.16); color: #eaf1ff; font-weight: 700; font-size: 13px; cursor: pointer; }
-.bx-exit:hover { background: rgba(16,20,34,.78); }
+.bx-exit { position: absolute; top: 18px; right: 20px; z-index: 6; padding: 9px 15px; border-radius: 12px;
+  background: rgba(255,255,255,.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.7); color: #2c2440; font-weight: 800; font-size: 13px; cursor: pointer;
+  box-shadow: 0 5px 16px rgba(50,40,90,.2); }
+.bx-exit:hover { background: #fff; }
 
 /* 전역 뒤로가기 버튼 — 모든 화면 좌상단 통일(루트에선 숨김). 기기/브라우저 뒤로·ESC 와 동일 동작 */
 .nav-back { position: fixed; top: 16px; left: 18px; z-index: 70; display: none; align-items: center; gap: 5px;
-  padding: 9px 16px 9px 13px; border-radius: 999px; background: rgba(16,20,34,.62); backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,.2); color: #eaf1ff; font-weight: 800; font-size: 14px; cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0,0,0,.32); transition: background .15s, transform .12s; }
-.nav-back:hover { background: rgba(16,20,34,.85); transform: translateX(-2px); }
+  padding: 9px 16px 9px 13px; border-radius: 999px; background: rgba(255,255,255,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.75); color: #2c2440; font-weight: 800; font-size: 14px; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(50,40,90,.22); transition: background .15s, transform .12s; }
+.nav-back:hover { background: #fff; transform: translateX(-2px); }
 .nav-back:active { transform: translateX(-2px) scale(.96); }
 .nav-back-arrow { font-size: 17px; line-height: 1; }
 body[data-canback="1"] .nav-back { display: inline-flex; }
