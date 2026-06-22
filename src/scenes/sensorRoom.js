@@ -24,7 +24,7 @@ function roomImgFor(name) { const key = name || 'room-bg'; if (!roomCache[key]) 
 const ROOMS_CFG = {
   led: {
     name: '반짝반짝 라이트쇼', sensor: 'LED · 발광 다이오드', icon: '💡', accent: '255,200,74',
-    room: 'room-led-bg', eddie: null, signL: '120,225,255', signR: '255,158,90', control: 'led', blockPin: 13,
+    room: 'room-bg', eddie: null, signL: '120,225,255', signR: '255,158,90', control: 'led', blockPin: 13,
     intro: '이론관에서 LED를 배우고, 체험관에서 직접 연주해보자! 🎶',
     animTheory: 'led',
     captions: [
