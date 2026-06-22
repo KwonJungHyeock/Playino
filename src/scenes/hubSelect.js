@@ -75,12 +75,13 @@ export function showHubSelect(root, { onEnter, spawnAt } = {}) {
   dots.forEach((d, i) => d.onclick = () => go(i));
 
   const onKey = (e) => {
+    if (!scene.isConnected) { cleanup(); return; }   // 씬이 떠났으면(뒤로 등) 무시+정리
     if (e.key === 'ArrowLeft') { e.preventDefault(); go(focus - 1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); go(focus + 1); }
     else if (e.key === 'Enter' || e.code === 'Space') { e.preventDefault(); enter(); }
   };
   window.addEventListener('keydown', onKey);
-  const onResize = () => layout();
+  const onResize = () => { if (!scene.isConnected) { cleanup(); return; } layout(); };
   window.addEventListener('resize', onResize);
   requestAnimationFrame(() => requestAnimationFrame(layout));
   setTimeout(layout, 120);

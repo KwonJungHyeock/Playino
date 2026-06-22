@@ -89,12 +89,13 @@ export function showChapterSelect(root, { chapter, onRoom, onExit, onChapter, sp
   dots.forEach((d, i) => d.onclick = () => go(i));
 
   const onKey = (e) => {
+    if (!scene.isConnected) { cleanup(); return; }   // 씬이 떠났으면(뒤로 등) 무시+정리
     if (e.key === 'ArrowLeft') { e.preventDefault(); go(focus - 1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); go(focus + 1); }
     else if (e.key === 'Enter' || e.code === 'Space') { e.preventDefault(); play(); }
   };
   window.addEventListener('keydown', onKey);
-  const onResize = () => layout();
+  const onResize = () => { if (!scene.isConnected) { cleanup(); return; } layout(); };
   window.addEventListener('resize', onResize);
   requestAnimationFrame(() => requestAnimationFrame(layout));
   setTimeout(layout, 120);   // 폰트/이미지 로드 후 보정
