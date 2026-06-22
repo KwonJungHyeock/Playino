@@ -10,6 +10,7 @@ import { showLedGame } from './ledGame.js';
 import { showBuzzerGame } from './buzzerGame.js';
 import { showRgbGame } from './rgbGame.js';
 import { showCdsGame } from './cdsGame.js';
+import { showPotGame } from './potGame.js';
 import { showJoystickGame } from './joystickGame.js';
 import { showUltraGame } from './ultraGame.js';
 import { showButtonGame } from './buttonGame.js';
@@ -69,6 +70,18 @@ const ROOMS_CFG = {
       '자동 가로등·화면 밝기 자동조절… 빛 센서가 똑똑하게 켜고 꺼줘요 💡',
     ],
     play: (root, opt) => showCdsGame(root, opt),
+  },
+  pot: {
+    name: '볼륨 다이얼쇼', sensor: '가변저항(회전형) · 아날로그 입력', icon: '🎚️', accent: '180,150,255',
+    room: 'room-pot-bg', eddie: '/brand/eddie-dj.webp', signL: '180,150,255', signR: '120,230,160', control: 'pot', adc: 0,
+    intro: '이론관에서 가변저항(아날로그 입력)을 배우고,<br>체험관에서 다이얼을 돌려 볼륨쇼를 펼쳐보자! 🎚️',
+    animTheory: 'pot',
+    captions: [
+      '가변저항은 돌린 만큼 저항이 바뀌어 0~1023 값을 만들어요 — 아날로그 입력! 🎚️',
+      '버튼(0/1)과 달리 가운데 값도 다 있어요 — 살살 돌리면 값도 살살 변해요 📈',
+      '볼륨·밝기·선풍기 세기… 다이얼로 "얼마나"를 정하는 게 아날로그예요 🔊',
+    ],
+    play: (root, opt) => showPotGame(root, opt),
   },
   joystick: {
     name: '우주 조종 훈련소', sensor: '조이스틱 · X·Y·버튼', icon: '🕹️', accent: '150,120,255',
@@ -238,7 +251,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
     function renderAnim() {
       ew.hidden = false;
-      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : cfg.animTheory === 'joystick' ? joystickTheory() : cfg.animTheory === 'ultra' ? ultraTheory() : cfg.animTheory === 'button' ? buttonTheory() : buzzerTheory();
+      const ANIM = cfg.animTheory === 'led' ? ledTheory() : cfg.animTheory === 'rgb' ? rgbTheory() : cfg.animTheory === 'cds' ? cdsTheory() : cfg.animTheory === 'pot' ? potTheory() : cfg.animTheory === 'joystick' ? joystickTheory() : cfg.animTheory === 'ultra' ? ultraTheory() : cfg.animTheory === 'button' ? buttonTheory() : buzzerTheory();
       bodyEl.innerHTML = `
         <div class="tv-slider">
           <button class="tv-arrow" id="tv-prev">◀</button>
@@ -744,6 +757,36 @@ function cdsTheory() {
         <div class="rt-use u-swing"><span>🌅</span>스마트 커튼</div>
         <div class="rt-use u-beep"><span>🚨</span>침입 감지</div>
       </div><div class="ba-flow">어두워지면 <b>자동으로</b> 켜고, 밝아지면 꺼요 💡</div></div>` },
+  ];
+}
+
+// ───────── 가변저항 이론 애니메이션(코드로 직접) ─────────
+function potTheory() {
+  return [
+    { // ① 원리: 돌린 만큼 저항이 변함
+      html: `<div class="ba">
+        <div style="font-size:46px;letter-spacing:8px;margin:8px 0 4px">🎚️ ⟳ 〜 📈</div>
+        <div class="ba-flow">가변저항은 다이얼을 <b>돌린 만큼 저항</b>이 바뀌어요 — 그래서 값이 <b>조금씩</b> 변해요. 버튼(0/1)과 달리 <b>중간 값</b>도 다 있어요! 🎚️</div>
+      </div>` },
+    { // ② 아날로그 0~1023 (인터랙티브 볼륨)
+      html: `<div class="ba">
+        <div class="ct-meter"><div class="ct-meter-fill" id="ptf"></div></div>
+        <div class="ct-read">볼륨 <b id="ptv">500</b> <span id="pts">🔉 보통</span></div>
+        <div class="ct-slider"><span>🔈 0</span><input type="range" id="ptl" min="0" max="1023" value="500"><span>1023 🔊</span></div>
+        <div class="ba-flow">다이얼을 돌리면 <b>0~1023</b> 숫자가 부드럽게 변해요 — 작게 돌리면 작은 값, 끝까지 돌리면 큰 값! 📈</div>
+      </div>`,
+      init: (stage) => {
+        const l = stage.querySelector('#ptl'), f = stage.querySelector('#ptf'), v = stage.querySelector('#ptv'), s = stage.querySelector('#pts');
+        const upd = () => { const n = +l.value, pct = Math.round(n / 1023 * 100); f.style.width = pct + '%'; v.textContent = n; s.textContent = n < 300 ? '🔈 작게' : n > 720 ? '🔊 크게' : '🔉 보통'; };
+        l.oninput = upd; upd();
+      } },
+    { // ③ 활용
+      html: `<div class="ba"><div class="rt-uses">
+        <div class="rt-use u-bounce"><span>🔊</span>볼륨 조절</div>
+        <div class="rt-use u-shake"><span>💡</span>밝기 다이얼</div>
+        <div class="rt-use u-swing"><span>🌀</span>선풍기 세기</div>
+        <div class="rt-use u-beep"><span>🎛️</span>믹서·이퀄라이저</div>
+      </div><div class="ba-flow">"얼마나?"를 정하는 건 모두 아날로그! 다이얼로 <b>세기를 조절</b>해요 🎚️</div></div>` },
   ];
 }
 

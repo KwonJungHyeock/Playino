@@ -21,7 +21,9 @@ export function mountEddieRig(container, { hero } = {}) {
   // 방별 코스튬: hero 한 장만 둥실(리깅/포즈 건너뜀)
   if (hero) {
     el.innerHTML = `<img class="er-fallback" alt="EDDIE" />`;
-    el.querySelector('.er-fallback').src = hero;
+    const himg = el.querySelector('.er-fallback');
+    himg.onerror = () => { if (himg.src !== location.origin + FALLBACK) himg.src = FALLBACK; };  // 코스튬 누락 시 기본 히어로
+    himg.src = hero;
     container.appendChild(el);
     return el;
   }
