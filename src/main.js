@@ -10,7 +10,7 @@ import { showLogin } from './scenes/login.js';
 import { showSetup } from './scenes/setup.js';
 import { showBasics } from './scenes/basics.js';
 import { showSensorRoom } from './scenes/sensorRoom.js';
-import { showHub } from './scenes/hub.js';
+import { showHubSelect } from './scenes/hubSelect.js';
 import { showChapterSelect } from './scenes/chapterSelect.js';
 import { showDhtCoding } from './scenes/dhtCoding.js';
 import { showDht11Room } from './scenes/dht11room.js';
@@ -35,7 +35,7 @@ function sceneKits() { showKits(app(), { onDone: () => nav.push(sceneLogin) }); 
 function sceneLogin() { showLogin(app(), { onDone: () => nav.push(sceneSetup) }); }
 function sceneSetup() { showSetup(app(), { onDone: () => { progress.mark('setup'); nav.push(sceneHub); } }); }   // CH1 클리어
 
-function sceneHub() { showHub(app(), { onEnter: (chId) => nav.push(() => enterChapter(chId)), spawnAt: lastChapter }); }
+function sceneHub() { showHubSelect(app(), { onEnter: (chId) => nav.push(() => enterChapter(chId)), spawnAt: lastChapter }); }
 
 function enterChapter(chId) {
   lastChapter = chId;
