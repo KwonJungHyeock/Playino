@@ -246,7 +246,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume();
     }
     function stopRaf() { if (theoryRaf) { cancelAnimationFrame(theoryRaf); theoryRaf = null; } }
-    function renderTab() { stopRaf(); stopCdsPoll(); stopJoyPoll(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : cfg.control === 'joystick' ? renderJoystick() : cfg.control === 'ultra' ? renderUltra() : cfg.control === 'button' ? renderButton() : renderControl()); }
+    function renderTab() { stopRaf(); stopCdsPoll(); stopJoyPoll(); stopBlink(); tab === 'info' ? renderInfo() : (cfg.control === 'keys' ? renderKeys() : cfg.control === 'rgb' ? renderRgb() : cfg.control === 'cds' ? renderCds() : cfg.control === 'joystick' ? renderJoystick() : cfg.control === 'ultra' ? renderUltra() : cfg.control === 'button' ? renderButton() : renderControl()); }
 
     // 자료 — 코드 애니메이션 이론(부저 등). 정적 이미지 대신 직접 생동감 있게.
     function renderAnim() {
