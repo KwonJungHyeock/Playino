@@ -15,8 +15,7 @@ const FLAGS = PINS.length;
 const COL = ['70,150,255', '232,236,244'];      // 청기 파랑 / 백기 흰
 const NAME = ['청기', '백기'];
 const GAMES = [
-  { key: 'easy', no: 1, name: '느긋한 청기백기', count: 12, target: 9,  window: 1700, gap: 600, trick: 0.22 },
-  { key: 'hard', no: 2, name: '번개 청기백기',   count: 14, target: 11, window: 1050, gap: 420, trick: 0.34 },
+  { key: 'main', no: 1, name: '청기백기', count: 14, target: 10, window: 1350, gap: 520, trick: 0.28 },
 ];
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-flag-bg.png'; } }; bgImg.src = '/brand/stage-flag-bg.webp';
@@ -140,7 +139,7 @@ export function showFlagGame(root, { onExit } = {}) {
   root.querySelector('#fl-start').onclick = () => { root.querySelector('#fl-prep').classList.add('hide'); skipBtn.hidden = false; startFlow(); };
 
   // ── 상태 ──
-  const cleared = { easy: false, hard: false };
+  const cleared = {};
   let gi = 0, game = GAMES[0];
   const up = [false, false];           // 깃발 상태(올림/내림)
   const anim = [{ t: 0 }, { t: 0 }];   // 토글 애니메이션
@@ -154,9 +153,9 @@ export function showFlagGame(root, { onExit } = {}) {
   function nextGame() { if (gi >= GAMES.length) { finishAll(); return; } game = GAMES[gi]; showIntro(); }
   function showIntro() {
     bgm.setDuck(1); hud.hidden = true; pads.hidden = true;
-    const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🚩 ${game.name}</h2>
+    const el = panel(`<h2>🚩 ${game.name}</h2>
       <p class="prep-sub">명령 <b>${game.count}</b>번 중 <b>${game.target}</b>번 이상 맞히면 통과! 진행자의 말을 잘 듣고 깃발을 올리거나 내려요.
-        <b>이미 그 상태면 가만히!</b> ${game.no === 2 ? '명령이 더 빨라요 ⚡' : ''}</p>
+        <b>이미 그 상태면 가만히!</b></p>
       <p class="lp-cond">🚩 청기=버튼1(D4·포트3) · 백기=버튼2(D5·포트4)</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
   }
@@ -165,7 +164,7 @@ export function showFlagGame(root, { onExit } = {}) {
     up[0] = up[1] = false; anim[0].t = anim[1].t = 0;
     Object.assign(state, { phase: 'count', countT: performance.now(), score: 0, combo: 0, bestCombo: 0, target: game.target,
       ended: false, cmd: null, resolved: false, idx: 0, nextAt: performance.now() + 3000 + 400, judge: null });
-    elTarget.textContent = game.target; elStage.textContent = `${game.no}단계 · ${game.name}`; elLeft.textContent = game.count;
+    elTarget.textContent = game.target; elStage.textContent = game.name; elLeft.textContent = game.count;
     sync(); hud.hidden = false; pads.hidden = false;
   }
   function nextCommand(now) {
@@ -195,13 +194,13 @@ export function showFlagGame(root, { onExit } = {}) {
     bgm.setDuck(1); pads.hidden = true; const last = gi === GAMES.length - 1;
     const el = panel(`<div class="lp-grade lp-${grade}">${grade}<span>등급</span></div><h2>${pass ? '명령 완벽 수행! 🎉' : '조금 아쉬워요! 🚩'}</h2>
       <p class="prep-sub">${game.name} · 🚩 ${state.score}점 (목표 ${state.target}) · 최고 콤보 ${state.bestCombo}</p>
-      <p class="lp-cond">${pass ? (last ? '두 판 클리어! 메달을 받자 🏅' : '다음 판으로 ▶') : `목표 ${state.target}점에 살짝 모자라요 — 다시!`}</p>
-      <button class="cel-go" id="lp-next">${pass ? (last ? '메달 받기 🏅' : '다음 판 ▶') : '다시 도전 ▶'}</button>`);
+      <p class="lp-cond">${pass ? '청기백기 통과! 메달을 받자 🏅' : `목표 ${state.target}점에 살짝 모자라요 — 다시!`}</p>
+      <button class="cel-go" id="lp-next">${pass ? '메달 받기 🏅' : '다시 도전 ▶'}</button>`);
     el.querySelector('#lp-next').onclick = () => { el.remove(); if (pass) { cleared[game.key] = true; gi++; nextGame(); } else beginPlay(); };
   }
   function finishAll() {
     cleanup();
-    if (cleared.easy && cleared.hard) { progress.mark('flag'); celebrateRoom({ title: '청기백기 챔피언! 🚩', message: '명령(디지털 입력)을 잘 듣고 청기·백기를 척척 — 🚩 깃발 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
+    if (GAMES.every((g) => cleared[g.key])) { progress.mark('flag'); celebrateRoom({ title: '청기백기 챔피언! 🚩', message: '명령(디지털 입력)을 잘 듣고 청기·백기를 척척 — 🚩 깃발 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
     else onExit?.();
   }
   skipBtn.onclick = () => { document.querySelectorAll('.led-panel').forEach((e) => e.remove()); cleared[game.key] = true; state.ended = true; state.phase = 'result'; bgm.setDuck(1); gi++; nextGame(); };

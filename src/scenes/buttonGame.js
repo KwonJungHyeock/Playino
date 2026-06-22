@@ -12,8 +12,7 @@ import { board } from '../app/board.js';
 const PINS = [4, 5];   // 구멍 0·1 ↔ 택트스위치 핀 D4·D5 (쉴드 포트 3·4)
 const HOLES = PINS.length;
 const GAMES = [
-  { key: 'easy', no: 1, name: '느긋한 두더지 들판', time: 30, target: 8,  upMin: 950, upMax: 1500, gapMin: 700, gapMax: 1100, golden: 0.16 },
-  { key: 'hard', no: 2, name: '번개 두더지 들판',   time: 30, target: 13, upMin: 650, upMax: 1050, gapMin: 460, gapMax: 820,  golden: 0.22 },
+  { key: 'main', no: 1, name: '두더지 들판', time: 40, target: 14, upMin: 800, upMax: 1300, gapMin: 560, gapMax: 980, golden: 0.18 },
 ];
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-button-bg.png'; } }; bgImg.src = '/brand/stage-button-bg.webp';
@@ -138,7 +137,7 @@ export function showButtonGame(root, { onExit } = {}) {
   root.querySelector('#bt-start').onclick = () => { root.querySelector('#bt-prep').classList.add('hide'); skipBtn.hidden = false; startFlow(); };
 
   // ── 플로우 ──
-  const cleared = { easy: false, hard: false };
+  const cleared = {};
   let gi = 0, game = GAMES[0];
   const holes = Array.from({ length: HOLES }, () => ({ up: false, hit: false, golden: false, t: 0, dur: 0, pop: 0 }));
   const whack = Array(HOLES).fill(0), parts = [], pops = [], hitFx = Array(HOLES).fill(0);
@@ -150,8 +149,8 @@ export function showButtonGame(root, { onExit } = {}) {
   function nextGame() { if (gi >= GAMES.length) { finishAll(); return; } game = GAMES[gi]; showIntro(); }
   function showIntro() {
     bgm.setDuck(1); hud.hidden = true;
-    const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🔨 ${game.name}</h2>
-      <p class="prep-sub">${game.time}초 안에 두더지를 <b>${game.target}마리</b> 이상 잡으면 통과! 튀어나온 두더지의 버튼(또는 구멍 클릭·1·2·3)을 재빨리 눌러요. ✨금두더지=3점, 연속으로 잡으면 콤보 보너스! ${game.no === 2 ? '두더지가 더 빨라요 ⚡' : ''}</p>
+    const el = panel(`<h2>🔨 ${game.name}</h2>
+      <p class="prep-sub">${game.time}초 안에 두더지를 <b>${game.target}마리</b> 이상 잡으면 통과! 튀어나온 두더지의 버튼(또는 구멍 클릭·1·2)을 재빨리 눌러요. ✨금두더지=3점, 연속으로 잡으면 콤보 보너스!</p>
       <p class="lp-cond">⏱ 시간 안에 🔨 목표 점수 달성 = 통과!</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
   }
@@ -160,20 +159,20 @@ export function showButtonGame(root, { onExit } = {}) {
     for (const m of holes) Object.assign(m, { up: false, hit: false, golden: false, t: 0, dur: 0, pop: 0 });
     for (let i = 0; i < HOLES; i++) { whack[i] = 0; hitFx[i] = 0; }
     Object.assign(state, { phase: 'count', countT: performance.now(), score: 0, combo: 0, bestCombo: 0, target: game.target, timeLeft: game.time, ended: false, spawnAt: performance.now() + 800 });
-    elTarget.textContent = game.target; elStage.textContent = `${game.no}단계 · ${game.name}`; sync();
+    elTarget.textContent = game.target; elStage.textContent = game.name; sync();
     hud.hidden = false;
   }
   function showResult(grade, pass) {
     bgm.setDuck(1); const last = gi === GAMES.length - 1;
     const el = panel(`<div class="lp-grade lp-${grade}">${grade}<span>등급</span></div><h2>${pass ? '두더지 소탕! 🎉' : '시간 초과! ⏱'}</h2>
       <p class="prep-sub">${game.name} · 🔨 ${state.score}마리 (목표 ${state.target}) · 최고 콤보 ${state.bestCombo}</p>
-      <p class="lp-cond">${pass ? (last ? '두 들판 클리어! 메달을 받자 🏅' : '다음 들판으로 ▶') : `목표 ${state.target}마리에 조금 모자라요 — 다시!`}</p>
-      <button class="cel-go" id="lp-next">${pass ? (last ? '메달 받기 🏅' : '다음 들판 ▶') : '다시 도전 ▶'}</button>`);
+      <p class="lp-cond">${pass ? '두더지 소탕 완료! 메달을 받자 🏅' : `목표 ${state.target}마리에 조금 모자라요 — 다시!`}</p>
+      <button class="cel-go" id="lp-next">${pass ? '메달 받기 🏅' : '다시 도전 ▶'}</button>`);
     el.querySelector('#lp-next').onclick = () => { el.remove(); if (pass) { cleared[game.key] = true; gi++; nextGame(); } else beginPlay(); };
   }
   function finishAll() {
     cleanup();
-    if (cleared.easy && cleared.hard) { progress.mark('button'); celebrateRoom({ title: '두더지 마스터! 🔨', message: '버튼(디지털 입력)으로 두더지를 재빨리 잡았어요 — 🔨 두더지 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
+    if (GAMES.every((g) => cleared[g.key])) { progress.mark('button'); celebrateRoom({ title: '두더지 마스터! 🔨', message: '버튼(디지털 입력)으로 두더지를 재빨리 잡았어요 — 🔨 두더지 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
     else onExit?.();
   }
   skipBtn.onclick = () => { document.querySelectorAll('.led-panel').forEach((e) => e.remove()); cleared[game.key] = true; state.ended = true; state.phase = 'result'; bgm.setDuck(1); gi++; nextGame(); };
