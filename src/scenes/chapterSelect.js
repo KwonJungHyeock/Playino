@@ -44,6 +44,13 @@ export function showChapterSelect(root, { chapter, onRoom, onExit, onChapter, sp
 
   const track = root.querySelector('#cs-track');
   const cards = [...track.querySelectorAll('.cs-card')];
+  // 커버 로딩(webp → png 폴백)
+  track.querySelectorAll('.cs-screen').forEach((sc) => {
+    const id = sc.dataset.cover, im = new Image();
+    im.onload = () => { sc.style.backgroundImage = `url(${im.src})`; };
+    im.onerror = () => { if (!im._p) { im._p = 1; im.src = `/brand/game-${id}-cover.png`; } };
+    im.src = `/brand/game-${id}-cover.webp`;
+  });
   const dots = [...root.querySelectorAll('#cs-dots i')];
   const metaEl = root.querySelector('#cs-meta');
   const playBtn = root.querySelector('#cs-play');
@@ -100,7 +107,7 @@ function cardHtml(r, i) {
   const badge = cleared ? '🏅' : soon ? '🔒' : '';
   return `<button class="cs-card${soon ? ' is-soon' : ''}" data-i="${i}" style="--i:${i}">
     <div class="cs-cab">
-      <div class="cs-screen" style="background-image:url(/brand/game-${r.id}-cover.webp)"></div>
+      <div class="cs-screen" data-cover="${r.id}"></div>
       <div class="cs-scan"></div>
       ${badge ? `<span class="cs-badge">${badge}</span>` : ''}
       ${soon ? '<div class="cs-lock"></div>' : ''}
