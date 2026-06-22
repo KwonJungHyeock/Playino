@@ -1,6 +1,7 @@
-// platformIntro.js — 'Eduino AI' 플랫폼 인트로(스튜디오 ident).
+// platformIntro.js — 'Eduino AI' 플랫폼 인트로(아케이드 부트 + PRESS START).
 // 미니멀 블랙 + 중앙 로고 리빌 + 페이드 인/아웃. (레퍼런스 컨셉 차용, 색은 자체 정체성)
 // public/brand/eduino-ai-logo.webp 가 있으면 워드마크 대신 자동으로 그 로고를 사용한다.
+import { sfx } from '../app/sfx.js';
 
 const HOLD_MS = 4600;    // 등장 후 유지(페이드아웃 전) — 천천히 감상
 const OUT_MS = 1100;     // 페이드아웃
@@ -34,7 +35,7 @@ export function showPlatformIntro(root, { onDone } = {}) {
         <h1 class="pi-word"><span class="pi-e">Eduino</span> <span class="pi-ai">AI</span></h1>
         <div class="pi-tag">AIoT LEARNING PLATFORM</div>
       </div>
-      <div class="pi-skip">▶ 화면을 눌러 START ◀</div>
+      <div class="pi-skip"><span class="pi-press">PRESS START</span><small>화면을 누르거나 아무 키나 ▶</small></div>
     </div>`;
 
   const el = root.querySelector('#pintro');
@@ -86,7 +87,7 @@ export function showPlatformIntro(root, { onDone } = {}) {
     // 인트로가 사라지며 생기던 '남색+물방울' 비침 방지 — 다음 장면이 자기 진입 애니메이션으로 등장.
     el.remove(); onDone?.();
   };
-  const onSkip = () => finish();
+  const onSkip = () => { try { sfx.start(); } catch (_) {} finish(); };
   window.addEventListener('keydown', onSkip);
   window.addEventListener('pointerdown', onSkip);
   function cleanup() { window.removeEventListener('keydown', onSkip); window.removeEventListener('pointerdown', onSkip); clearTimeout(dT); clearTimeout(t1); clearTimeout(t2); }

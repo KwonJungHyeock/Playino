@@ -1098,13 +1098,18 @@ html, body {
   opacity: 0; transition: opacity .9s ease .55s; }
 .platform-intro.in .pi-tag { opacity: 1; }
 
-.pi-skip { position: absolute; left: 0; right: 0; bottom: 30px; text-align: center;
-  color: #3b4663; font-size: 12px; letter-spacing: .5px; z-index: 1; }
-/* 카드(아케이드) 모드: 네온 'START' 깜빡임 */
-.platform-intro.card-mode .pi-skip { bottom: 42px; z-index: 6; color: #fff; font-weight: 800;
-  font-size: 15px; letter-spacing: 4px; text-shadow: 0 0 10px rgba(120,200,255,.95), 0 0 24px rgba(150,120,255,.7);
-  animation: pi-blink 1.15s steps(1) infinite; }
-@keyframes pi-blink { 0%,62% { opacity: 1; } 63%,100% { opacity: .22; } }
+.pi-skip { position: absolute; left: 0; right: 0; bottom: 34px; text-align: center; z-index: 6;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pi-skip .pi-press { font-family: "Orbitron", "Space Grotesk", sans-serif; font-weight: 900; font-size: clamp(18px, 2.4vw, 26px); letter-spacing: 6px;
+  color: #fff; padding: 10px 26px; border-radius: 999px; border: 2px solid rgba(140,200,255,.8);
+  background: rgba(20,24,48,.4); backdrop-filter: blur(4px);
+  text-shadow: 0 0 12px rgba(120,200,255,.95), 0 0 26px rgba(150,120,255,.7);
+  box-shadow: 0 0 18px rgba(120,200,255,.5), inset 0 0 14px rgba(120,200,255,.25);
+  animation: pi-blink 1.1s steps(1) infinite; }
+.pi-skip small { color: rgba(255,255,255,.6); font-size: 11px; letter-spacing: 2px; }
+@keyframes pi-blink { 0%,60% { opacity: 1; } 61%,100% { opacity: .28; } }
+/* 카드(아케이드) 모드도 동일 PRESS START 사용 */
+.platform-intro.card-mode .pi-skip { bottom: 44px; }
 
 @keyframes pi-pulse {
   0%, 100% { filter: drop-shadow(0 0 16px rgba(111,183,255,.38)); transform: scale(1); }
@@ -1434,10 +1439,15 @@ html, body {
 
 /* ===== 로그인: 6자리 접속 코드 ===== */
 .code-inputs { display: flex; gap: 10px; justify-content: space-between; margin: 4px 0 18px; }
-.code-box { width: 100%; aspect-ratio: 3 / 4; text-align: center; font-size: 26px; font-weight: 800;
-  font-family: var(--mono); border-radius: 12px; border: 1.5px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.07); color: #fff; transition: border-color .15s, box-shadow .15s, background .15s; }
-.code-box:focus { outline: none; border-color: #6fb7ff; box-shadow: 0 0 0 3px rgba(111,183,255,.25); background: rgba(255,255,255,.12); }
+/* 아케이드 네온 코드 입장 칸 */
+.code-box { width: 100%; aspect-ratio: 3 / 4; text-align: center; font-size: 26px; font-weight: 900;
+  font-family: var(--mono); border-radius: 12px; border: 2px solid rgba(140,200,255,.3);
+  background: rgba(16,22,44,.5); color: #cfe6ff; caret-color: #6fb7ff;
+  transition: border-color .18s, box-shadow .18s, background .18s, color .18s, transform .18s; }
+.code-box:focus { outline: none; border-color: #6fb7ff; box-shadow: 0 0 0 3px rgba(111,183,255,.28), 0 0 16px rgba(111,183,255,.5); background: rgba(20,28,56,.7); }
+.code-box.filled { border-color: #5ad17a; color: #eafff1; background: rgba(20,46,34,.6);
+  box-shadow: 0 0 0 2px rgba(90,209,122,.35), 0 0 18px rgba(90,209,122,.55); text-shadow: 0 0 10px rgba(120,255,170,.8);
+  transform: translateY(-2px); }
 .btn.lg-go { width: 100%; height: 52px !important; max-height: 52px !important; min-height: 0 !important;
   font-size: 17px; font-weight: 700; border: none; color: #2a1200;
   background: linear-gradient(92deg,#ff9e3c,#ff5a8a); box-shadow: 0 12px 30px rgba(255,90,120,.35); }
@@ -2201,7 +2211,8 @@ body { word-break: keep-all; overflow-wrap: break-word; }
   background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.14); color: #fff;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   transition: transform .16s, border-color .16s, background .16s, box-shadow .16s; }
-.ms-opt:hover { transform: translateY(-6px); background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.34); box-shadow: 0 18px 44px rgba(0,0,0,.4); }
+.ms-opt:hover { transform: translateY(-6px); background: rgba(255,255,255,.1); border-color: rgba(140,200,255,.6); box-shadow: 0 18px 44px rgba(0,0,0,.4), 0 0 28px rgba(120,180,255,.4); }
+.ms-opt:hover .ms-scr-glow { opacity: 1; filter: brightness(1.3); }
 .ms-opt:active { transform: translateY(-2px) scale(.99); }
 .ms-opt.rec { border-color: #ffb13c; box-shadow: 0 14px 40px rgba(255,160,60,.25); }
 .ms-screen { position: relative; width: 124px; height: 92px; border-radius: 14px; display: grid; place-items: center;

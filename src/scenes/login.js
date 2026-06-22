@@ -47,7 +47,7 @@ export function showLogin(root, { onDone } = {}) {
   // 6자리 코드 입력(자동 이동·백스페이스·붙여넣기)
   const boxes = [...root.querySelectorAll('.code-box')];
   boxes.forEach((b, idx) => {
-    b.addEventListener('input', () => { b.value = b.value.replace(/\D/g, '').slice(0, 1); if (b.value) { sfx.hover(); if (idx < 5) boxes[idx + 1].focus(); } });
+    b.addEventListener('input', () => { b.value = b.value.replace(/\D/g, '').slice(0, 1); b.classList.toggle('filled', !!b.value); if (b.value) { sfx.hover(); if (idx < 5) boxes[idx + 1].focus(); } });
     b.addEventListener('keydown', (e) => {
       if (e.key === 'Backspace' && !b.value && idx > 0) boxes[idx - 1].focus();
       if (e.key === 'Enter') go();
@@ -55,7 +55,7 @@ export function showLogin(root, { onDone } = {}) {
     b.addEventListener('paste', (e) => {
       e.preventDefault();
       const d = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
-      d.split('').forEach((ch, k) => { if (boxes[k]) boxes[k].value = ch; });
+      d.split('').forEach((ch, k) => { if (boxes[k]) { boxes[k].value = ch; boxes[k].classList.add('filled'); } });
       if (d.length) boxes[Math.min(d.length, 5)].focus();
     });
   });
