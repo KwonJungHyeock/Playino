@@ -231,9 +231,10 @@ export function showPotGame(root, { onExit, onComplete } = {}) {
       const frac = (i + 0.5) / segs, sy = bot - (i + 1) * segH - i * gap;
       const on = frac <= level;
       const col = frac > 0.8 ? '255,90,90' : frac > 0.55 ? '255,210,90' : '120,230,140';
+      // shadowBlur(프레임당 18회)은 렉의 주범 → 켜진 칸은 밝은 본체+옅은 외곽선으로 글로우 흉내(저비용)
       ctx.fillStyle = on ? `rgb(${col})` : 'rgba(255,255,255,0.08)';
-      if (on) { ctx.save(); ctx.shadowColor = `rgba(${col},0.8)`; ctx.shadowBlur = 12; }
-      rr(ctx, x, sy, w, segH, 5); ctx.fill(); if (on) ctx.restore();
+      rr(ctx, x, sy, w, segH, 5); ctx.fill();
+      if (on) { ctx.strokeStyle = `rgba(${col},0.5)`; ctx.lineWidth = 2; ctx.stroke(); }
     }
     // 목표 표시
     if (game.mode === 'match' && m) {
