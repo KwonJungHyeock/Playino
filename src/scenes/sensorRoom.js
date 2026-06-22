@@ -98,7 +98,7 @@ const ROOMS_CFG = {
   button: {
     name: '두더지 잡기', sensor: '버튼(택트스위치) · 디지털 입력', icon: '🔨', accent: '255,170,90',
     room: 'room-button-bg', eddie: null, signL: '255,170,90', signR: '150,210,120',
-    control: 'button', pins: { b1: 5, b2: 6 }, floor: 0.82,
+    control: 'button', pins: { b1: 4, b2: 5 }, floor: 0.82,
     intro: '이론관에서 버튼(디지털 입력)을 배우고,<br>체험관에서 두더지를 잡아보자! 🔨',
     animTheory: 'button',
     captions: [
@@ -111,12 +111,12 @@ const ROOMS_CFG = {
   flag: {
     name: '청기백기', sensor: '택트스위치 2개 · 디지털 입력', icon: '🚩', accent: '90,150,255',
     room: 'room-flag-bg', eddie: '/brand/eddie-conductor.webp', signL: '90,150,255', signR: '210,215,230',
-    control: 'button', pins: { b1: 5, b2: 6 }, floor: 0.82,
+    control: 'button', pins: { b1: 4, b2: 5 }, floor: 0.82,
     intro: '이론관에서 버튼(디지털 입력)을 배우고,<br>체험관에서 청기·백기 명령에 맞춰 깃발을 올려보자! 🚩',
     animTheory: 'button',
     captions: [
       '버튼은 누름(1)/안 누름(0) 두 값만 있는 디지털 입력이에요 — 청기·백기 두 버튼! 🔘',
-      '버튼1=청기(D5), 버튼2=백기(D6) — 누름 신호로 깃발을 올리고 내려요 🚩',
+      '버튼1=청기(D4·포트3), 버튼2=백기(D5·포트4) — 누름 신호로 깃발을 올리고 내려요 🚩',
       '명령을 잘 듣고 빠르게 반응! 누름 신호 하나하나가 명령이 돼요 ⚡',
     ],
     play: (root, opt) => showFlagGame(root, opt),
@@ -532,7 +532,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
         <div class="dash joy-dash">
           <div class="dash-led">
             <div class="btn-lamps" id="btn-lamps">${[1, 2].map((n) => `<button class="btn-lamp" data-i="${n - 1}"><span></span><em>${n}</em></button>`).join('')}</div>
-            <div class="dl-pin">🔘 버튼을 누르면 그 핀이 <b>0 ↔ 1</b>로 바뀌어요<br><span>(버튼1=D5 · 버튼2=D6, 디지털 입력)</span></div>
+            <div class="dl-pin">🔘 버튼을 누르면 그 핀이 <b>0 ↔ 1</b>로 바뀌어요<br><span>(버튼1=D4·포트3 · 버튼2=D5·포트4, 디지털 입력)</span></div>
           </div>
           <div class="dash-cards">
             <div class="dcard"><div class="dc-h">📟 입력 상태 <span>눌림 = 1(ON)</span></div>

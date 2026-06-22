@@ -1,6 +1,6 @@
 // buttonGame.js — 두더지 잡기 (버튼/택트스위치 방 · 디지털 입력)
 // 구멍 2개에서 두더지가 불쑥! 해당 버튼(또는 화면 클릭·1·2 키)을 눌러 잡으면 점수.
-// 입력: 실물 택트스위치 2개(D5·D6, 디지털) — 연결 직후 쉬는 값을 기준으로 보정해 '눌림(변화)'을 감지.
+// 입력: 실물 택트스위치 2개(D4·D5, 디지털 / 쉴드 포트 3·4) — 연결 직후 쉬는 값을 기준으로 '눌림(변화)' 감지.
 //        보드가 없으면 화면 클릭/터치·키보드(1·2)로 플레이.
 // 1차 느긋한 들판 · 2차 빠른 들판. 두 판 통과 → 🔨 두더지 메달.
 import { sfx } from '../app/sfx.js';
@@ -9,7 +9,7 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = [5, 6];   // 구멍 0·1 ↔ 택트스위치 핀 (BOM: 택트 2개)
+const PINS = [4, 5];   // 구멍 0·1 ↔ 택트스위치 핀 D4·D5 (쉴드 포트 3·4)
 const HOLES = PINS.length;
 const GAMES = [
   { key: 'easy', no: 1, name: '느긋한 두더지 들판', time: 30, target: 8,  upMin: 950, upMax: 1500, gapMin: 700, gapMax: 1100, golden: 0.16 },
@@ -49,11 +49,11 @@ export function showButtonGame(root, { onExit } = {}) {
             <div class="prep-img" id="bt-wimg"><span class="prep-img-ph">🔘 결선 사진</span></div>
             <div class="prep-side">
               <table class="prep-table">
-                <thead><tr><th>택트스위치</th><th>아두이노</th></tr></thead>
+                <thead><tr><th>택트스위치</th><th>핀</th><th>쉴드 포트</th></tr></thead>
                 <tbody>
-                  <tr><td>버튼 1 (왼쪽)</td><td>D5</td></tr>
-                  <tr><td>버튼 2 (오른쪽)</td><td>D6</td></tr>
-                  <tr><td>공통</td><td>GND · VCC(5V)</td></tr>
+                  <tr><td>버튼 1 (왼쪽)</td><td>D4</td><td>포트 3</td></tr>
+                  <tr><td>버튼 2 (오른쪽)</td><td>D5</td><td>포트 4</td></tr>
+                  <tr><td>공통</td><td colspan="2">GND · VCC(5V) (포트에 함께 연결)</td></tr>
                 </tbody>
               </table>
               <div class="prep-status" id="bt-pstat">버튼을 누르면 그 칸 두더지를 잡아요! 보드가 없으면 <b>화면 구멍 클릭</b>이나 <b>1·2 키</b>로도 OK 🔨</div>
@@ -94,8 +94,8 @@ export function showButtonGame(root, { onExit } = {}) {
   const IMG_W = 1600, IMG_H = 900;
   // 두더지 구멍 2곳(좌·우) — stage-button-bg(1600×900)의 실제 구멍 위치에 맞춤(픽셀+육안 보정).
   const HOLE_UV = [
-    { u: 445 / IMG_W, v: 722 / IMG_H, rw: 80 },    // 왼쪽 구멍  (격자 검수: 중심 445,710)
-    { u: 1088 / IMG_W, v: 722 / IMG_H, rw: 80 },   // 오른쪽 구멍 (격자 검수: 중심 1088,710)
+    { u: 397 / IMG_W, v: 692 / IMG_H, rw: 74 },    // 왼쪽 구멍  (확대 격자 검수: 개구부 중심 397,690)
+    { u: 1115 / IMG_W, v: 692 / IMG_H, rw: 74 },   // 오른쪽 구멍 (확대 격자 검수: 개구부 중심 1115,690)
   ];
   function geom() {
     const sc = Math.max(W / IMG_W, H / IMG_H), dw = IMG_W * sc, dh = IMG_H * sc, ox = (W - dw) / 2, oy = (H - dh) / 2;
@@ -111,7 +111,7 @@ export function showButtonGame(root, { onExit } = {}) {
     for (let i = 0; i < HOLES; i++) if (Math.hypot(x - g[i].x, y - g[i].y) < g[i].r * 1.5) { bonk(i); return; }
   });
 
-  // 실물 택트스위치 폴링(D5·D6): 쉬는 값 기준으로 '눌림(변화)' 에지 감지 → 해당 구멍 타격.
+  // 실물 택트스위치 폴링(D4·D5): 쉬는 값 기준으로 '눌림(변화)' 에지 감지 → 해당 구멍 타격.
   let hwTimer = null;
   const rings = Array.from({ length: HOLES }, () => []), rest = Array(HOLES).fill(null), pressed = Array(HOLES).fill(false), RING = 4;
   const unanim = (r) => { if (r.length < RING) return null; const a = r[0]; for (const v of r) if (v !== a) return null; return a; };
@@ -259,7 +259,7 @@ export function showButtonGame(root, { onExit } = {}) {
     if (!ready(bgImg)) { ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H); } else { ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(0, 0, W, H); }
     const g = geom(), bgOk = ready(bgImg);
     for (let i = 0; i < HOLES; i++) {
-      const { x, y, r } = g[i], m = holes[i], headR = r * 0.86, clipB = y + r * 0.34;
+      const { x, y, r } = g[i], m = holes[i], headR = r * 0.86, clipB = y + r * 0.42;
       if (!bgOk) {   // 배경 이미지가 없을 때만 구멍을 직접 그림(폴백)
         const mg = ctx.createLinearGradient(0, y - r * 0.55, 0, y + r * 0.95); mg.addColorStop(0, '#b9824e'); mg.addColorStop(1, '#744d2c');
         ctx.fillStyle = mg; ctx.beginPath(); ctx.ellipse(x, y + r * 0.3, r * 1.7, r * 0.9, 0, 0, 6.283); ctx.fill();
@@ -274,7 +274,7 @@ export function showButtonGame(root, { onExit } = {}) {
         const mi = m.golden ? moleGoldImg : moleImg;
         if (ready(mi)) {
           const MW = (r * 2.5) / MOLE.cwFrac, MH = MW * MOLE.ar;
-          const cBottomY = (y + r * 0.85) + (1 - m.pop) * (MH * 0.92);   // pop=1 솟음 / pop=0 구멍 속
+          const cBottomY = (y + r * 0.92) + (1 - m.pop) * (MH * 0.92);   // pop=1 솟음 / pop=0 구멍 속
           const dx = x - MOLE.cx * MW, dy = cBottomY - MOLE.cBottom * MH;
           if (m.hit) ctx.globalAlpha = 0.92;
           ctx.drawImage(mi, dx, dy, MW, MH);

@@ -1,7 +1,7 @@
 // flagGame.js — 청기백기 (택트스위치 2개 · 디지털 입력)
-// 진행자(EDDIE)의 명령에 맞춰 청기(파랑·버튼1/D5)·백기(흰·버튼2/D6)를 올리고 내린다.
+// 진행자(EDDIE)의 명령에 맞춰 청기(파랑·버튼1/D4)·백기(흰·버튼2/D5)를 올리고 내린다.
 // 명령: "청기 올려/내려", "백기 올려/내려" — 이미 그 상태면 '함정'(누르면 실수!).
-// 입력: 실물 택트스위치 2개(D5·D6) 에지 감지 / 화면 버튼 / 키보드(1·2 또는 ←·→).
+// 입력: 실물 택트스위치 2개(D4·D5 / 쉴드 포트 3·4) 에지 감지 / 화면 버튼 / 키보드(1·2 또는 ←·→).
 // 판정: 명령 시간 안에 '지목된 깃발 = 목표 상태' + '다른 깃발 = 그대로'면 정답.
 // 1차 느긋 · 2차 빠름. 두 판 통과 → 🚩 깃발 메달.
 import { sfx } from '../app/sfx.js';
@@ -10,7 +10,7 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const PINS = [5, 6];   // 0=청기(파랑·D5), 1=백기(흰·D6)
+const PINS = [4, 5];   // 0=청기(파랑·D4·포트3), 1=백기(흰·D5·포트4)
 const FLAGS = PINS.length;
 const COL = ['70,150,255', '232,236,244'];      // 청기 파랑 / 백기 흰
 const NAME = ['청기', '백기'];
@@ -45,8 +45,8 @@ export function showFlagGame(root, { onExit } = {}) {
         <span class="lh-item">📩 <b id="fl-left">0</b></span>
       </div>
       <div class="flag-pads" id="fl-pads" hidden>
-        <button class="flag-pad blue" id="fl-b0"><span>🔵</span>청기<small>버튼1·D5</small></button>
-        <button class="flag-pad white" id="fl-b1"><span>⚪</span>백기<small>버튼2·D6</small></button>
+        <button class="flag-pad blue" id="fl-b0"><span>🔵</span>청기<small>버튼1·D4</small></button>
+        <button class="flag-pad white" id="fl-b1"><span>⚪</span>백기<small>버튼2·D5</small></button>
       </div>
       <div class="led-prep" id="fl-prep">
         <div class="prep-card" style="max-width:720px">
@@ -57,11 +57,11 @@ export function showFlagGame(root, { onExit } = {}) {
             <div class="prep-img" id="fl-wimg"><span class="prep-img-ph">🔘 결선 사진</span></div>
             <div class="prep-side">
               <table class="prep-table">
-                <thead><tr><th>택트스위치</th><th>아두이노</th></tr></thead>
+                <thead><tr><th>택트스위치</th><th>핀</th><th>쉴드 포트</th></tr></thead>
                 <tbody>
-                  <tr><td>버튼 1 (청기 🔵)</td><td>D5</td></tr>
-                  <tr><td>버튼 2 (백기 ⚪)</td><td>D6</td></tr>
-                  <tr><td>공통</td><td>GND · VCC(5V)</td></tr>
+                  <tr><td>버튼 1 (청기 🔵)</td><td>D4</td><td>포트 3</td></tr>
+                  <tr><td>버튼 2 (백기 ⚪)</td><td>D5</td><td>포트 4</td></tr>
+                  <tr><td>공통</td><td colspan="2">GND · VCC(5V) (포트에 함께 연결)</td></tr>
                 </tbody>
               </table>
               <div class="prep-status" id="fl-pstat">버튼을 누르면 그 깃발이 올라가요(다시 누르면 내려가요)! 보드 없으면 <b>화면 버튼</b>이나 <b>1·2 키</b>로도 OK 🚩</div>
@@ -113,7 +113,7 @@ export function showFlagGame(root, { onExit } = {}) {
   root.querySelector('#fl-b0').addEventListener('pointerdown', (e) => { e.preventDefault(); onPress(0); });
   root.querySelector('#fl-b1').addEventListener('pointerdown', (e) => { e.preventDefault(); onPress(1); });
 
-  // 실물 택트 폴링(D5·D6): 쉬는 값 기준 '눌림(변화)' 에지 감지 → 해당 깃발 토글.
+  // 실물 택트 폴링(D4·D5): 쉬는 값 기준 '눌림(변화)' 에지 감지 → 해당 깃발 토글.
   let hwTimer = null;
   const rings = Array.from({ length: FLAGS }, () => []), rest = Array(FLAGS).fill(null), pressed = Array(FLAGS).fill(false), RING = 4;
   const unanim = (r) => { if (r.length < RING) return null; const a = r[0]; for (const v of r) if (v !== a) return null; return a; };
@@ -157,7 +157,7 @@ export function showFlagGame(root, { onExit } = {}) {
     const el = panel(`<div class="lp-no">${game.no} / ${GAMES.length} 단계</div><h2>🚩 ${game.name}</h2>
       <p class="prep-sub">명령 <b>${game.count}</b>번 중 <b>${game.target}</b>번 이상 맞히면 통과! 진행자의 말을 잘 듣고 깃발을 올리거나 내려요.
         <b>이미 그 상태면 가만히!</b> ${game.no === 2 ? '명령이 더 빨라요 ⚡' : ''}</p>
-      <p class="lp-cond">🚩 청기=버튼1(D5) · 백기=버튼2(D6)</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
+      <p class="lp-cond">🚩 청기=버튼1(D4·포트3) · 백기=버튼2(D5·포트4)</p><button class="cel-go" id="lp-go">시작 ▶</button>`);
     el.querySelector('#lp-go').onclick = () => { el.remove(); beginPlay(); };
   }
   function beginPlay() {
