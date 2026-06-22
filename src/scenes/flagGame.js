@@ -28,7 +28,7 @@ const ready = (im) => im.complete && im.naturalWidth > 0;
 const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >= 0.5 ? 'C' : 'D';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-export function showFlagGame(root, { onExit } = {}) {
+export function showFlagGame(root, { onExit, onComplete, skipPrep } = {}) {
   root.innerHTML = `
     <div class="led scene-fade joygame flaggame">
       <div class="joy-stage-bg" id="fl-bg"></div>
@@ -137,6 +137,7 @@ export function showFlagGame(root, { onExit } = {}) {
   root.querySelector('#fl-connect').onclick = async () => { const b = root.querySelector('#fl-connect'); try { await board.connect(); b.textContent = '🔌 연결됨 ✓'; startHw(); pstat.innerHTML = '버튼을 한 번씩 눌러봐! 깃발이 오르락내리락 하면 준비 끝 🚩'; } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
   board.connectAuto().then(() => startHw()).catch(() => {});
   root.querySelector('#fl-start').onclick = () => { root.querySelector('#fl-prep').classList.add('hide'); skipBtn.hidden = false; startFlow(); };
+  if (skipPrep) setTimeout(() => { const p = root.querySelector('#fl-prep'); if (p) p.classList.add('hide'); skipBtn.hidden = false; startFlow(); }, 0);   // 순차 플레이: 결선 안내 건너뛰고 바로 시작
 
   // ── 상태 ──
   const cleared = {};
@@ -200,7 +201,10 @@ export function showFlagGame(root, { onExit } = {}) {
   }
   function finishAll() {
     cleanup();
-    if (GAMES.every((g) => cleared[g.key])) { progress.mark('flag'); celebrateRoom({ title: '청기백기 챔피언! 🚩', message: '명령(디지털 입력)을 잘 듣고 청기·백기를 척척 — 🚩 깃발 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
+    if (GAMES.every((g) => cleared[g.key])) {
+      if (onComplete) { onComplete(); return; }   // 순차 플레이: 최종 메달은 호출측에서
+      progress.mark('flag'); celebrateRoom({ title: '청기백기 챔피언! 🚩', message: '명령(디지털 입력)을 잘 듣고 청기·백기를 척척 — 🚩 깃발 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() });
+    }
     else onExit?.();
   }
   skipBtn.onclick = () => { document.querySelectorAll('.led-panel').forEach((e) => e.remove()); cleared[game.key] = true; state.ended = true; state.phase = 'result'; bgm.setDuck(1); gi++; nextGame(); };

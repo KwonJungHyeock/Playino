@@ -25,7 +25,7 @@ const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >=
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-export function showButtonGame(root, { onExit } = {}) {
+export function showButtonGame(root, { onExit, onComplete } = {}) {
   root.innerHTML = `
     <div class="led scene-fade joygame buttongame">
       <div class="joy-stage-bg" id="bt-bg"></div>
@@ -166,13 +166,16 @@ export function showButtonGame(root, { onExit } = {}) {
     bgm.setDuck(1); const last = gi === GAMES.length - 1;
     const el = panel(`<div class="lp-grade lp-${grade}">${grade}<span>등급</span></div><h2>${pass ? '두더지 소탕! 🎉' : '시간 초과! ⏱'}</h2>
       <p class="prep-sub">${game.name} · 🔨 ${state.score}마리 (목표 ${state.target}) · 최고 콤보 ${state.bestCombo}</p>
-      <p class="lp-cond">${pass ? '두더지 소탕 완료! 메달을 받자 🏅' : `목표 ${state.target}마리에 조금 모자라요 — 다시!`}</p>
-      <button class="cel-go" id="lp-next">${pass ? '메달 받기 🏅' : '다시 도전 ▶'}</button>`);
+      <p class="lp-cond">${pass ? (onComplete ? '잘했어! 이어서 청기백기 🚩' : '두더지 소탕 완료! 메달을 받자 🏅') : `목표 ${state.target}마리에 조금 모자라요 — 다시!`}</p>
+      <button class="cel-go" id="lp-next">${pass ? (onComplete ? '청기백기 하러 가기 ▶' : '메달 받기 🏅') : '다시 도전 ▶'}</button>`);
     el.querySelector('#lp-next').onclick = () => { el.remove(); if (pass) { cleared[game.key] = true; gi++; nextGame(); } else beginPlay(); };
   }
   function finishAll() {
     cleanup();
-    if (GAMES.every((g) => cleared[g.key])) { progress.mark('button'); celebrateRoom({ title: '두더지 마스터! 🔨', message: '버튼(디지털 입력)으로 두더지를 재빨리 잡았어요 — 🔨 두더지 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() }); }
+    if (GAMES.every((g) => cleared[g.key])) {
+      if (onComplete) { onComplete(); return; }   // 순차 플레이: 다음(청기백기)로
+      progress.mark('button'); celebrateRoom({ title: '두더지 마스터! 🔨', message: '버튼(디지털 입력)으로 두더지를 재빨리 잡았어요 — 🔨 두더지 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => onExit?.() });
+    }
     else onExit?.();
   }
   skipBtn.onclick = () => { document.querySelectorAll('.led-panel').forEach((e) => e.remove()); cleared[game.key] = true; state.ended = true; state.phase = 'result'; bgm.setDuck(1); gi++; nextGame(); };

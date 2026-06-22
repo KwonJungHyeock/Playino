@@ -1,4 +1,4 @@
-// curriculum.js — Eduino AI : 미니게임천국 커리큘럼 단일 공급원(4무대 · 11 미니게임).
+// curriculum.js — Eduino AI : 미니게임천국 커리큘럼 단일 공급원(4무대 · 10 미니게임 부스).
 // 학습 라벨(기초/응용 등)을 메인으로, '미니게임천국' 서사(무대 퍼포먼스)를 스토리 레이어로 얹는다.
 // 스토리: EDDIE가 4개 무대를 돌며 미니게임을 성공시켜 메달·티켓·별을 모으고,
 //         모두 모으면 👑 '천국의 왕관' = 학습 100% 완료(졸업).
@@ -25,8 +25,7 @@ export const ROOMS = {
   rgb:    R('rgb', 'ch2', '무지개 물감놀이', '🌈', 'PWM 색 혼합', '색을 섞어 정답 색 만들기', '🌈 무지개 메달', 'rgb'),
   cds:    R('cds', 'ch2', '손그림자 마술', '🔆', '아날로그 입력(빛)', '조도센서로 빛 가리기 반응', '🔆 햇살 메달', 'cds'),
   pot:    R('pot', 'ch2', '볼륨 다이얼쇼', '🎚️', '아날로그 입력', '가변저항 다이얼 맞추기', '🎚️ 다이얼 메달'),
-  button: R('button', 'ch2', '두더지 잡기', '🔘', '디지털 입력(버튼 2개)', '택트스위치 2개로 두더지 잡기', '🔨 두더지 메달', 'button'),
-  flag:   R('flag', 'ch2', '청기백기', '🚩', '디지털 입력(버튼 2개)', '명령 따라 청기·백기 버튼 누르기', '🚩 깃발 메달', 'flag'),
+  button: R('button', 'ch2', '두더지 & 청기백기', '🔨', '디지털 입력(버튼 2개)', '두더지 잡기 → 청기백기 (택트 2개)', '🔨🚩 버튼 메달', 'button'),
 
   // 🎭 응용 대극장 (2종 조합 · 2) — BOM 부품만으로 신규 설계
   lamp:   R('lamp', 'ch3', '빛 마법 램프', '🪔', '조도센서 + RGB (입력→색 출력)', '손 그림자로 빛을 조절해 마법 램프 색 맞추기', '🪔 램프 스타'),
@@ -40,7 +39,7 @@ export const CHAPTERS = [
   { id: 'ch1', no: 1, label: '시작의 천막', short: '시작의 천막', act: '피지컬 코딩 기초', icon: '🎪',
     rooms: ['basics'] },
   { id: 'ch2', no: 2, label: '기초의 전당', short: '기초의 전당', act: '센서 개별 체험', icon: '🏛️',
-    rooms: ['led', 'buzzer', 'rgb', 'cds', 'pot', 'button', 'flag'] },
+    rooms: ['led', 'buzzer', 'rgb', 'cds', 'pot', 'button'] },
   { id: 'ch3', no: 3, label: '응용 대극장', short: '응용 대극장', act: '2종 조합 응용', icon: '🎭',
     rooms: ['lamp', 'bomb'] },
   { id: 'ch4', no: 4, label: '마법의 돔', short: '마법의 돔', act: '종합 프로젝트', icon: '🕌',
@@ -67,7 +66,7 @@ export function chapterUnlocked(id) {
 }
 
 export const allRoomIds = () => CHAPTERS.flatMap((c) => c.rooms);
-export const overallTotal = () => allRoomIds().length;                 // 11
+export const overallTotal = () => allRoomIds().length;                 // 10
 export const overallCleared = () => allRoomIds().filter((id) => progress.isCleared(id)).length;
 export const overallPercent = () => Math.round((overallCleared() / overallTotal()) * 100);
 export const allDone = () => overallCleared() >= overallTotal();

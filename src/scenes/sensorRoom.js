@@ -14,6 +14,7 @@ import { showJoystickGame } from './joystickGame.js';
 import { showUltraGame } from './ultraGame.js';
 import { showButtonGame } from './buttonGame.js';
 import { showFlagGame } from './flagGame.js';
+import { celebrateRoom } from './celebrate.js';
 import { nav } from '../app/nav.js';
 
 const roomCache = {};
@@ -96,30 +97,24 @@ const ROOMS_CFG = {
     play: (root, opt) => showUltraGame(root, opt),
   },
   button: {
-    name: '두더지 잡기', sensor: '버튼(택트스위치) · 디지털 입력', icon: '🔨', accent: '255,170,90',
-    room: 'room-button-bg', eddie: null, signL: '255,170,90', signR: '150,210,120',
+    name: '두더지 & 청기백기', sensor: '택트스위치 2개 · 디지털 입력', icon: '🔨', accent: '255,170,90',
+    room: 'room-button-bg', eddie: null, signL: '255,170,90', signR: '90,150,255',
     control: 'button', pins: { b1: 4, b2: 5 }, floor: 0.82,
-    intro: '이론관에서 버튼(디지털 입력)을 배우고,<br>체험관에서 두더지를 잡아보자! 🔨',
+    intro: '이론관에서 버튼(디지털 입력)을 배우고,<br>체험관에서 두더지 잡기 → 청기백기 순서로 즐겨보자! 🔨🚩',
     animTheory: 'button',
     captions: [
       '버튼은 누름(1)/안 누름(0) 두 값만 있는 디지털 입력이에요 — 켜짐/꺼짐! 🔘',
-      '누르는 순간이 또렷하게 0↔1로 바뀌어요. 그 변화를 읽어 반응해요 ⚡',
-      '키보드·게임패드·엘리베이터 버튼… 누름 신호로 명령을 전해요 🎮',
+      '버튼1=D4(포트3), 버튼2=D5(포트4) — 누르는 순간 0↔1로 또렷하게 바뀌어요 ⚡',
+      '두더지 잡기(반응)·청기백기(명령 따라) — 한 방에서 두 게임! 🎮',
     ],
-    play: (root, opt) => showButtonGame(root, opt),
-  },
-  flag: {
-    name: '청기백기', sensor: '택트스위치 2개 · 디지털 입력', icon: '🚩', accent: '90,150,255',
-    room: 'room-flag-bg', eddie: '/brand/eddie-conductor.webp', signL: '90,150,255', signR: '210,215,230',
-    control: 'button', pins: { b1: 4, b2: 5 }, floor: 0.82,
-    intro: '이론관에서 버튼(디지털 입력)을 배우고,<br>체험관에서 청기·백기 명령에 맞춰 깃발을 올려보자! 🚩',
-    animTheory: 'button',
-    captions: [
-      '버튼은 누름(1)/안 누름(0) 두 값만 있는 디지털 입력이에요 — 청기·백기 두 버튼! 🔘',
-      '버튼1=청기(D4·포트3), 버튼2=백기(D5·포트4) — 누름 신호로 깃발을 올리고 내려요 🚩',
-      '명령을 잘 듣고 빠르게 반응! 누름 신호 하나하나가 명령이 돼요 ⚡',
-    ],
-    play: (root, opt) => showFlagGame(root, opt),
+    // 택트 2개로 두 게임 순차 플레이: 두더지 → 청기백기 → 메달
+    play: (root, opt) => showButtonGame(root, {
+      onExit: opt.onExit,
+      onComplete: () => showFlagGame(root, {
+        onExit: opt.onExit, skipPrep: true,
+        onComplete: () => { progress.mark('button'); celebrateRoom({ title: '택트스위치 마스터! 🔨🚩', message: '두더지 잡기와 청기백기를 모두 클리어 — 메달 획득!', exitLabel: '전시관으로 ▶', onExit: () => opt.onExit?.() }); },
+      }),
+    }),
   },
 };
 
