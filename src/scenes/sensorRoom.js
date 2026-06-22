@@ -73,7 +73,7 @@ const ROOMS_CFG = {
   },
   pot: {
     name: '볼륨 다이얼쇼', sensor: '가변저항(회전형) · 아날로그 입력', icon: '🎚️', accent: '180,150,255',
-    room: 'room-pot-bg', eddie: '/brand/eddie-dj.webp', signL: '180,150,255', signR: '120,230,160', control: 'pot', adc: 0,
+    room: 'room-pot-bg', eddie: '/brand/eddie-dj.png', signL: '180,150,255', signR: '120,230,160', control: 'pot', adc: 0,
     intro: '이론관에서 가변저항(아날로그 입력)을 배우고,<br>체험관에서 다이얼을 돌려 볼륨쇼를 펼쳐보자! 🎚️',
     animTheory: 'pot',
     captions: [
