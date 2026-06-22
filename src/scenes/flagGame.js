@@ -222,19 +222,25 @@ export function showFlagGame(root, { onExit } = {}) {
   }
 
   function drawFlag(x, by, raise, idx, glow) {
-    const poleH = H * 0.40, topY = by - poleH;
-    // 깃대
-    ctx.strokeStyle = '#8a6a40'; ctx.lineWidth = Math.max(5, W * 0.007); ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x, by); ctx.lineTo(x, topY); ctx.stroke();
-    ctx.fillStyle = '#f2c14e'; ctx.beginPath(); ctx.arc(x, topY, ctx.lineWidth * 1.0, 0, 6.283); ctx.fill();
-    // 깃발: raise 0(아래)~1(위) — 깃대를 따라 미끄러져 오르내림
     const im = flagImg[idx], hasIm = ready(im);
-    const fw = W * 0.17, fh = hasIm ? fw * (im.naturalHeight / im.naturalWidth) : H * 0.13;
-    const fy = topY + (1 - raise) * (poleH * 0.52);
-    if (glow) { ctx.save(); ctx.shadowColor = `rgba(${COL[idx]},0.95)`; ctx.shadowBlur = 26; }
     if (hasIm) {
-      ctx.drawImage(im, x - fw * 0.04, fy, fw, fh);   // 이미지 깃발(왼쪽 끝이 깃대에 붙음)
+      // 이미지 깃발(손잡이 포함): 손잡이 끝을 피벗으로 올리고/내리기 회전. 왼쪽 깃발은 좌우반전.
+      const fh = H * 0.34, fw = fh * (im.naturalWidth / im.naturalHeight);
+      const gx = 0.136 * fw, gy = 0.96 * fh;            // 손잡이 끝(피벗)
+      const side = idx === 0 ? -1 : 1;
+      ctx.save();
+      ctx.translate(x, by); ctx.scale(side, 1);
+      ctx.rotate((1 - raise) * 1.05 - 0.04);            // 올림≈세움 / 내림≈바깥 아래로
+      if (glow) { ctx.shadowColor = `rgba(${COL[idx]},0.95)`; ctx.shadowBlur = 28; }
+      ctx.drawImage(im, -gx, -gy, fw, fh);
+      ctx.restore();
     } else {
+      const poleH = H * 0.40, topY = by - poleH;
+      ctx.strokeStyle = '#8a6a40'; ctx.lineWidth = Math.max(5, W * 0.007); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x, by); ctx.lineTo(x, topY); ctx.stroke();
+      ctx.fillStyle = '#f2c14e'; ctx.beginPath(); ctx.arc(x, topY, ctx.lineWidth, 0, 6.283); ctx.fill();
+      const fw = W * 0.17, fh = H * 0.13, fy = topY + (1 - raise) * (poleH * 0.52);
+      if (glow) { ctx.save(); ctx.shadowColor = `rgba(${COL[idx]},0.95)`; ctx.shadowBlur = 26; }
       const wave = Math.sin(performance.now() / 160 + idx) * fh * 0.12;
       ctx.fillStyle = `rgb(${COL[idx]})`; ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(x, fy);
@@ -242,11 +248,11 @@ export function showFlagGame(root, { onExit } = {}) {
       ctx.quadraticCurveTo(x + fw * 0.5, fy + fh * 0.5 + wave, x + fw, fy + fh * 0.84 + wave);
       ctx.lineTo(x, fy + fh); ctx.closePath(); ctx.fill(); ctx.stroke();
       if (idx === 0) { ctx.fillStyle = '#fff'; ctx.font = `${fh * 0.5}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★', x + fw * 0.5, fy + fh * 0.5); }
+      if (glow) ctx.restore();
     }
-    if (glow) ctx.restore();
     // 라벨
     ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.strokeStyle = `rgba(${COL[idx]},0.9)`; ctx.lineWidth = 2;
-    const lw = W * 0.09, lh = H * 0.05, lx = x - lw * 0.1, ly = by + 6;
+    const lw = W * 0.09, lh = H * 0.05, lx = x - lw * 0.5, ly = by + 8;
     rrect(lx, ly, lw, lh, 8); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#2a2f3a'; ctx.font = `800 ${lh * 0.5}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(`${idx === 0 ? '🔵' : '⚪'} ${NAME[idx]}`, lx + lw / 2, ly + lh / 2);

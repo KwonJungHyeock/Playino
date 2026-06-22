@@ -17,6 +17,10 @@ const GAMES = [
 ];
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-button-bg.png'; } }; bgImg.src = '/brand/stage-button-bg.webp';
+// 두더지 이미지(있으면 사용, 없으면 캔버스 moleHead 폴백) — 콘텐츠 기준 정렬값
+const moleImg = new Image(); moleImg.src = '/brand/mole.webp';
+const moleGoldImg = new Image(); moleGoldImg.src = '/brand/mole-gold.webp';
+const MOLE = { cx: 0.5, cBottom: 0.927, cwFrac: 0.962, ar: 520 / 420 };  // 이미지 내 콘텐츠 중심/바닥/폭비/종횡비
 const ready = (im) => im.complete && im.naturalWidth > 0;
 const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >= 0.5 ? 'C' : 'D';
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -262,12 +266,23 @@ export function showButtonGame(root, { onExit } = {}) {
         const hg = ctx.createRadialGradient(x, y - r * 0.08, r * 0.12, x, y, r); hg.addColorStop(0, '#140b04'); hg.addColorStop(1, '#3c2614');
         ctx.fillStyle = hg; ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.5, 0, 0, 6.283); ctx.fill();
       }
-      // 두더지: 구멍 앞테두리 위로만 보이게 클립해 '쏙' 올라오게
+      // 두더지: 구멍 앞테두리(clipB) 위로만 보이게 클립해 '쏙' 올라오게
       if (m.pop > 0.02) {
-        ctx.save(); ctx.beginPath(); ctx.rect(x - r * 1.05, 0, r * 2.1, clipB); ctx.clip();
-        const cy = (y + r * 1.2) - m.pop * (r * 1.9);
+        ctx.save(); ctx.beginPath(); ctx.rect(x - r * 1.6, 0, r * 3.2, clipB); ctx.clip();
+        // 그림자(구멍 바닥 접지)
         ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x, clipB - r * 0.04, headR * 0.85, r * 0.16, 0, 0, 6.283); ctx.fill();
-        moleHead(x, cy, headR, m.golden, m.hit);
+        const mi = m.golden ? moleGoldImg : moleImg;
+        if (ready(mi)) {
+          const MW = (r * 2.5) / MOLE.cwFrac, MH = MW * MOLE.ar;
+          const cBottomY = (y + r * 0.85) + (1 - m.pop) * (MH * 0.92);   // pop=1 솟음 / pop=0 구멍 속
+          const dx = x - MOLE.cx * MW, dy = cBottomY - MOLE.cBottom * MH;
+          if (m.hit) ctx.globalAlpha = 0.92;
+          ctx.drawImage(mi, dx, dy, MW, MH);
+          ctx.globalAlpha = 1;
+        } else {
+          const cy = (y + r * 1.2) - m.pop * (r * 1.9);
+          moleHead(x, cy, headR, m.golden, m.hit);
+        }
         ctx.restore();
       }
       if (!bgOk) { ctx.fillStyle = '#2c1b0d'; ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.5, 0, 0, Math.PI); ctx.fill(); }
