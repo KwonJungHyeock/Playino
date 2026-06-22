@@ -8,7 +8,7 @@ import { mountCurriculumHeader } from '../app/curriculumHeader.js';
 import { getChapter, chapterRooms, isRoomCleared } from '../content/curriculum.js';
 
 let CARD_W = 184, CARD_H = 128;          // 단일 부스면 더 크게(showChapter에서 조정)
-const COL_W = 248, ROW_H = 224, MARGIN = 80;
+const COL_W = 312, ROW_H = 288, MARGIN = 80;
 const PAL = [['255,200,74', '255,170,40'], ['255,122,184', '233,80,150'], ['90,201,255', '40,160,235'], ['155,140,255', '120,100,235'], ['120,220,150', '60,185,110']];
 
 // 스테이지별 배경(있으면 사용): /brand/stage-{chapterId}-bg.webp (없으면 .png 도 시도)
@@ -33,9 +33,10 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   const ch = getChapter(chapter);
   const rooms = chapterRooms(chapter);
   // 부스가 하나뿐이면 크게(휑함 방지). 여러 개면 표준 크기.
-  CARD_W = rooms.length <= 1 ? 320 : 188;
-  CARD_H = rooms.length <= 1 ? 210 : 154;
-  const cols = rooms.length <= 3 ? rooms.length : rooms.length <= 8 ? 4 : 5;
+  CARD_W = rooms.length <= 1 ? 340 : 240;
+  CARD_H = rooms.length <= 1 ? 222 : 196;
+  // 6개 부스 = 3개씩 두 줄(3×2). 4~6개는 3열, 7~8개는 4열.
+  const cols = rooms.length <= 1 ? 1 : rooms.length <= 3 ? rooms.length : rooms.length <= 6 ? 3 : rooms.length <= 8 ? 4 : 5;
   const rowsN = Math.ceil(rooms.length / cols);
 
   // 뷰포트에 맞춰 월드를 채우고(작아 보이던 문제), 부스 격자를 '가운데' 정렬
