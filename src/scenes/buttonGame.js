@@ -93,8 +93,8 @@ export function showButtonGame(root, { onExit } = {}) {
   const IMG_W = 1600, IMG_H = 900;
   // 두더지 구멍 2곳(좌·우) — stage-button-bg(1600×900)의 실제 구멍 위치에 맞춤(픽셀+육안 보정).
   const HOLE_UV = [
-    { u: 397 / IMG_W, v: 674 / IMG_H, rw: 74 },    // 왼쪽 구멍 (살짝 위로)
-    { u: 1137 / IMG_W, v: 692 / IMG_H, rw: 74 },   // 오른쪽 구멍 (살짝 오른쪽)
+    { u: 397 / IMG_W, v: 674 / IMG_H, rw: 74 },    // 왼쪽 구멍
+    { u: 1155 / IMG_W, v: 672 / IMG_H, rw: 74 },   // 오른쪽 구멍 (오른쪽·위로)
   ];
   function geom() {
     const sc = Math.max(W / IMG_W, H / IMG_H), dw = IMG_W * sc, dh = IMG_H * sc, ox = (W - dw) / 2, oy = (H - dh) / 2;
@@ -197,6 +197,7 @@ export function showButtonGame(root, { onExit } = {}) {
       if (state.combo >= 2) { comboFx = 1; pops.push({ x: gg.x, y: gg.y - gg.r * 1.5, vy: -1.0, life: 50, text: `${state.combo} 콤보!`, combo: true }); }
     } else { state.combo = 0; sfx.hover && sfx.hover(); }
     sync();
+    if (state.score >= state.target) endPlay(true);   // 목표 달성 즉시 통과(점수 폭주 방지)
   }
 
   let lastT = performance.now();
