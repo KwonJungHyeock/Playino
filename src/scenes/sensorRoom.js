@@ -994,8 +994,8 @@ function drawSign(ctx, s, active, t) {
     ctx.save(); if (active) { ctx.shadowColor = `rgba(${acc},0.6)`; ctx.shadowBlur = 28; ctx.shadowOffsetY = 6; }
     ctx.drawImage(im, cx - iw / 2, by - ih / 2, iw, ih); ctx.restore();
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#2a2438'; ctx.font = '900 26px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by + 6);
-    ctx.fillStyle = `rgb(${acc})`; ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 26);
+    ctx.fillStyle = '#27233a'; ctx.font = '900 26px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by + 6);
+    ctx.fillStyle = 'rgba(39,35,58,0.72)'; ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 26);
     ctx.textAlign = 'start';
     signArrow(ctx, cx, by, dir, acc, active, t, iw / 2);
     return;
