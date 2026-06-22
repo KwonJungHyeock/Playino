@@ -15,11 +15,11 @@ const FLAGS = PINS.length;
 const COL = ['70,150,255', '232,236,244'];      // 청기 파랑 / 백기 흰
 const NAME = ['청기', '백기'];
 const GAMES = [
-  { key: 'main', no: 1, name: '청기백기', count: 14, target: 10, window: 1350, gap: 520, trick: 0.28 },
+  { key: 'main', no: 1, name: '청기백기', count: 16, target: 12, window: 1050, gap: 420, trick: 0.36 },
 ];
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-flag-bg.png'; } }; bgImg.src = '/brand/stage-flag-bg.webp';
-const callerImg = new Image(); callerImg.src = '/brand/eddie-conductor.webp';
+const callerImg = new Image(); callerImg.onerror = () => { if (!callerImg._p) { callerImg._p = 1; callerImg.src = '/brand/eddie-conductor.webp'; } }; callerImg.src = '/brand/eddie/eddie-hero.webp';
 // 깃발 이미지(있으면 캔버스 그림 대신 사용 — 0=청기, 1=백기). 없으면 폴리곤 폴백.
 const flagImg = [new Image(), new Image()];
 flagImg[0].onerror = () => { if (!flagImg[0]._p) { flagImg[0]._p = 1; flagImg[0].src = '/brand/flag-blue.png'; } }; flagImg[0].src = '/brand/flag-blue.webp';
@@ -187,6 +187,7 @@ export function showFlagGame(root, { onExit, onComplete, skipPrep } = {}) {
       state.combo++; state.bestCombo = Math.max(state.bestCombo, state.combo);
       state.score += 1 + (state.combo >= 3 ? 1 : 0);
       sfx.note(720 + Math.min(8, state.combo) * 30, 150);
+      heroFx = 1;   // 정답 → 히어로 신나게 점프
       const px = poleX(); burst(px[c.flag], baseY() - H * 0.36, COL[c.flag], 16);
     } else { state.combo = 0; sfx.note(180, 220); }
     sync();
@@ -212,7 +213,7 @@ export function showFlagGame(root, { onExit, onComplete, skipPrep } = {}) {
   function burst(x, y, c, n = 12) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = 1 + Math.random() * 4; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1.5, life: 34, color: c }); } }
   function endPlay(win) { if (state.ended) return; state.ended = true; state.phase = 'result'; showResult(win ? gradeOf(clamp(state.score / (game.count), 0, 1)) : 'D', win); }
 
-  let lastT = performance.now();
+  let lastT = performance.now(), heroFx = 0;
   function update(dt) {
     const now = performance.now();
     if (state.phase === 'count') { if ((now - state.countT) / 1000 >= 3) { state.phase = 'play'; state.nextAt = now + 300; } }
@@ -222,6 +223,7 @@ export function showFlagGame(root, { onExit, onComplete, skipPrep } = {}) {
     else if (!state.resolved) { if (now - state.cmdStart >= game.window) resolveCommand(); }
     else { if (now - state.cmdStart >= game.window + game.gap) { if (state.idx >= game.count) endPlay(state.score >= state.target); else { state.cmd = null; state.nextAt = now; } } }
     for (let i = 0; i < FLAGS; i++) anim[i].t = Math.max(0, anim[i].t - dt * 0.12);
+    heroFx = Math.max(0, heroFx - dt * 0.06);
   }
 
   function drawFlag(x, by, raise, idx, glow) {
@@ -267,8 +269,21 @@ export function showFlagGame(root, { onExit, onComplete, skipPrep } = {}) {
     ctx.clearRect(0, 0, W, H);
     if (!ready(bgImg)) { ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H); } else { ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fillRect(0, 0, W, H); }
     const px = poleX(), by = baseY();
-    // 진행자(EDDIE)
-    if (ready(callerImg)) { const cw = W * 0.16, ch = cw * (callerImg.naturalHeight / callerImg.naturalWidth); ctx.drawImage(callerImg, W / 2 - cw / 2, by - ch * 0.92, cw, ch); }
+    // 진행자(EDDIE) — 최신 히어로, 살아 움직이게: 둥실 흔들 + 명령 쪽으로 기울 + 정답 시 점프
+    if (ready(callerImg)) {
+      const cw = W * 0.16, ch = cw * (callerImg.naturalHeight / callerImg.naturalWidth);
+      const footY = by + ch * 0.08;                       // 발 위치(스케일 기준점)
+      const idle = Math.sin(now / 420) * ch * 0.025;       // 둥실 호흡
+      const jump = Math.sin(Math.min(1, heroFx) * Math.PI) * ch * 0.16; // 정답 점프(반원 궤적)
+      const lean = state.cmd ? (state.cmd.flag === 0 ? -0.07 : 0.07) : 0; // 명령한 깃발 쪽으로 기울
+      const sx = 1 + heroFx * 0.06, sy = 1 - heroFx * 0.05; // 점프 순간 살짝 늘림
+      ctx.save();
+      ctx.translate(W / 2, footY - idle - jump);
+      ctx.rotate(lean);
+      ctx.scale(sx, sy);
+      ctx.drawImage(callerImg, -cw / 2, -ch, cw, ch);
+      ctx.restore();
+    }
     // 깃발 2개
     for (let i = 0; i < FLAGS; i++) {
       const raise = up[i] ? 1 : 0, eased = raise + (anim[i].t * (up[i] ? -0.12 : 0.12));

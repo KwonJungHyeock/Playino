@@ -12,7 +12,7 @@ import { board } from '../app/board.js';
 const PINS = [4, 5];   // 구멍 0·1 ↔ 택트스위치 핀 D4·D5 (쉴드 포트 3·4)
 const HOLES = PINS.length;
 const GAMES = [
-  { key: 'main', no: 1, name: '두더지 들판', time: 40, target: 14, upMin: 800, upMax: 1300, gapMin: 560, gapMax: 980, golden: 0.18 },
+  { key: 'main', no: 1, name: '두더지 들판', time: 40, target: 18, upMin: 620, upMax: 1040, gapMin: 440, gapMax: 800, golden: 0.16 },
 ];
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-button-bg.png'; } }; bgImg.src = '/brand/stage-button-bg.webp';
