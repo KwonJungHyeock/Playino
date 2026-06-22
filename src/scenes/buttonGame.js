@@ -88,10 +88,10 @@ export function showButtonGame(root, { onExit } = {}) {
   // 배경(stage-button-bg, 1600×900)의 그려진 구멍 위치에 맞춰 두더지를 올린다.
   // background:center/cover 와 동일한 매핑으로 이미지 좌표 → 캔버스 좌표 변환.
   const IMG_W = 1600, IMG_H = 900;
-  // 두더지 구멍 2곳(좌·우). 배경(stage-button-bg)을 2구멍짜리로 교체하면 좌표만 맞추면 됨.
+  // 두더지 구멍 2곳(좌·우) — stage-button-bg(1600×900)의 실제 구멍 위치에 맞춤(픽셀+육안 보정).
   const HOLE_UV = [
-    { u: 500 / IMG_W, v: 690 / IMG_H, rw: 86 },
-    { u: 1100 / IMG_W, v: 690 / IMG_H, rw: 86 },
+    { u: 458 / IMG_W, v: 728 / IMG_H, rw: 95 },    // 왼쪽 구멍  (u≈0.29)
+    { u: 1088 / IMG_W, v: 728 / IMG_H, rw: 95 },   // 오른쪽 구멍 (u≈0.68)
   ];
   function geom() {
     const sc = Math.max(W / IMG_W, H / IMG_H), dw = IMG_W * sc, dh = IMG_H * sc, ox = (W - dw) / 2, oy = (H - dh) / 2;

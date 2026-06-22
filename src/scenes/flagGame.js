@@ -94,7 +94,7 @@ export function showFlagGame(root, { onExit } = {}) {
   }
   resize(); window.addEventListener('resize', resize);
   // 깃대 위치: 좌(청기)·우(백기)
-  const poleX = () => [W * 0.32, W * 0.68];
+  const poleX = () => [W * 0.28, W * 0.72];
   const baseY = () => H * 0.82;
 
   // ── 입력 ──
