@@ -42,9 +42,8 @@ export function showHubSelect(root, { onEnter, spawnAt } = {}) {
   const playBtn = root.querySelector('#cs-play');
   const snd = root.querySelector('#snd-toggle'); snd.onclick = () => { snd.textContent = sfx.toggle() ? '🔇' : '🔊'; };
 
-  let focus = Math.max(0, CHAPTERS.findIndex((c) => c.id === spawnAt));
-  // 잠긴 첫 챕터 대신, 열린 마지막 챕터로 포커스
-  if (!spawnAt) { const open = CHAPTERS.map((c, i) => chapterUnlocked(c.id) ? i : -1).filter((i) => i >= 0); focus = open.length ? open[open.length - 1] : 0; }
+  let focus = CHAPTERS.findIndex((c) => c.id === spawnAt);
+  if (focus < 0) focus = 0;   // 기본 초기 포커스 = STAGE 1(베이직)
 
   function layout() {
     const vp = track.parentElement.clientWidth;

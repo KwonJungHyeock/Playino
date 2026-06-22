@@ -1109,6 +1109,11 @@ html, body {
   font-size: clamp(11px, 1.5vw, 14px); letter-spacing: 6px; color: #7f8db0;
   opacity: 0; transition: opacity .9s ease .55s; }
 .platform-intro.in .pi-tag { opacity: 1; }
+.pi-progress { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 7px; opacity: 0; transition: opacity .6s .35s; }
+.platform-intro.in .pi-progress { opacity: 1; }
+.pi-prog-bar { width: 210px; height: 7px; border-radius: 999px; background: rgba(255,255,255,.16); overflow: hidden; }
+.pi-prog-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg,#6fb7ff,#a78bfa); box-shadow: 0 0 10px rgba(120,160,255,.7); }
+.pi-progress span { font-size: 12px; letter-spacing: 1px; color: rgba(255,255,255,.78); font-weight: 700; }
 
 .pi-skip { position: absolute; left: 0; right: 0; bottom: 34px; text-align: center; z-index: 6;
   display: flex; flex-direction: column; align-items: center; gap: 8px; }

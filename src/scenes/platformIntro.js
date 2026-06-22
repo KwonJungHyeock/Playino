@@ -2,6 +2,7 @@
 // 미니멀 블랙 + 중앙 로고 리빌 + 페이드 인/아웃. (레퍼런스 컨셉 차용, 색은 자체 정체성)
 // public/brand/eduino-ai-logo.webp 가 있으면 워드마크 대신 자동으로 그 로고를 사용한다.
 import { sfx } from '../app/sfx.js';
+import { overallCleared, overallTotal, overallPercent } from '../content/curriculum.js';
 
 const HOLD_MS = 4600;    // 등장 후 유지(페이드아웃 전) — 천천히 감상
 const OUT_MS = 1100;     // 페이드아웃
@@ -34,11 +35,17 @@ export function showPlatformIntro(root, { onDone } = {}) {
         <img class="pi-logo-img" id="pi-img" alt="Eduino AI" hidden />
         <h1 class="pi-word"><span class="pi-e">Eduino</span> <span class="pi-ai">AI</span></h1>
         <div class="pi-tag">AIoT LEARNING PLATFORM</div>
+        <div class="pi-progress" id="pi-prog"></div>
       </div>
       <div class="pi-skip"><span class="pi-press">PRESS START</span><small>화면을 누르거나 아무 키나 ▶</small></div>
     </div>`;
 
   const el = root.querySelector('#pintro');
+
+  // 로고와 함께 학습 진척 표시(돌아온 사용자)
+  const oc = overallCleared(), ot = overallTotal(), op = overallPercent();
+  if (oc > 0) el.querySelector('#pi-prog').innerHTML =
+    `<div class="pi-prog-bar"><i style="width:${op}%"></i></div><span>학습 진척 ${oc} / ${ot} · ${op}%</span>`;
 
   // (카드 없을 때) 추상 배경 이미지가 있으면 적용
   const bgProbe = new Image();
@@ -63,7 +70,7 @@ export function showPlatformIntro(root, { onDone } = {}) {
   function reveal() {
     if (revealed) return; revealed = true;
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
-    t1 = setTimeout(finish, HOLD_MS);        // 등장 후 유지 타이머는 '등장 시점'부터
+    // 자동 진행 없음 — PRESS START(키/클릭)로만 넘어감
   }
 
   let decided = false;
@@ -90,7 +97,5 @@ export function showPlatformIntro(root, { onDone } = {}) {
   const onSkip = () => { try { sfx.start(); } catch (_) {} finish(); };
   window.addEventListener('keydown', onSkip);
   window.addEventListener('pointerdown', onSkip);
-  function cleanup() { window.removeEventListener('keydown', onSkip); window.removeEventListener('pointerdown', onSkip); clearTimeout(dT); clearTimeout(t1); clearTimeout(t2); }
-
-  const t2 = setTimeout(finish, SAFETY_MS);   // 전체 안전망(어떤 경우에도 멈추지 않게)
+  function cleanup() { window.removeEventListener('keydown', onSkip); window.removeEventListener('pointerdown', onSkip); clearTimeout(dT); }
 }
