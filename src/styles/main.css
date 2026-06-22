@@ -837,6 +837,7 @@ html, body {
   border-bottom: 1px solid rgba(255,255,255,.7); box-shadow: 0 6px 22px rgba(70,45,110,.18); }
 .ch-brand { display: flex; flex-direction: column; gap: 3px; min-width: 150px; }
 .ch-logo { display: flex; align-items: center; gap: 7px; font-size: 17px; font-weight: 800; letter-spacing: .3px; color: #2c2440; }
+.ch-logo img { height: 32px; width: auto; display: block; }
 .ch-logo .grad { background: linear-gradient(90deg, #ff8fb0, #a78bfa 55%, #6fb7ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .ch-crumb { font-size: 11px; color: #8a7fa6; }
 

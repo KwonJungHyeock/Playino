@@ -26,7 +26,7 @@ export function mountCurriculumHeader(root, { active = null, crumb = '연구소 
     const pct = overallPercent();
     el.innerHTML = `
       <div class="ch-brand">
-        <div class="ch-logo"><span class="brand-dot"></span><b>Eduino <span class="grad">AI</span></b></div>
+        <div class="ch-logo"><img src="/brand/logo.webp" alt="Eduino AI" /></div>
         <div class="ch-crumb">스타터 키트 · ${crumb}</div>
       </div>
       <div class="ch-steps">${CHAPTERS.map((c, i) => (i ? '<span class="ch-link"></span>' : '') + stepHtml(c)).join('')}</div>
