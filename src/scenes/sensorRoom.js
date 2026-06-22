@@ -620,16 +620,18 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       const bulb = bodyEl.querySelector('#dl-bulb'), stateEl = bodyEl.querySelector('#dl-state');
       const bRange = bodyEl.querySelector('#b-range'), bSpd = bodyEl.querySelector('#b-spd'), bTog = bodyEl.querySelector('#b-toggle');
       const status = bodyEl.querySelector('#dc-status');
-      function send(o) { if (board.connected) board.digital(cfg.blockPin, o).catch(() => {}); }
+      function send(o) { try { if (board.connected) board.digital(cfg.blockPin, o).catch(() => {}); } catch (_) {} }
       function paint(o) { bulb.classList.toggle('on', o); stateEl.textContent = o ? '상태 · ON (HIGH)' : '상태 · OFF (LOW)'; }
       const delayLabel = () => bSpd.textContent = (+bRange.value / 1000).toFixed(1) + '초';
       const dOn = bodyEl.querySelector('#d-on'), dOff = bodyEl.querySelector('#d-off');
       function setLed(o, doSend) { ledOn = o; paint(o); dOn.classList.toggle('active', o); dOff.classList.toggle('active', !o); if (doSend) send(o); }
-      setLed(ledOn, false); delayLabel();
-      dOn.onclick = () => { sfx.ok(); stopBlink(); setLed(true, true); };
-      dOff.onclick = () => { sfx.pop(); stopBlink(); setLed(false, true); };
+      // 핸들러를 먼저 바인딩(혹시 paint/초기화가 실패해도 클릭은 살아있게)
+      dOn.onclick = () => { try { sfx.ok(); } catch (_) {} stopBlink(); setLed(true, true); };
+      dOff.onclick = () => { try { sfx.pop(); } catch (_) {} stopBlink(); setLed(false, true); };
       bRange.oninput = () => { delayLabel(); if (blinkOn) startBlink(); };
-      bTog.onclick = () => { if (blinkOn) { sfx.pop(); stopBlink(); paint(ledOn); send(ledOn); } else { sfx.click(); startBlink(); } };
+      bTog.onclick = () => { if (blinkOn) { try { sfx.pop(); } catch (_) {} stopBlink(); paint(ledOn); send(ledOn); } else { try { sfx.click(); } catch (_) {} startBlink(); } };
+      setLed(ledOn, false); delayLabel();
+      console.log('[Playino] LED 제어 준비 완료 ✓ (최신 코드)');
       function startBlink() {
         stopBlink(); blinkOn = true; bTog.textContent = '⏹ 멈추기';
         let o = true; paint(true); send(true);
