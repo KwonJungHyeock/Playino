@@ -960,7 +960,20 @@ function doorGlow(ctx, x, VH, acc, k) {
 // 둥근 사각형 path
 function signRR(ctx, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
-// 입구 안내 — 아케이드 마퀴 사인(전구 테두리·글로시 플라크) + 방향 뱃지. 역할 색 고정.
+// 이론관/체험관 사인 이미지(있으면 사용). 없으면 아래 캔버스 마퀴로 폴백.
+const SIGN_IMG = { theory: new Image(), play: new Image() };
+SIGN_IMG.theory.src = '/brand/sign-theory.webp';
+SIGN_IMG.play.src = '/brand/sign-play.webp';
+function signArrow(ctx, cx, by, dir, acc, active, t, halfW) {
+  const ax = cx + dir * (halfW + 6) + dir * Math.abs(Math.sin(t * 0.16)) * 6, ay = by;
+  ctx.save(); if (active) { ctx.shadowColor = `rgba(${acc},0.95)`; ctx.shadowBlur = 20; }
+  ctx.fillStyle = `rgb(${acc})`; ctx.beginPath(); ctx.arc(ax, ay, 20, 0, 6.283); ctx.fill(); ctx.restore();
+  ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ax, ay, 20, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = '900 22px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(dir > 0 ? '▶' : '◀', ax, ay + 1); ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'start';
+}
+
+// 입구 안내 — (이미지 있으면 이미지) / 없으면 아케이드 마퀴 캔버스 + 방향 뱃지. 역할 색 고정.
 function drawSign(ctx, s, active, t) {
   const dir = s.dir, cx = s.cx;
   const acc = s.id === 'play' ? '80,205,140' : '90,180,255';   // 체험관=초록 / 이론관=파랑 (모든 방 동일)
@@ -973,6 +986,16 @@ function drawSign(ctx, s, active, t) {
   ctx.fillStyle = `rgba(40,28,52,${active ? 0.2 : 0.13})`;
   ctx.beginPath(); ctx.ellipse(cx, baseY, active ? 100 : 84, active ? 22 : 17, 0, 0, 6.283); ctx.fill();
   ctx.restore();
+
+  // 이미지 사인이 준비돼 있으면 그걸로(텍스트·디자인 고정)
+  const im = SIGN_IMG[s.id];
+  if (im && im.complete && im.naturalWidth) {
+    const iw = 262, ih = iw * (im.naturalHeight / im.naturalWidth);
+    ctx.save(); if (active) { ctx.shadowColor = `rgba(${acc},0.6)`; ctx.shadowBlur = 28; ctx.shadowOffsetY = 6; }
+    ctx.drawImage(im, cx - iw / 2, by - ih / 2, iw, ih); ctx.restore();
+    signArrow(ctx, cx, by, dir, acc, active, t, iw / 2);
+    return;
+  }
 
   // 플라크 본체(흰→파스텔 + 드롭섀도/글로우)
   ctx.save();
