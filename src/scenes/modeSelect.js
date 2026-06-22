@@ -10,7 +10,7 @@ export function showModeSelect(root, { onDone } = {}) {
       <div class="ms-aurora"></div>
       <div class="ms-inner">
         <div class="ms-head">
-          <div class="ms-bot">🤖</div>
+          <div class="ms-bot"><img src="/brand/eddie/eddie-hero.webp" alt="EDDIE" /></div>
           <h1>어떤 기기로 접속했나요?</h1>
           <p class="ms-sub">기기에 맞춰 조작 방식을 자동으로 맞춰드려요.<br/>게임 중 화면 버튼으로 언제든 바꿀 수 있어요.</p>
         </div>

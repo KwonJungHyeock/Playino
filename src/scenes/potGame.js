@@ -16,7 +16,7 @@ const GAMES = [
 ];
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-pot-bg.png'; } }; bgImg.src = '/brand/stage-pot-bg.webp';
-const djImg = new Image(); djImg.onerror = () => { if (!djImg._p1) { djImg._p1 = 1; djImg.src = '/brand/eddie-dj.png'; } else if (!djImg._p2) { djImg._p2 = 1; djImg.src = '/brand/eddie/eddie-hero.webp'; } }; djImg.src = '/brand/eddie-dj.webp';
+const djImg = new Image(); djImg.src = '/brand/eddie/eddie-hero.webp';   // 메인 캐릭터(에디)로 통일
 const ready = (im) => im.complete && im.naturalWidth > 0;
 const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.8 ? 'B' : a >= 0.6 ? 'C' : 'D';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
