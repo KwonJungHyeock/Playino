@@ -13,6 +13,7 @@ import { showCdsGame } from './cdsGame.js';
 import { showJoystickGame } from './joystickGame.js';
 import { showUltraGame } from './ultraGame.js';
 import { showButtonGame } from './buttonGame.js';
+import { showFlagGame } from './flagGame.js';
 import { nav } from '../app/nav.js';
 
 const roomCache = {};
@@ -106,6 +107,19 @@ const ROOMS_CFG = {
       '키보드·게임패드·엘리베이터 버튼… 누름 신호로 명령을 전해요 🎮',
     ],
     play: (root, opt) => showButtonGame(root, opt),
+  },
+  flag: {
+    name: '청기백기', sensor: '택트스위치 2개 · 디지털 입력', icon: '🚩', accent: '90,150,255',
+    room: 'room-flag-bg', eddie: '/brand/eddie-conductor.webp', signL: '90,150,255', signR: '210,215,230',
+    control: 'button', pins: { b1: 5, b2: 6 }, floor: 0.82,
+    intro: '이론관에서 버튼(디지털 입력)을 배우고,<br>체험관에서 청기·백기 명령에 맞춰 깃발을 올려보자! 🚩',
+    animTheory: 'button',
+    captions: [
+      '버튼은 누름(1)/안 누름(0) 두 값만 있는 디지털 입력이에요 — 청기·백기 두 버튼! 🔘',
+      '버튼1=청기(D5), 버튼2=백기(D6) — 누름 신호로 깃발을 올리고 내려요 🚩',
+      '명령을 잘 듣고 빠르게 반응! 누름 신호 하나하나가 명령이 돼요 ⚡',
+    ],
+    play: (root, opt) => showFlagGame(root, opt),
   },
 };
 
