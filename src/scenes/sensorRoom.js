@@ -73,7 +73,7 @@ const ROOMS_CFG = {
   },
   pot: {
     name: '볼륨 다이얼쇼', sensor: '가변저항(회전형) · 아날로그 입력', icon: '🎚️', accent: '180,150,255',
-    room: 'room-pot-bg', eddie: '/brand/eddie-dj.png', signL: '180,150,255', signR: '120,230,160', control: 'pot', adc: 0,
+    room: 'room-pot-bg', eddie: null, signL: '180,150,255', signR: '120,230,160', control: 'pot', adc: 0,
     intro: '이론관에서 가변저항(아날로그 입력)을 배우고,<br>체험관에서 다이얼을 돌려 볼륨쇼를 펼쳐보자! 🎚️',
     animTheory: 'pot',
     captions: [
@@ -957,38 +957,50 @@ function doorGlow(ctx, x, VH, acc, k) {
   ctx.fillStyle = g; ctx.fillRect(x - 90, 0, 180, VH);
 }
 
-// 화살표 푯말(문을 가리킴) — 기둥 + 화살표 보드 + 큰 방향 화살표
+// 둥근 사각형 path
+function signRR(ctx, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+// 입구 안내 — 떠 있는 글로시 파스텔 배너(말뚝 제거) + 방향 뱃지
 function drawSign(ctx, s, active, t) {
-  const dir = s.dir, cx = s.cx, boardY = s.signY, baseY = s.postY;
+  const dir = s.dir, cx = s.cx;
   const acc = s.color || (s.id === 'play' ? '255,140,90' : '120,225,255');
-  const pulse = 0.55 + 0.45 * Math.sin(t * 0.12 + (dir > 0 ? 1 : 0));
-  const bob = active ? Math.sin(t * 0.12) * 3 : 0, by = boardY + bob;
+  const bob = Math.sin(t * 0.1 + (dir > 0 ? 1 : 0)) * (active ? 5 : 2.5);
+  const by = s.signY + bob, baseY = s.postY;
+  const bw = 226, bh = 86, top = by - bh / 2;
 
-  // 바닥 풋라이트
-  const fg = ctx.createRadialGradient(cx, baseY, 4, cx, baseY, 110);
-  fg.addColorStop(0, `rgba(${acc},${active ? 0.5 : 0.3})`); fg.addColorStop(1, `rgba(${acc},0)`);
-  ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(cx, baseY, active ? 96 : 76, active ? 26 : 20, 0, 0, 6.283); ctx.fill();
-  // 기둥
-  const post = ctx.createLinearGradient(cx - 7, 0, cx + 7, 0); post.addColorStop(0, '#6f4a2c'); post.addColorStop(.5, '#8a5e38'); post.addColorStop(1, '#6f4a2c');
-  ctx.fillStyle = post; ctx.fillRect(cx - 7, by + 26, 14, baseY - (by + 26));
-
-  // 화살표 보드
-  const bw = 232, bh = 78;
+  // 바닥 소프트 그림자(말뚝 대신 자연스럽게 지면에 앉힘)
   ctx.save();
-  ctx.fillStyle = 'rgba(16,12,24,0.88)'; arrowBoard(ctx, cx, by, bw, bh, dir); ctx.fill();
-  ctx.shadowColor = `rgba(${acc},${pulse})`; ctx.shadowBlur = 28 * pulse;
-  ctx.strokeStyle = `rgba(${acc},1)`; ctx.lineWidth = 4; arrowBoard(ctx, cx, by, bw - 8, bh - 8, dir); ctx.stroke();
-  ctx.shadowBlur = 14; ctx.textAlign = 'center';
-  const tShift = -dir * 12;
-  ctx.fillStyle = '#fff'; ctx.font = '900 24px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx + tShift, by + 1);
-  ctx.shadowBlur = 8; ctx.fillStyle = `rgb(${acc})`; ctx.font = '700 12px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx + tShift, by + 21);
+  ctx.fillStyle = `rgba(40,28,52,${active ? 0.2 : 0.13})`;
+  ctx.beginPath(); ctx.ellipse(cx, baseY, active ? 98 : 82, active ? 22 : 17, 0, 0, 6.283); ctx.fill();
   ctx.restore();
 
-  // 큰 방향 화살표(문 쪽으로 깜빡)
-  ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = `rgba(${acc},${0.6 + 0.4 * Math.sin(t * 0.18)})`;
-  ctx.font = '900 34px "Space Grotesk", sans-serif';
-  ctx.fillText(dir > 0 ? '▶' : '◀', cx + dir * (bw / 2 + 26) + dir * Math.abs(Math.sin(t * 0.16)) * 8, by + 10);
-  ctx.restore(); ctx.textAlign = 'start';
+  // 배너 본체(흰→파스텔 그라데이션 + 드롭섀도)
+  ctx.save();
+  ctx.shadowColor = active ? `rgba(${acc},0.55)` : 'rgba(30,20,42,0.28)';
+  ctx.shadowBlur = active ? 30 : 20; ctx.shadowOffsetY = 9;
+  const g = ctx.createLinearGradient(0, top, 0, top + bh);
+  g.addColorStop(0, 'rgba(255,255,255,0.97)'); g.addColorStop(1, `rgba(${acc},0.24)`);
+  ctx.fillStyle = g; signRR(ctx, cx - bw / 2, top, bw, bh, 26); ctx.fill();
+  ctx.restore();
+  // 컬러 테두리
+  ctx.strokeStyle = `rgba(${acc},0.95)`; ctx.lineWidth = 3.5; signRR(ctx, cx - bw / 2 + 2, top + 2, bw - 4, bh - 4, 23); ctx.stroke();
+  // 상단 글로시 하이라이트
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'; signRR(ctx, cx - bw / 2 + 12, top + 9, bw - 24, bh * 0.3, 16); ctx.fill();
+
+  // 텍스트
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2c2438'; ctx.font = '900 25px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by - 1);
+  ctx.fillStyle = `rgb(${acc})`; ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 20);
+
+  // 방향 뱃지(문 쪽 원형 + 셰브론, 살짝 통통 튐)
+  const ax = cx + dir * (bw / 2 + 20) + dir * Math.abs(Math.sin(t * 0.16)) * 6, ay = by;
+  ctx.save();
+  if (active) { ctx.shadowColor = `rgba(${acc},0.9)`; ctx.shadowBlur = 18; }
+  ctx.fillStyle = `rgb(${acc})`; ctx.beginPath(); ctx.arc(ax, ay, 19, 0, 6.283); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#fff'; ctx.font = '900 21px "Space Grotesk", sans-serif'; ctx.textBaseline = 'middle';
+  ctx.fillText(dir > 0 ? '▶' : '◀', ax, ay + 1);
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'start';
 }
 function arrowBoard(ctx, cx, cy, w, h, dir) {
   const x = cx - w / 2, y = cy - h / 2, n = 26;

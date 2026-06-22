@@ -8,7 +8,7 @@ import { mountCurriculumHeader } from '../app/curriculumHeader.js';
 import { getChapter, chapterRooms, isRoomCleared } from '../content/curriculum.js';
 
 let CARD_W = 184, CARD_H = 128;          // 단일 부스면 더 크게(showChapter에서 조정)
-const COL_W = 312, ROW_H = 288, MARGIN = 80;
+const COL_W = 344, ROW_H = 312, MARGIN = 80;
 const PAL = [['255,200,74', '255,170,40'], ['255,122,184', '233,80,150'], ['90,201,255', '40,160,235'], ['155,140,255', '120,100,235'], ['120,220,150', '60,185,110']];
 
 // 스테이지별 배경(있으면 사용): /brand/stage-{chapterId}-bg.webp (없으면 .png 도 시도)
@@ -33,8 +33,8 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
   const ch = getChapter(chapter);
   const rooms = chapterRooms(chapter);
   // 부스가 하나뿐이면 크게(휑함 방지). 여러 개면 표준 크기.
-  CARD_W = rooms.length <= 1 ? 340 : 240;
-  CARD_H = rooms.length <= 1 ? 222 : 196;
+  CARD_W = rooms.length <= 1 ? 340 : 268;
+  CARD_H = rooms.length <= 1 ? 222 : 214;
   // 6개 부스 = 3개씩 두 줄(3×2). 4~6개는 3열, 7~8개는 4열.
   const cols = rooms.length <= 1 ? 1 : rooms.length <= 3 ? rooms.length : rooms.length <= 6 ? 3 : rooms.length <= 8 ? 4 : 5;
   const rowsN = Math.ceil(rooms.length / cols);
@@ -62,8 +62,8 @@ export function showChapter(root, { chapter, onRoom, onExit, onChapter, spawnAt 
     : { x: MAP_W / 2 - 14, y: MAP_H - 120 };
   if (spawnAt) { const c = cells.find((x) => x.id === spawnAt); if (c) spawnPt = { x: c.cx + CARD_W / 2 - 14, y: c.cy + CARD_H + 16 }; }
 
-  // ── 무대 소품(장식 + 장애물 + 인터랙션) — 빈 공간을 채우고 EDDIE가 피해다니게 ──
-  const props = buildProps(cells, EXIT, spawnPt, MAP_W, MAP_H, offY, ch);
+  // 소품(풍선·장애물 등)은 제거 — 새 배경이 장식을 담당, 부스 카드만 깔끔히 중앙 배치
+  const props = [];
 
   root.innerHTML = `
     <div class="scene game-scene scene-fade escape-scene">
