@@ -115,7 +115,7 @@ export function showFlagGame(root, { onExit } = {}) {
 
   // 실물 택트 폴링(D4·D5): 쉬는 값 기준 '눌림(변화)' 에지 감지 → 해당 깃발 토글.
   let hwTimer = null;
-  const rings = Array.from({ length: FLAGS }, () => []), rest = Array(FLAGS).fill(null), pressed = Array(FLAGS).fill(false), RING = 4;
+  const rings = Array.from({ length: FLAGS }, () => []), rest = Array(FLAGS).fill(null), pressed = Array(FLAGS).fill(false), RING = 2;
   const unanim = (r) => { if (r.length < RING) return null; const a = r[0]; for (const v of r) if (v !== a) return null; return a; };
   function startHw() {
     stopHw(); if (!board.connected) return;
@@ -130,7 +130,7 @@ export function showFlagGame(root, { onExit } = {}) {
         if (down && !pressed[i]) onPress(i);   // 누르는 순간(에지)
         pressed[i] = down;
       }
-    }, 55);
+    }, 30);
   }
   function stopHw() { if (hwTimer) { clearInterval(hwTimer); hwTimer = null; } for (let i = 0; i < FLAGS; i++) { rings[i].length = 0; rest[i] = null; pressed[i] = false; } }
 
