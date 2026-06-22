@@ -90,8 +90,8 @@ export function showButtonGame(root, { onExit } = {}) {
   const IMG_W = 1600, IMG_H = 900;
   // 두더지 구멍 2곳(좌·우) — stage-button-bg(1600×900)의 실제 구멍 위치에 맞춤(픽셀+육안 보정).
   const HOLE_UV = [
-    { u: 458 / IMG_W, v: 728 / IMG_H, rw: 95 },    // 왼쪽 구멍  (u≈0.29)
-    { u: 1088 / IMG_W, v: 728 / IMG_H, rw: 95 },   // 오른쪽 구멍 (u≈0.68)
+    { u: 445 / IMG_W, v: 722 / IMG_H, rw: 80 },    // 왼쪽 구멍  (격자 검수: 중심 445,710)
+    { u: 1088 / IMG_W, v: 722 / IMG_H, rw: 80 },   // 오른쪽 구멍 (격자 검수: 중심 1088,710)
   ];
   function geom() {
     const sc = Math.max(W / IMG_W, H / IMG_H), dw = IMG_W * sc, dh = IMG_H * sc, ox = (W - dw) / 2, oy = (H - dh) / 2;

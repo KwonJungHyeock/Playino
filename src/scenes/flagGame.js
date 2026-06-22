@@ -21,6 +21,10 @@ const GAMES = [
 
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-flag-bg.png'; } }; bgImg.src = '/brand/stage-flag-bg.webp';
 const callerImg = new Image(); callerImg.src = '/brand/eddie-conductor.webp';
+// 깃발 이미지(있으면 캔버스 그림 대신 사용 — 0=청기, 1=백기). 없으면 폴리곤 폴백.
+const flagImg = [new Image(), new Image()];
+flagImg[0].onerror = () => { if (!flagImg[0]._p) { flagImg[0]._p = 1; flagImg[0].src = '/brand/flag-blue.png'; } }; flagImg[0].src = '/brand/flag-blue.webp';
+flagImg[1].onerror = () => { if (!flagImg[1]._p) { flagImg[1]._p = 1; flagImg[1].src = '/brand/flag-white.png'; } }; flagImg[1].src = '/brand/flag-white.webp';
 const ready = (im) => im.complete && im.naturalWidth > 0;
 const gradeOf = (a) => a >= 0.95 ? 'S' : a >= 0.85 ? 'A' : a >= 0.7 ? 'B' : a >= 0.5 ? 'C' : 'D';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -218,26 +222,28 @@ export function showFlagGame(root, { onExit } = {}) {
   }
 
   function drawFlag(x, by, raise, idx, glow) {
-    const poleH = H * 0.34, topY = by - poleH;
+    const poleH = H * 0.40, topY = by - poleH;
     // 깃대
-    ctx.strokeStyle = '#7a5a36'; ctx.lineWidth = Math.max(4, W * 0.006); ctx.lineCap = 'round';
+    ctx.strokeStyle = '#8a6a40'; ctx.lineWidth = Math.max(5, W * 0.007); ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(x, by); ctx.lineTo(x, topY); ctx.stroke();
-    ctx.fillStyle = '#d8b15a'; ctx.beginPath(); ctx.arc(x, topY, ctx.lineWidth * 0.9, 0, 6.283); ctx.fill();
-    // 깃발: raise 0(아래)~1(위) — 위치/펄럭
-    const fy = topY + (1 - raise) * poleH * 0.62;
-    const fw = W * 0.13, fh = H * 0.12, wave = Math.sin(performance.now() / 160 + idx) * fh * 0.12;
-    if (glow) { ctx.save(); ctx.shadowColor = `rgba(${COL[idx]},0.9)`; ctx.shadowBlur = 22; }
-    ctx.fillStyle = `rgb(${COL[idx]})`; ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, fy);
-    ctx.quadraticCurveTo(x + fw * 0.5, fy - wave, x + fw, fy + fh * 0.16 + wave);
-    ctx.lineTo(x + fw, fy + fh * 0.16 + wave);
-    ctx.quadraticCurveTo(x + fw * 0.5, fy + fh * 0.5 + wave, x + fw, fy + fh * 0.84 + wave);
-    ctx.lineTo(x, fy + fh);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f2c14e'; ctx.beginPath(); ctx.arc(x, topY, ctx.lineWidth * 1.0, 0, 6.283); ctx.fill();
+    // 깃발: raise 0(아래)~1(위) — 깃대를 따라 미끄러져 오르내림
+    const im = flagImg[idx], hasIm = ready(im);
+    const fw = W * 0.17, fh = hasIm ? fw * (im.naturalHeight / im.naturalWidth) : H * 0.13;
+    const fy = topY + (1 - raise) * (poleH * 0.52);
+    if (glow) { ctx.save(); ctx.shadowColor = `rgba(${COL[idx]},0.95)`; ctx.shadowBlur = 26; }
+    if (hasIm) {
+      ctx.drawImage(im, x - fw * 0.04, fy, fw, fh);   // 이미지 깃발(왼쪽 끝이 깃대에 붙음)
+    } else {
+      const wave = Math.sin(performance.now() / 160 + idx) * fh * 0.12;
+      ctx.fillStyle = `rgb(${COL[idx]})`; ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x, fy);
+      ctx.quadraticCurveTo(x + fw * 0.5, fy - wave, x + fw, fy + fh * 0.16 + wave);
+      ctx.quadraticCurveTo(x + fw * 0.5, fy + fh * 0.5 + wave, x + fw, fy + fh * 0.84 + wave);
+      ctx.lineTo(x, fy + fh); ctx.closePath(); ctx.fill(); ctx.stroke();
+      if (idx === 0) { ctx.fillStyle = '#fff'; ctx.font = `${fh * 0.5}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★', x + fw * 0.5, fy + fh * 0.5); }
+    }
     if (glow) ctx.restore();
-    // 깃발 표식(청=별, 백=무지)
-    if (idx === 0) { ctx.fillStyle = '#fff'; ctx.font = `${fh * 0.5}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★', x + fw * 0.5, fy + fh * 0.5 + wave * 0.4); }
     // 라벨
     ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.strokeStyle = `rgba(${COL[idx]},0.9)`; ctx.lineWidth = 2;
     const lw = W * 0.09, lh = H * 0.05, lx = x - lw * 0.1, ly = by + 6;
@@ -261,17 +267,24 @@ export function showFlagGame(root, { onExit } = {}) {
     }
     // 파티클
     for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.16; p.life--; ctx.globalAlpha = Math.max(0, p.life / 34); ctx.fillStyle = `rgb(${p.color})`; ctx.beginPath(); ctx.arc(p.x, p.y, 3.6, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; if (p.life <= 0) parts.splice(i, 1); }
-    // 명령 배너
+    // 명령 배너 (알약 패널 + 그림자 + 그라데이션)
     if (state.phase === 'play' && state.cmd) {
       const c = state.cmd, txt = `${NAME[c.flag]} ${c.target ? '올려' : '내려'}!`;
       const remain = clamp(1 - (now - state.cmdStart) / game.window, 0, 1);
-      ctx.textAlign = 'center';
-      ctx.fillStyle = `rgb(${COL[c.flag]})`; ctx.strokeStyle = 'rgba(0,0,0,0.32)'; ctx.lineWidth = 7;
-      ctx.font = `900 ${Math.round(H * 0.11)}px "Space Grotesk",sans-serif`;
-      ctx.strokeText(txt, W / 2, H * 0.2); ctx.fillText(txt, W / 2, H * 0.2);
-      // 남은 시간 바
-      if (!state.resolved) { const bw = W * 0.34, bx = W / 2 - bw / 2, byr = H * 0.235; ctx.fillStyle = 'rgba(0,0,0,0.18)'; rrect(bx, byr, bw, 12, 6); ctx.fill(); ctx.fillStyle = remain > 0.35 ? '#5ad17a' : '#ff8a3c'; rrect(bx, byr, bw * remain, 12, 6); ctx.fill(); }
-      else { ctx.font = `900 ${Math.round(H * 0.06)}px sans-serif`; ctx.fillStyle = state.judge === 'ok' ? '#3ec06b' : '#ff5b5b'; ctx.fillText(state.judge === 'ok' ? '정답! ✅' : '땡! ❌', W / 2, H * 0.3); }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `900 ${Math.round(H * 0.082)}px "Space Grotesk",sans-serif`;
+      const pw = ctx.measureText(txt).width + H * 0.18, ph = H * 0.135, bx = W / 2 - pw / 2, byb = H * 0.1;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.28)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 6;
+      const grad = ctx.createLinearGradient(0, byb, 0, byb + ph);
+      if (c.flag === 0) { grad.addColorStop(0, '#7db0ff'); grad.addColorStop(1, '#2f6bff'); }
+      else { grad.addColorStop(0, '#ffffff'); grad.addColorStop(1, '#d7dce8'); }
+      ctx.fillStyle = grad; rrect(bx, byb, pw, ph, ph / 2); ctx.fill(); ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.lineWidth = 4; rrect(bx, byb, pw, ph, ph / 2); ctx.stroke();
+      ctx.fillStyle = c.flag === 0 ? '#fff' : '#28304a'; ctx.fillText(txt, W / 2, byb + ph * 0.54);
+      ctx.textBaseline = 'alphabetic';
+      // 남은 시간 바 / 판정
+      if (!state.resolved) { const bw = pw * 0.82, bxr = W / 2 - bw / 2, byr = byb + ph + H * 0.018; ctx.fillStyle = 'rgba(0,0,0,0.16)'; rrect(bxr, byr, bw, 12, 6); ctx.fill(); ctx.fillStyle = remain > 0.35 ? '#5ad17a' : '#ff8a3c'; rrect(bxr, byr, bw * remain, 12, 6); ctx.fill(); }
+      else { ctx.textAlign = 'center'; ctx.font = `900 ${Math.round(H * 0.07)}px sans-serif`; ctx.fillStyle = state.judge === 'ok' ? '#3ec06b' : '#ff5b5b'; ctx.fillText(state.judge === 'ok' ? '정답! ✅' : '땡! ❌', W / 2, byb + ph + H * 0.1); }
     }
     if (state.phase === 'play' && state.combo >= 3) { ctx.fillStyle = '#ff8a3c'; ctx.font = '900 26px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`🔥 ${state.combo} 콤보!`, W / 2, H * 0.4); }
     // 카운트다운
