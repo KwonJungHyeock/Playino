@@ -11,7 +11,7 @@ import { showSetup } from './scenes/setup.js';
 import { showBasics } from './scenes/basics.js';
 import { showSensorRoom } from './scenes/sensorRoom.js';
 import { showHub } from './scenes/hub.js';
-import { showChapter } from './scenes/chapter.js';
+import { showChapterSelect } from './scenes/chapterSelect.js';
 import { showDhtCoding } from './scenes/dhtCoding.js';
 import { showDht11Room } from './scenes/dht11room.js';
 import { showDht11 } from './scenes/dht11.js';
@@ -39,7 +39,7 @@ function sceneHub() { showHub(app(), { onEnter: (chId) => nav.push(() => enterCh
 
 function enterChapter(chId) {
   lastChapter = chId;
-  showChapter(app(), {
+  showChapterSelect(app(), {
     chapter: chId,
     onRoom: (roomId) => nav.push(() => enterRoom(roomId)),
     onExit: () => nav.back(),

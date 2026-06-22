@@ -1,0 +1,110 @@
+// chapterSelect.js — 아케이드 캐비닛 셀렉트(A안). 게임을 가로로 진열 → ◀▶로 포커스 줌 → ▶입장.
+//   · 가운데 포커스 카드 확대 + 커버 프리뷰  · 키보드 ←/→·Enter  · 좌우 카드 클릭으로 포커스
+//   · 메달(클리어)·잠금(준비중) 표시  · 상단 커리큘럼 스텝퍼  · 배경 stage-{chapter}-bg
+import { sfx } from '../app/sfx.js';
+import { mountCurriculumHeader } from '../app/curriculumHeader.js';
+import { getChapter, chapterRooms, isRoomCleared } from '../content/curriculum.js';
+
+const PAL = ['255,170,60', '255,110,170', '90,170,255', '150,130,255', '90,210,150', '255,140,90'];
+
+export function showChapterSelect(root, { chapter, onRoom, onExit, onChapter, spawnAt } = {}) {
+  const ch = getChapter(chapter);
+  const rooms = chapterRooms(chapter);
+
+  root.innerHTML = `
+    <div class="chsel scene-fade">
+      <div class="chsel-bg" id="cs-bg"></div>
+      <div class="chsel-shade"></div>
+      <button class="snd-toggle" id="snd-toggle">${sfx.muted ? '🔇' : '🔊'}</button>
+      <div class="chsel-body">
+        <button class="chsel-arw chsel-prev" id="cs-prev" aria-label="이전">◀</button>
+        <div class="chsel-viewport"><div class="chsel-track" id="cs-track">
+          ${rooms.map((r, i) => cardHtml(r, i)).join('')}
+        </div></div>
+        <button class="chsel-arw chsel-next" id="cs-next" aria-label="다음">▶</button>
+      </div>
+      <div class="chsel-foot">
+        <div class="chsel-meta" id="cs-meta"></div>
+        <button class="chsel-play" id="cs-play">▶ 입장하기</button>
+        <div class="chsel-dots" id="cs-dots">${rooms.map((_, i) => `<i data-i="${i}"></i>`).join('')}</div>
+      </div>
+    </div>`;
+
+  const scene = root.querySelector('.chsel');
+  mountCurriculumHeader(scene, {
+    active: chapter, crumb: `${ch.short} · ${ch.act}`,
+    onChapter: (id) => { if (id !== chapter) { cleanup(); (onChapter || (() => onExit?.()))(id); } },
+  });
+
+  const bg = root.querySelector('#cs-bg');
+  const bgImg = new Image();
+  bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = `/brand/stage-${chapter}-bg.png`; } };
+  bgImg.onload = () => { bg.style.backgroundImage = `url(${bgImg.src})`; };
+  bgImg.src = `/brand/stage-${chapter}-bg.webp`;
+
+  const track = root.querySelector('#cs-track');
+  const cards = [...track.querySelectorAll('.cs-card')];
+  const dots = [...root.querySelectorAll('#cs-dots i')];
+  const metaEl = root.querySelector('#cs-meta');
+  const playBtn = root.querySelector('#cs-play');
+  const snd = root.querySelector('#snd-toggle'); snd.onclick = () => { snd.textContent = sfx.toggle() ? '🔇' : '🔊'; };
+
+  let focus = Math.max(0, rooms.findIndex((r) => r.id === spawnAt));
+  if (focus < 0) focus = Math.max(0, rooms.findIndex((r) => r.status === 'ready'));
+
+  function layout() {
+    const vp = track.parentElement.clientWidth;
+    const card = cards[focus]; if (!card) return;
+    const center = card.offsetLeft + card.offsetWidth / 2;
+    track.style.transform = `translateX(${vp / 2 - center}px)`;
+    cards.forEach((c, i) => c.classList.toggle('is-focus', i === focus));
+    dots.forEach((d, i) => d.classList.toggle('on', i === focus));
+    const r = rooms[focus], acc = PAL[focus % PAL.length];
+    scene.style.setProperty('--cs-acc', acc);
+    const cleared = isRoomCleared(r.id), soon = r.status !== 'ready';
+    metaEl.innerHTML = `<span class="cs-ico">${r.icon}</span><b>${r.name}</b>
+      <span class="cs-concept">${r.concept}</span>
+      <span class="cs-status ${cleared ? 'done' : soon ? 'soon' : 'go'}">${cleared ? '🏅 클리어' : soon ? '🔒 준비중' : '플레이 가능'}</span>`;
+    playBtn.textContent = soon ? '곧 만나요 🔒' : cleared ? '다시 플레이 ▶' : '▶ 입장하기';
+    playBtn.classList.toggle('soon', soon);
+  }
+  function go(i) { const n = Math.max(0, Math.min(rooms.length - 1, i)); if (n === focus) return; focus = n; sfx.pop(); layout(); }
+  function play() {
+    const r = rooms[focus];
+    if (r.status !== 'ready') { sfx.no(); playBtn.classList.add('shake'); setTimeout(() => playBtn.classList.remove('shake'), 400); return; }
+    sfx.start(); cleanup(); onRoom?.(r.id);
+  }
+
+  root.querySelector('#cs-prev').onclick = () => go(focus - 1);
+  root.querySelector('#cs-next').onclick = () => go(focus + 1);
+  playBtn.onclick = play;
+  cards.forEach((c, i) => c.onclick = () => (i === focus ? play() : go(i)));
+  dots.forEach((d, i) => d.onclick = () => go(i));
+
+  const onKey = (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(focus - 1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); go(focus + 1); }
+    else if (e.key === 'Enter' || e.code === 'Space') { e.preventDefault(); play(); }
+  };
+  window.addEventListener('keydown', onKey);
+  const onResize = () => layout();
+  window.addEventListener('resize', onResize);
+  requestAnimationFrame(() => requestAnimationFrame(layout));
+  setTimeout(layout, 120);   // 폰트/이미지 로드 후 보정
+
+  function cleanup() { window.removeEventListener('keydown', onKey); window.removeEventListener('resize', onResize); }
+}
+
+function cardHtml(r, i) {
+  const cleared = isRoomCleared(r.id), soon = r.status !== 'ready';
+  const badge = cleared ? '🏅' : soon ? '🔒' : '';
+  return `<button class="cs-card${soon ? ' is-soon' : ''}" data-i="${i}" style="--i:${i}">
+    <div class="cs-cab">
+      <div class="cs-screen" style="background-image:url(/brand/game-${r.id}-cover.webp)"></div>
+      <div class="cs-scan"></div>
+      ${badge ? `<span class="cs-badge">${badge}</span>` : ''}
+      ${soon ? '<div class="cs-lock"></div>' : ''}
+    </div>
+    <div class="cs-cap"><span class="cs-cap-ico">${r.icon}</span>${r.name}</div>
+  </button>`;
+}
