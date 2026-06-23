@@ -209,7 +209,7 @@ export function showLampGame(root, { onExit } = {}) {
   // ── 그리기 ──
   function draw(now) {
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(12,8,26,0.5)'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(12,8,26,0.34)'; ctx.fillRect(0, 0, W, H);   // 배경(마법 무대) 살짝만 가라앉힘
     drawLamp(now); drawTargets(now); drawMage(now);
 
     if (state.phase === 'count') {
