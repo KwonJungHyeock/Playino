@@ -7,7 +7,7 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const ADC = 0, RGB = { r: 9, g: 10, b: 11 }, HUE_MAX = 320, PASS = 0.8;
+const ADC = 0, RGB = { r: 5, g: 4, b: 3 }, HUE_MAX = 320, PASS = 0.8;
 const ACTS = [
   { key: 'wake', no: 1, mode: 'match', name: '색 깨우기', icon: '✨',
     story: '잠든 램프들이 색을 잃었어요. 손그림자로 빛을 다뤄 <b>목표 색</b>을 깨워봐요! 🪄',
@@ -58,11 +58,11 @@ export function showLampGame(root, { onExit } = {}) {
         <div class="prep-card" style="max-width:640px;text-align:center">
           <h2>🪔 빛 마법 램프</h2>
           <p class="prep-sub">에디는 <b>빛의 마법사 견습생</b>! <b>손그림자(조도센서)</b>로 빛을 다루면 램프 색(<b>RGB</b>)이 바뀌어요. 목표 색에 맞춰 잃어버린 색을 되살려요! 🌈</p>
-          <p class="prep-sub">조작: <b>아래 슬라이더</b>(또는 ↑ ↓ 키). 조도센서를 <b>A0</b>, RGB를 <b>D9·D10·D11</b>에 연결하면 진짜 손그림자·실물 LED로 즐겨요.</p>
+          <p class="prep-sub">조작: <b>아래 슬라이더</b>(또는 ↑ ↓ 키). 조도센서를 <b>A0</b>, RGB를 <b>D5·D4·D3</b>에 연결하면 진짜 손그림자·실물 LED로 즐겨요.</p>
           <div class="prep-wire"><b>🔌 결선</b>
             <table class="prep-table prep-wire-t"><tbody>
               <tr><td>🔆 조도센서(CDS)</td><td><b>A0</b> 포트</td></tr>
-              <tr><td>🌈 RGB LED</td><td><b>D9(R)·D10(G)·D11(B)</b> + GND</td></tr>
+              <tr><td>🌈 RGB LED</td><td><b>D5(R)·D4(G)·D3(B)</b> + GND</td></tr>
             </tbody></table>
             <img id="lp-wire" alt="결선 회로도" hidden style="display:block;max-width:100%;border-radius:12px;margin-top:10px" />
           </div>
