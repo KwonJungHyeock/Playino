@@ -128,7 +128,7 @@ export function showLampGame(root, { onExit } = {}) {
 
   // ── 플로우 ──
   const cleared = { wake: false, river: false, grand: false };
-  let ai = 0, act = ACTS[0], parts = [], pops = [], curRGB = [0, 0, 0], curHue = 0, fx = 0, matching = false, motes = [], flash = 0;
+  let ai = 0, act = ACTS[0], parts = [], pops = [], curRGB = [0, 0, 0], curHue = 0, fx = 0, matching = false, motes = [], flash = 0, hintT = 0, hintTarget = null;
   let m = null, tk = null, sp = null;
   const state = { phase: 'prep', countT: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, total: 0, ended: false };
   function panel(html) { const el = document.createElement('div'); el.className = 'led-panel'; el.innerHTML = `<div class="prep-card led-pcard">${html}</div>`; scene.appendChild(el); return el; }
@@ -206,6 +206,9 @@ export function showLampGame(root, { onExit } = {}) {
       if (sp.holdT >= act.holdNeed) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 150 + state.combo * 12; sfx.ok(); fx = 1; flash = 0.5; burst(W * 0.5, H * 0.46, hsv2rgb(tgt, 1, 1)); pop(`주문 ${sp.idx + 1} 완성!`, '#fff'); sp.idx++; sp.holdT = 0; sync(); if (sp.idx >= act.len) endPlay(); }
       if (sp.t >= act.time) endPlay();
     }
+    // 색 못 맞추고 헤매면 힌트 타이머 누적 → 일정 시간 넘으면 에디가 말풍선으로 방향 알려줌
+    hintTarget = act.mode === 'match' ? (m && m.target) : act.mode === 'track' ? trackTarget(tk.t) : (sp && sp.seq[sp.idx]);
+    if (matching) hintT = 0; else hintT += ms;
     fx = Math.max(0, fx - ms * 0.0016); flash = Math.max(0, flash - ms * 0.004);
   }
 
@@ -216,7 +219,7 @@ export function showLampGame(root, { onExit } = {}) {
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(12,8,26,0.34)'; ctx.fillRect(0, 0, W, H);   // 배경(마법 무대) 살짝만 가라앉힘
     drawMotes(now); drawBeam(now);
-    drawLamp(now); drawTargets(now); drawMage(now);
+    drawLamp(now); drawTargets(now); drawMage(now); drawHint(now);
 
     if (state.phase === 'count') {
       const el = (now - state.countT) / 1000, n = 3 - Math.floor(el);
@@ -292,13 +295,15 @@ export function showLampGame(root, { onExit } = {}) {
     const g = lampGeo();
     if (act.mode === 'match' && m) {
       const danger = clamp((performance.now() - m.roundStart) / act.roundLimit, 0, 1);
-      drawMonster(W * 0.5, lerp(H * 0.15, H * 0.31, danger), 42, m.target, danger, now, danger > 0.7 ? '⚠️ 다가온다!' : '약점 색 맞춰 처치!');
+      // 위험할수록 위(0.13)에서 램프 가까이(0.30)로 다가옴 + 다가올수록 약간 커짐(압박감)
+      drawMonster(W * 0.5, lerp(H * 0.13, H * 0.30, danger), 48 + danger * 10, m.target, danger, now, danger > 0.7 ? '⚠️ 다가온다!' : '약점 색 맞춰 처치!');
       if (state.phase === 'play') { const pr = clamp(m.holdT / act.holdNeed, 0, 1); const bw = 200, bx = W / 2 - bw / 2, by = g.y + g.r * 1.5; ctx.fillStyle = 'rgba(0,0,0,0.4)'; rr(ctx, bx, by, bw, 13, 6); ctx.fill(); ctx.fillStyle = '#7bf0a0'; rr(ctx, bx, by, bw * pr, 13, 6); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = '700 12px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🪄 빛 마법 충전!', W / 2, by - 6); }
     } else if (act.mode === 'track' && tk) {
-      drawMonster(W * 0.5, H * 0.16, 40, trackTarget(tk.t), 0.3, now, '도망치는 색!');
+      drawMonster(W * 0.5, H * 0.15, 46, trackTarget(tk.t), 0.3, now, '도망치는 색!');
     } else if (act.mode === 'spell' && sp) {
-      drawMonster(W * 0.5, H * 0.14, 52, sp.seq[sp.idx], 0.45 + 0.25 * Math.sin(now / 240), now, '');
-      const n = act.len, gap = 56, sx = W / 2 - (n - 1) * gap / 2, ry = H * 0.3;
+      // 3막 보스 — 훨씬 크게(긴장감↑). 시전 시퀀스 오브는 더 아래로 내려 겹침 방지.
+      drawMonster(W * 0.5, H * 0.17, 78, sp.seq[sp.idx], 0.5 + 0.28 * Math.sin(now / 240), now, '');
+      const n = act.len, gap = 56, sx = W / 2 - (n - 1) * gap / 2, ry = H * 0.36;
       for (let i = 0; i < n; i++) { const done = i < sp.idx, cur = i === sp.idx; orb(sx + i * gap, ry, cur ? 22 : 15, sp.seq[i], done ? '✓' : (cur ? '지금!' : ''), cur); if (done) { ctx.fillStyle = '#7bf0a0'; ctx.font = '900 15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✓', sx + i * gap, ry + 5); } }
       if (state.phase === 'play') { const left = Math.max(0, act.time - sp.t) / 1000; ctx.fillStyle = left < 8 ? '#ff7a5a' : 'rgba(255,255,255,0.85)'; ctx.font = '800 15px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`⏱ ${left.toFixed(0)}초`, W / 2, ry + 40); }
     }
@@ -340,6 +345,26 @@ export function showLampGame(root, { onExit } = {}) {
     ctx.save(); ctx.shadowColor = `rgba(${curRGB[0]},${curRGB[1]},${curRGB[2]},0.95)`; ctx.shadowBlur = matching ? 30 : 14;
     ctx.fillStyle = `rgba(${curRGB[0]},${curRGB[1]},${curRGB[2]},${matching ? 0.95 : 0.65})`;
     ctx.beginPath(); ctx.arc(-dw * 0.3, -dh * 0.46, matching ? 9 : 6, 0, 6.283); ctx.fill(); ctx.restore();
+    ctx.restore();
+  }
+
+  // 색을 한동안 못 맞추면 에디가 말풍선으로 방향 힌트(빛을 더 가려/덜 가려)
+  function drawHint(now) {
+    if (state.phase !== 'play' || hintT < 1500 || hintTarget == null) return;
+    // 슬라이더/손그림자는 선형(가림↑ → hue↑)이라 목표와의 선형 차이 부호로 방향 안내
+    const d = hintTarget - curHue;                        // +면 더 가려야(hue↑), -면 덜 가려야
+    const near = hueDiff(curHue, hintTarget) <= 26;
+    const text = near ? '✨ 거의 다 왔어! 유지해!' : d > 0 ? '🖐️ 손으로 더 가려요!' : '☀️ 손을 살짝 치워요!';
+    const bx = W * 0.82, by = H * 0.50;                  // 에디 머리 위쪽
+    ctx.save();
+    ctx.font = '800 15px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const w = Math.max(150, ctx.measureText(text).width + 34), h = 40, x = bx - w / 2, y = by - h;
+    const pulse = 0.85 + 0.15 * Math.sin(now / 200);
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 14;
+    ctx.fillStyle = `rgba(255,255,255,${pulse})`; rr(ctx, x, y, w, h, 14); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(bx - 12, y + h - 2); ctx.lineTo(bx + 2, y + h + 16); ctx.lineTo(bx + 12, y + h - 2); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0; ctx.fillStyle = near ? '#1d9a55' : '#c4452a';
+    ctx.fillText(text, bx, y + h / 2);
     ctx.restore();
   }
 
