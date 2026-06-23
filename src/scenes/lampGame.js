@@ -64,6 +64,7 @@ export function showLampGame(root, { onExit } = {}) {
               <tr><td>🔆 조도센서(CDS)</td><td><b>A0</b> 포트</td></tr>
               <tr><td>🌈 RGB LED</td><td><b>D9(R)·D10(G)·D11(B)</b> + GND</td></tr>
             </tbody></table>
+            <img id="lp-wire" alt="결선 회로도" hidden style="display:block;max-width:100%;border-radius:12px;margin-top:10px" />
           </div>
           <div class="prep-actions" style="justify-content:center">
             <button class="prep-btn" id="lp-connect">🔌 보드 연결(선택)</button>
@@ -121,6 +122,8 @@ export function showLampGame(root, { onExit } = {}) {
   root.querySelector('#lp-connect').onclick = async () => { const b = root.querySelector('#lp-connect'); try { await board.connect(); b.textContent = '🔌 연결됨 ✓'; startSense(); startRgb(); } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
   board.connectAuto().then(() => { startSense(); startRgb(); }).catch(() => {});
   root.querySelector('#lp-start').onclick = () => { root.querySelector('#lp-prep').classList.add('hide'); skipBtn.hidden = false; startFlow(); };
+  // 결선 회로도 이미지(있으면 표시)
+  const wireProbe = new Image(); wireProbe.onload = () => { const el = root.querySelector('#lp-wire'); if (el) { el.src = wireProbe.src; el.hidden = false; } }; wireProbe.src = '/brand/wiring-lamp.webp';
 
   // ── 플로우 ──
   const cleared = { wake: false, river: false, grand: false };
