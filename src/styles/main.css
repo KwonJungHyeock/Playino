@@ -1575,6 +1575,7 @@ button:focus-visible, a:focus-visible, .code-box:focus-visible, .lf-input:focus-
 body[data-canback="1"] .nav-back { display: inline-flex; }
 body[data-canback="1"] .brand-badge { left: 116px; }   /* 게임/인트로: 좌상단 뱃지를 우측으로 비켜줌 */
 body[data-canback="1"] .led-hud { left: 116px !important; }   /* 게임 HUD도 뒤로 버튼과 안 겹치게 */
+.led:has(.led-hud:not([hidden])) .brand-badge { display: none; }   /* 게임 중엔 로고 숨김(HUD와 겹침 방지) */
 /* 상단 헤더 바(허브·챕터·미니게임)에선 로고와 겹치지 않게 버튼을 한 칸 아래로 */
 body:has(.curr-header) .nav-back,
 body:has(.hud-top) .nav-back,
@@ -1820,7 +1821,7 @@ body:has(.app-header) .nav-back { top: 62px; left: 18px; }
 .lp-S { color: #ffb800; } .lp-A { color: #2ec27e; } .lp-B { color: #3aa0e0; } .lp-C { color: #ff9e3c; } .lp-D { color: #ef5470; }
 
 /* LED 테스트용 건너뛰기 버튼(나가기 왼쪽) */
-.led-skip { right: 132px !important; background: rgba(50,38,70,.6); }
+.led-skip { right: 172px !important; background: rgba(50,38,70,.6); }
 
 /* 말풍선/대사: 기본 한 줄(nowrap) — 두 줄이 필요하면 텍스트에 <br>로 명시 */
 .eddie-bubble, .bx-speech, .lg-speech, .pm-eddie-say { white-space: nowrap; max-width: min(86vw, 560px); }

@@ -127,7 +127,7 @@ export function showLampGame(root, { onExit } = {}) {
 
   // ── 플로우 ──
   const cleared = { wake: false, river: false, grand: false };
-  let ai = 0, act = ACTS[0], parts = [], pops = [], curRGB = [0, 0, 0], curHue = 0, fx = 0;
+  let ai = 0, act = ACTS[0], parts = [], pops = [], curRGB = [0, 0, 0], curHue = 0, fx = 0, matching = false, motes = [];
   let m = null, tk = null, sp = null;
   const state = { phase: 'prep', countT: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, total: 0, ended: false };
   function panel(html) { const el = document.createElement('div'); el.className = 'led-panel'; el.innerHTML = `<div class="prep-card led-pcard">${html}</div>`; scene.appendChild(el); return el; }
@@ -182,24 +182,25 @@ export function showLampGame(root, { onExit } = {}) {
     cover = lerp(cover, target01(), 0.3);
     curHue = cover * HUE_MAX;
     curRGB = hsv2rgb(curHue, 0.95, 1);
+    matching = false;
     if (state.phase !== 'play' || state.ended) return;
     const ms = dt * 16.67;
     if (act.mode === 'match') {
       const tol = lerp(act.tol0, act.tol1, act.rounds > 1 ? m.idx / (act.rounds - 1) : 0);
-      const inZone = hueDiff(curHue, m.target) <= tol;
+      const inZone = hueDiff(curHue, m.target) <= tol; matching = inZone;
       if (inZone) m.holdT += ms; else m.holdT = Math.max(0, m.holdT - ms * 0.85);
       if (m.holdT >= act.holdNeed) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 120 + state.combo * 10; sfx.ok(); fx = 1; burst(W * 0.5, H * 0.46, hsv2rgb(m.target, 1, 1)); pop('색 깨움! ✨', '#fff'); sync(); nextRound(false); }
       else if (performance.now() - m.roundStart > act.roundLimit) { state.combo = 0; sfx.no(); pop('너무 느려요!', '#ff9a9a'); sync(); nextRound(false); }
     } else if (act.mode === 'track') {
       tk.t += ms; const tgt = trackTarget(tk.t), tol = lerp(act.tol0, act.tol1, clamp(tk.t / act.dur, 0, 1));
-      const inZone = hueDiff(curHue, tgt) <= tol; if (inZone) { tk.inT += ms; state.score += Math.round(dt * 2); }
+      const inZone = hueDiff(curHue, tgt) <= tol; matching = inZone; if (inZone) { tk.inT += ms; state.score += Math.round(dt * 2); }
       if (tk.t >= tk.nextCheck && tk.checkIdx < act.checks) {
         tk.checkIdx++; tk.nextCheck = (tk.checkIdx + 1) * (act.dur / act.checks);
         if (inZone) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 70 + state.combo * 6; sfx.ok(); fx = 1; burst(W * 0.5, H * 0.46, hsv2rgb(tgt, 1, 1)); pop('GOOD!', '#ffe28a'); } else { state.combo = 0; sfx.no(); } sync();
       }
       if (tk.t >= act.dur && tk.checkIdx >= act.checks) endPlay();
     } else { // spell
-      sp.t += ms; const tgt = sp.seq[sp.idx], inZone = hueDiff(curHue, tgt) <= act.tol;
+      sp.t += ms; const tgt = sp.seq[sp.idx], inZone = hueDiff(curHue, tgt) <= act.tol; matching = inZone;
       if (inZone) sp.holdT += ms; else sp.holdT = Math.max(0, sp.holdT - ms * 0.8);
       if (sp.holdT >= act.holdNeed) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 150 + state.combo * 12; sfx.ok(); fx = 1; burst(W * 0.5, H * 0.46, hsv2rgb(tgt, 1, 1)); pop(`주문 ${sp.idx + 1} 완성!`, '#fff'); sp.idx++; sp.holdT = 0; sync(); if (sp.idx >= act.len) endPlay(); }
       if (sp.t >= act.time) endPlay();
@@ -213,6 +214,7 @@ export function showLampGame(root, { onExit } = {}) {
   function draw(now) {
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(12,8,26,0.34)'; ctx.fillRect(0, 0, W, H);   // 배경(마법 무대) 살짝만 가라앉힘
+    drawMotes(now); drawBeam(now);
     drawLamp(now); drawTargets(now); drawMage(now);
 
     if (state.phase === 'count') {
@@ -240,6 +242,10 @@ export function showLampGame(root, { onExit } = {}) {
     lg.addColorStop(0, '#fff'); lg.addColorStop(0.35, `rgb(${curRGB[0]},${curRGB[1]},${curRGB[2]})`); lg.addColorStop(1, `rgb(${Math.round(curRGB[0] * 0.6)},${Math.round(curRGB[1] * 0.6)},${Math.round(curRGB[2] * 0.6)})`);
     ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 6.283); ctx.fill(); ctx.restore();
     ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 6.283); ctx.stroke();
+    // 공명 링(목표 색에 맞추는 중일 때 확장 — 역동감)
+    if (matching && state.phase === 'play') {
+      for (let k = 0; k < 3; k++) { const p = (now / 680 + k / 3) % 1; ctx.strokeStyle = `rgba(${curRGB[0]},${curRGB[1]},${curRGB[2]},${(1 - p) * 0.55})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(g.x, g.y, g.r * (1 + p * 1.05), 0, 6.283); ctx.stroke(); }
+    }
     // 현재 손그림자(빛 가림) 표시 — 램프 위 작은 미터
     ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = '700 13px "Space Grotesk", sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('🖐️ 빛 가림', g.x, g.y - g.r - 18);
@@ -270,11 +276,43 @@ export function showLampGame(root, { onExit } = {}) {
     }
   }
 
+  // 떠다니는 마법 입자(앰비언트)
+  function drawMotes(now) {
+    if (motes.length < 38) motes.push({ x: Math.random() * W, y: H + 8, vy: 0.3 + Math.random() * 0.9, r: 1 + Math.random() * 2.2, h: Math.random() * 360, ph: Math.random() * 6.28 });
+    for (let i = motes.length - 1; i >= 0; i--) {
+      const p = motes[i]; p.y -= p.vy; p.x += Math.sin(now / 900 + p.ph) * 0.3;
+      if (p.y < -12) { motes.splice(i, 1); continue; }
+      const rgb = hsv2rgb(p.h, 0.5, 1);
+      ctx.globalAlpha = 0.22 + 0.22 * Math.sin(now / 500 + p.ph); ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1;
+    }
+  }
+  // 캐스팅 빔(에디 손 → 램프) — 흐르는 빛 입자
+  function drawBeam(now) {
+    if (state.phase === 'prep') return;
+    const g = lampGeo(), hx = W * 0.76, hy = H * 0.64, inten = matching ? 1 : 0.45;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = `rgba(${curRGB[0]},${curRGB[1]},${curRGB[2]},${0.22 * inten})`; ctx.lineWidth = matching ? 9 : 5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo((hx + g.x) / 2, hy - 70, g.x, g.y); ctx.stroke();
+    const n = matching ? 5 : 3;
+    for (let i = 0; i < n; i++) { const t = (now / 800 + i / n) % 1, mx = lerp(hx, g.x, t), my = lerp(hy, g.y, t) - Math.sin(t * Math.PI) * 60; ctx.fillStyle = `rgba(${curRGB[0]},${curRGB[1]},${curRGB[2]},${0.85 * inten})`; ctx.beginPath(); ctx.arc(mx, my, matching ? 5 : 3.5, 0, 6.283); ctx.fill(); }
+    ctx.restore();
+  }
   function drawMage(now) {
     if (!ready(eddieImg)) return;
     const dw = W * 0.16, dh = dw * (eddieImg.naturalHeight / eddieImg.naturalWidth);
-    const bob = Math.sin(now / 420) * dh * 0.02 + Math.sin(now / 600) * fx * dh * 0.04;
-    ctx.save(); ctx.globalAlpha = 0.96; ctx.drawImage(eddieImg, W * 0.82 - dw / 2, H * 0.92 - dh - bob, dw, dh); ctx.restore();
+    const cx = W * 0.82, foot = H * 0.92;
+    const bob = Math.sin(now / 340) * dh * 0.03;
+    const lean = -0.06 + (matching ? Math.sin(now / 110) * 0.035 : 0);     // 램프 쪽으로 기울 + 맞출 때 떨림(시전감)
+    const sc = 1 + (matching ? 0.035 + 0.02 * Math.sin(now / 90) : 0);
+    ctx.save();
+    ctx.translate(cx, foot - bob); ctx.rotate(lean); ctx.scale(sc, sc);
+    ctx.drawImage(eddieImg, -dw / 2, -dh, dw, dh);
+    // 손끝 마법 글로우(현재 색)
+    ctx.save(); ctx.shadowColor = `rgba(${curRGB[0]},${curRGB[1]},${curRGB[2]},0.95)`; ctx.shadowBlur = matching ? 30 : 14;
+    ctx.fillStyle = `rgba(${curRGB[0]},${curRGB[1]},${curRGB[2]},${matching ? 0.95 : 0.65})`;
+    ctx.beginPath(); ctx.arc(-dw * 0.3, -dh * 0.46, matching ? 9 : 6, 0, 6.283); ctx.fill(); ctx.restore();
+    ctx.restore();
   }
 
   let lastT = performance.now();
