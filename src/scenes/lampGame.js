@@ -9,14 +9,14 @@ import { board } from '../app/board.js';
 
 const ADC = 0, RGB = { r: 5, g: 4, b: 3 }, HUE_MAX = 320, PASS = 0.8;
 const ACTS = [
-  { key: 'wake', no: 1, mode: 'match', name: '색 깨우기', icon: '✨',
-    story: '잠든 램프들이 색을 잃었어요. 손그림자로 빛을 다뤄 <b>목표 색</b>을 깨워봐요! 🪄',
+  { key: 'wake', no: 1, mode: 'match', name: '빛 몬스터 처치', icon: '👾',
+    story: '<b>어둠 몬스터</b>가 천국의 색을 훔쳐 달아나요! 몬스터의 <b>약점 색</b>을 맞춰 빛 마법으로 물리쳐요. 너무 늦으면 몬스터가 다가와요! ⚠️',
     rounds: 5, holdNeed: 800, roundLimit: 6500, tol0: 38, tol1: 18 },
-  { key: 'river', no: 2, mode: 'track', name: '흐르는 빛', icon: '🌊',
-    story: '빛의 강이 흐르기 시작했어요. 흐르는 <b>무지개 색</b>을 손그림자로 계속 따라가요! 🌈',
+  { key: 'river', no: 2, mode: 'track', name: '도망치는 무리', icon: '🌀',
+    story: '색을 <b>바꾸며 도망가는</b> 몬스터 무리! 변하는 약점 색을 손그림자로 계속 맞춰 빛으로 지져요! 🌈',
     dur: 24000, checks: 18, tol0: 36, tol1: 26 },
-  { key: 'grand', no: 3, mode: 'spell', name: '대마법 램프', icon: '🪔',
-    story: '마지막 <b>대마법 램프</b>! 색 주문을 <b>순서대로</b> 외워 천국에 무지개를 되돌려요! ✨',
+  { key: 'grand', no: 3, mode: 'spell', name: '어둠의 보스', icon: '👹',
+    story: '거대한 <b>어둠의 보스</b>가 나타났다! 보스의 <b>색 봉인</b>을 순서대로 풀어 마지막 빛 마법으로 처치하고 천국에 무지개를 되돌려요! ⏱️',
     len: 5, holdNeed: 650, tol: 22, time: 34000 },
 ];
 
@@ -57,7 +57,7 @@ export function showLampGame(root, { onExit } = {}) {
       <div class="led-prep" id="lp-prep">
         <div class="prep-card" style="max-width:640px;text-align:center">
           <h2>🪔 빛 마법 램프</h2>
-          <p class="prep-sub">에디는 <b>빛의 마법사 견습생</b>! <b>손그림자(조도센서)</b>로 빛을 다루면 램프 색(<b>RGB</b>)이 바뀌어요. 목표 색에 맞춰 잃어버린 색을 되살려요! 🌈</p>
+          <p class="prep-sub">에디는 <b>빛의 마법사</b>! 어둠 몬스터가 색을 훔쳐갔어요. <b>손그림자(조도센서)</b>로 램프 색(<b>RGB</b>)을 바꿔 <b>몬스터 약점 색</b>에 맞추고 빛 마법으로 처치해요! 👾🌈</p>
           <p class="prep-sub">조작: <b>아래 슬라이더</b>(또는 ↑ ↓ 키). 조도센서를 <b>A0</b>, RGB를 <b>D5·D4·D3</b>에 연결하면 진짜 손그림자·실물 LED로 즐겨요.</p>
           <div class="prep-wire"><b>🔌 결선</b>
             <table class="prep-table prep-wire-t"><tbody>
@@ -127,7 +127,7 @@ export function showLampGame(root, { onExit } = {}) {
 
   // ── 플로우 ──
   const cleared = { wake: false, river: false, grand: false };
-  let ai = 0, act = ACTS[0], parts = [], pops = [], curRGB = [0, 0, 0], curHue = 0, fx = 0, matching = false, motes = [];
+  let ai = 0, act = ACTS[0], parts = [], pops = [], curRGB = [0, 0, 0], curHue = 0, fx = 0, matching = false, motes = [], flash = 0;
   let m = null, tk = null, sp = null;
   const state = { phase: 'prep', countT: 0, score: 0, combo: 0, maxCombo: 0, hits: 0, total: 0, ended: false };
   function panel(html) { const el = document.createElement('div'); el.className = 'led-panel'; el.innerHTML = `<div class="prep-card led-pcard">${html}</div>`; scene.appendChild(el); return el; }
@@ -144,9 +144,9 @@ export function showLampGame(root, { onExit } = {}) {
   function beginPlay() {
     bgm.setDuck(0); fader.hidden = false; parts = []; pops = []; fx = 0;
     Object.assign(state, { phase: 'count', countT: performance.now(), score: 0, combo: 0, maxCombo: 0, hits: 0, ended: false });
-    if (act.mode === 'match') { m = { idx: 0, target: randHue(null), holdT: 0, roundStart: 0 }; nextRound(true); state.total = act.rounds; elHlbl.textContent = '✨ 깨움'; }
-    else if (act.mode === 'track') { tk = { t: 0, checkIdx: 0, nextCheck: act.dur / act.checks, inT: 0 }; state.total = act.checks; elHlbl.textContent = '🌊 적중'; }
-    else { sp = { seq: Array.from({ length: act.len }, (_, i) => randHue(i ? null : 30 + Math.random() * 40)), idx: 0, holdT: 0, t: 0 }; state.total = act.len; elHlbl.textContent = '🪔 주문'; }
+    if (act.mode === 'match') { m = { idx: 0, target: randHue(null), holdT: 0, roundStart: 0 }; nextRound(true); state.total = act.rounds; elHlbl.textContent = '👾 처치'; }
+    else if (act.mode === 'track') { tk = { t: 0, checkIdx: 0, nextCheck: act.dur / act.checks, inT: 0 }; state.total = act.checks; elHlbl.textContent = '🌀 적중'; }
+    else { sp = { seq: Array.from({ length: act.len }, (_, i) => randHue(i ? null : 30 + Math.random() * 40)), idx: 0, holdT: 0, t: 0 }; state.total = act.len; elHlbl.textContent = '👹 봉인'; }
     elTot.textContent = state.total; elAct.textContent = `${act.no}막 · ${act.name}`;
     hud.hidden = false; sync();
   }
@@ -189,23 +189,23 @@ export function showLampGame(root, { onExit } = {}) {
       const tol = lerp(act.tol0, act.tol1, act.rounds > 1 ? m.idx / (act.rounds - 1) : 0);
       const inZone = hueDiff(curHue, m.target) <= tol; matching = inZone;
       if (inZone) m.holdT += ms; else m.holdT = Math.max(0, m.holdT - ms * 0.85);
-      if (m.holdT >= act.holdNeed) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 120 + state.combo * 10; sfx.ok(); fx = 1; burst(W * 0.5, H * 0.46, hsv2rgb(m.target, 1, 1)); pop('색 깨움! ✨', '#fff'); sync(); nextRound(false); }
+      if (m.holdT >= act.holdNeed) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 120 + state.combo * 10; sfx.ok(); fx = 1; flash = 0.5; burst(W * 0.5, H * 0.46, hsv2rgb(m.target, 1, 1)); pop('색 깨움! ✨', '#fff'); sync(); nextRound(false); }
       else if (performance.now() - m.roundStart > act.roundLimit) { state.combo = 0; sfx.no(); pop('너무 느려요!', '#ff9a9a'); sync(); nextRound(false); }
     } else if (act.mode === 'track') {
       tk.t += ms; const tgt = trackTarget(tk.t), tol = lerp(act.tol0, act.tol1, clamp(tk.t / act.dur, 0, 1));
       const inZone = hueDiff(curHue, tgt) <= tol; matching = inZone; if (inZone) { tk.inT += ms; state.score += Math.round(dt * 2); }
       if (tk.t >= tk.nextCheck && tk.checkIdx < act.checks) {
         tk.checkIdx++; tk.nextCheck = (tk.checkIdx + 1) * (act.dur / act.checks);
-        if (inZone) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 70 + state.combo * 6; sfx.ok(); fx = 1; burst(W * 0.5, H * 0.46, hsv2rgb(tgt, 1, 1)); pop('GOOD!', '#ffe28a'); } else { state.combo = 0; sfx.no(); } sync();
+        if (inZone) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 70 + state.combo * 6; sfx.ok(); fx = 1; flash = 0.5; burst(W * 0.5, H * 0.46, hsv2rgb(tgt, 1, 1)); pop('GOOD!', '#ffe28a'); } else { state.combo = 0; sfx.no(); } sync();
       }
       if (tk.t >= act.dur && tk.checkIdx >= act.checks) endPlay();
     } else { // spell
       sp.t += ms; const tgt = sp.seq[sp.idx], inZone = hueDiff(curHue, tgt) <= act.tol; matching = inZone;
       if (inZone) sp.holdT += ms; else sp.holdT = Math.max(0, sp.holdT - ms * 0.8);
-      if (sp.holdT >= act.holdNeed) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 150 + state.combo * 12; sfx.ok(); fx = 1; burst(W * 0.5, H * 0.46, hsv2rgb(tgt, 1, 1)); pop(`주문 ${sp.idx + 1} 완성!`, '#fff'); sp.idx++; sp.holdT = 0; sync(); if (sp.idx >= act.len) endPlay(); }
+      if (sp.holdT >= act.holdNeed) { state.hits++; state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo); state.score += 150 + state.combo * 12; sfx.ok(); fx = 1; flash = 0.5; burst(W * 0.5, H * 0.46, hsv2rgb(tgt, 1, 1)); pop(`주문 ${sp.idx + 1} 완성!`, '#fff'); sp.idx++; sp.holdT = 0; sync(); if (sp.idx >= act.len) endPlay(); }
       if (sp.t >= act.time) endPlay();
     }
-    fx = Math.max(0, fx - ms * 0.0016);
+    fx = Math.max(0, fx - ms * 0.0016); flash = Math.max(0, flash - ms * 0.004);
   }
 
   const lampGeo = () => ({ x: W * 0.5, y: H * 0.46, r: Math.min(W, H) * 0.16 });
@@ -226,6 +226,7 @@ export function showLampGame(root, { onExit } = {}) {
     for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.16; p.life--; ctx.globalAlpha = Math.max(0, p.life / 40); ctx.fillStyle = `rgb(${p.rgb[0]},${p.rgb[1]},${p.rgb[2]})`; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; if (p.life <= 0) parts.splice(i, 1); }
     for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i]; p.y -= 0.7; p.life--; ctx.globalAlpha = Math.max(0, p.life / 46); ctx.fillStyle = p.color; ctx.font = '900 26px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(p.text, W / 2, p.y); ctx.globalAlpha = 1; if (p.life <= 0) pops.splice(i, 1); }
     if (state.combo >= 2 && state.phase === 'play') { ctx.fillStyle = '#ffd24a'; ctx.font = '900 24px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`🔥 ${state.combo} COMBO`, W / 2, H * 0.13); }
+    if (flash > 0.01) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, W, H); }   // 처치 순간 번쩍
   }
 
   function drawLamp(now) {
@@ -261,18 +262,40 @@ export function showLampGame(root, { onExit } = {}) {
     if (label) { ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.font = '800 12px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, x, y + r + 16); }
   }
 
+  // 어둠 몬스터 — 약점 색(목표)을 코어로 글로우. 위험할수록 다가오고 붉게 떨림.
+  function drawMonster(x, y, r, hue, danger, now, label) {
+    const rgb = hsv2rgb(hue, 1, 1);
+    x += danger > 0.5 ? Math.sin(now / 38) * (danger - 0.5) * 8 : 0; y += Math.sin(now / 260) * 3;
+    if (danger > 0.5) { ctx.strokeStyle = `rgba(255,80,80,${(danger - 0.5) * 1.5})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r + 9 + Math.sin(now / 110) * 3, 0, 6.283); ctx.stroke(); }
+    // 어둠 몸(울렁이는 블롭) + 약점색 글로우
+    ctx.save(); ctx.shadowColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.85)`; ctx.shadowBlur = 22; ctx.fillStyle = '#241a36';
+    ctx.beginPath(); for (let a = 0; a <= 6.2832; a += 0.28) { const rr2 = r * (1 + 0.09 * Math.sin(a * 3 + now / 180)); const px = x + Math.cos(a) * rr2, py = y + Math.sin(a) * rr2 * 1.05; a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); ctx.fill(); ctx.restore();
+    // 뿔
+    ctx.fillStyle = '#241a36';
+    ctx.beginPath(); ctx.moveTo(x - r * 0.5, y - r * 0.7); ctx.lineTo(x - r * 0.62, y - r * 1.05); ctx.lineTo(x - r * 0.3, y - r * 0.82); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + r * 0.5, y - r * 0.7); ctx.lineTo(x + r * 0.62, y - r * 1.05); ctx.lineTo(x + r * 0.3, y - r * 0.82); ctx.closePath(); ctx.fill();
+    // 약점 코어(목표 색)
+    ctx.save(); ctx.shadowColor = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.shadowBlur = 16; ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.beginPath(); ctx.arc(x, y + r * 0.12, r * 0.4, 0, 6.283); ctx.fill(); ctx.restore();
+    // 눈
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - r * 0.34, y - r * 0.4, r * 0.2, 0, 6.283); ctx.arc(x + r * 0.34, y - r * 0.4, r * 0.2, 0, 6.283); ctx.fill();
+    ctx.fillStyle = danger > 0.6 ? '#ff5b5b' : '#23182f'; ctx.beginPath(); ctx.arc(x - r * 0.34, y - r * 0.36, r * 0.1, 0, 6.283); ctx.arc(x + r * 0.34, y - r * 0.36, r * 0.1, 0, 6.283); ctx.fill();
+    if (label) { ctx.fillStyle = danger > 0.6 ? '#ffd2d2' : 'rgba(255,255,255,0.92)'; ctx.font = '800 13px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, x, y + r + 22); }
+  }
+
   function drawTargets(now) {
     if (state.phase === 'prep') return;
-    const g = lampGeo(), ty = H * 0.16;
+    const g = lampGeo();
     if (act.mode === 'match' && m) {
-      orb(W * 0.5, ty, 30, m.target, '🎯 목표 색', true);
-      if (state.phase === 'play') { const pr = clamp(m.holdT / act.holdNeed, 0, 1); const bw = 180, bx = W / 2 - bw / 2, by = g.y + g.r * 1.5; ctx.fillStyle = 'rgba(0,0,0,0.4)'; rr(ctx, bx, by, bw, 12, 6); ctx.fill(); ctx.fillStyle = '#7bf0a0'; rr(ctx, bx, by, bw * pr, 12, 6); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = '700 12px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('맞춰서 유지!', W / 2, by - 6); }
+      const danger = clamp((performance.now() - m.roundStart) / act.roundLimit, 0, 1);
+      drawMonster(W * 0.5, lerp(H * 0.15, H * 0.31, danger), 42, m.target, danger, now, danger > 0.7 ? '⚠️ 다가온다!' : '약점 색 맞춰 처치!');
+      if (state.phase === 'play') { const pr = clamp(m.holdT / act.holdNeed, 0, 1); const bw = 200, bx = W / 2 - bw / 2, by = g.y + g.r * 1.5; ctx.fillStyle = 'rgba(0,0,0,0.4)'; rr(ctx, bx, by, bw, 13, 6); ctx.fill(); ctx.fillStyle = '#7bf0a0'; rr(ctx, bx, by, bw * pr, 13, 6); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = '700 12px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🪄 빛 마법 충전!', W / 2, by - 6); }
     } else if (act.mode === 'track' && tk) {
-      orb(W * 0.5, ty, 30, trackTarget(tk.t), '🌊 흐르는 색', true);
+      drawMonster(W * 0.5, H * 0.16, 40, trackTarget(tk.t), 0.3, now, '도망치는 색!');
     } else if (act.mode === 'spell' && sp) {
-      const n = act.len, gap = 64, sx = W / 2 - (n - 1) * gap / 2;
-      for (let i = 0; i < n; i++) { const done = i < sp.idx, cur = i === sp.idx; orb(sx + i * gap, ty, cur ? 26 : 18, sp.seq[i], done ? '✓' : (cur ? '지금!' : ''), cur); if (done) { ctx.fillStyle = '#7bf0a0'; ctx.font = '900 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✓', sx + i * gap, ty + 5); } }
-      if (state.phase === 'play') { const left = Math.max(0, act.time - sp.t) / 1000; ctx.fillStyle = left < 6 ? '#ff8a3c' : 'rgba(255,255,255,0.8)'; ctx.font = '800 14px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`⏱ ${left.toFixed(0)}초`, W / 2, ty + 56); }
+      drawMonster(W * 0.5, H * 0.14, 52, sp.seq[sp.idx], 0.45 + 0.25 * Math.sin(now / 240), now, '');
+      const n = act.len, gap = 56, sx = W / 2 - (n - 1) * gap / 2, ry = H * 0.3;
+      for (let i = 0; i < n; i++) { const done = i < sp.idx, cur = i === sp.idx; orb(sx + i * gap, ry, cur ? 22 : 15, sp.seq[i], done ? '✓' : (cur ? '지금!' : ''), cur); if (done) { ctx.fillStyle = '#7bf0a0'; ctx.font = '900 15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✓', sx + i * gap, ry + 5); } }
+      if (state.phase === 'play') { const left = Math.max(0, act.time - sp.t) / 1000; ctx.fillStyle = left < 8 ? '#ff7a5a' : 'rgba(255,255,255,0.85)'; ctx.font = '800 15px "Space Grotesk",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`⏱ ${left.toFixed(0)}초`, W / 2, ry + 40); }
     }
   }
 
