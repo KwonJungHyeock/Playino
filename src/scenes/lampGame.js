@@ -22,6 +22,7 @@ const ACTS = [
 
 const eddieImg = new Image(); eddieImg.onerror = () => { if (!eddieImg._p) { eddieImg._p = 1; eddieImg.src = '/brand/eddie/eddie-hero.webp'; } }; eddieImg.src = '/brand/eddie-mage.webp';
 const bgImg = new Image(); bgImg.onerror = () => { if (!bgImg._p) { bgImg._p = 1; bgImg.src = '/brand/stage-lamp-bg.png'; } }; bgImg.src = '/brand/stage-lamp-bg.webp';
+const monImg = new Image(); monImg.src = '/brand/monster-dark.webp';   // 몬스터 1장(보스는 같은 이미지를 크게)
 const ready = (im) => im.complete && im.naturalWidth > 0;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -263,22 +264,26 @@ export function showLampGame(root, { onExit } = {}) {
   }
 
   // 어둠 몬스터 — 약점 색(목표)을 코어로 글로우. 위험할수록 다가오고 붉게 떨림.
-  function drawMonster(x, y, r, hue, danger, now, label) {
+  // 이미지(monster-dark/monster-boss) 있으면 그걸 몸으로, 약점색 코어는 코드가 위에 얹는다.
+  function drawMonster(x, y, r, hue, danger, now, label, boss) {
     const rgb = hsv2rgb(hue, 1, 1);
     x += danger > 0.5 ? Math.sin(now / 38) * (danger - 0.5) * 8 : 0; y += Math.sin(now / 260) * 3;
     if (danger > 0.5) { ctx.strokeStyle = `rgba(255,80,80,${(danger - 0.5) * 1.5})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r + 9 + Math.sin(now / 110) * 3, 0, 6.283); ctx.stroke(); }
-    // 어둠 몸(울렁이는 블롭) + 약점색 글로우
-    ctx.save(); ctx.shadowColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.85)`; ctx.shadowBlur = 22; ctx.fillStyle = '#241a36';
-    ctx.beginPath(); for (let a = 0; a <= 6.2832; a += 0.28) { const rr2 = r * (1 + 0.09 * Math.sin(a * 3 + now / 180)); const px = x + Math.cos(a) * rr2, py = y + Math.sin(a) * rr2 * 1.05; a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); ctx.fill(); ctx.restore();
-    // 뿔
-    ctx.fillStyle = '#241a36';
-    ctx.beginPath(); ctx.moveTo(x - r * 0.5, y - r * 0.7); ctx.lineTo(x - r * 0.62, y - r * 1.05); ctx.lineTo(x - r * 0.3, y - r * 0.82); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(x + r * 0.5, y - r * 0.7); ctx.lineTo(x + r * 0.62, y - r * 1.05); ctx.lineTo(x + r * 0.3, y - r * 0.82); ctx.closePath(); ctx.fill();
-    // 약점 코어(목표 색)
-    ctx.save(); ctx.shadowColor = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.shadowBlur = 16; ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.beginPath(); ctx.arc(x, y + r * 0.12, r * 0.4, 0, 6.283); ctx.fill(); ctx.restore();
-    // 눈
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - r * 0.34, y - r * 0.4, r * 0.2, 0, 6.283); ctx.arc(x + r * 0.34, y - r * 0.4, r * 0.2, 0, 6.283); ctx.fill();
-    ctx.fillStyle = danger > 0.6 ? '#ff5b5b' : '#23182f'; ctx.beginPath(); ctx.arc(x - r * 0.34, y - r * 0.36, r * 0.1, 0, 6.283); ctx.arc(x + r * 0.34, y - r * 0.36, r * 0.1, 0, 6.283); ctx.fill();
+    if (ready(monImg)) {   // 보스는 r이 커서 같은 이미지가 자동으로 더 크게 그려짐
+      const iw = r * 2.7, ih = iw * (monImg.naturalHeight / monImg.naturalWidth);
+      ctx.save(); ctx.shadowColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.7)`; ctx.shadowBlur = 18; ctx.drawImage(monImg, x - iw / 2, y - ih / 2, iw, ih); ctx.restore();
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.shadowColor = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.shadowBlur = 22; ctx.fillStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.92)`; ctx.beginPath(); ctx.arc(x, y + r * 0.1, r * 0.34, 0, 6.283); ctx.fill(); ctx.restore();
+    } else {
+      // 캔버스 폴백(울렁이는 어둠 블롭 + 뿔 + 약점색 코어 + 눈)
+      ctx.save(); ctx.shadowColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.85)`; ctx.shadowBlur = 22; ctx.fillStyle = '#241a36';
+      ctx.beginPath(); for (let a = 0; a <= 6.2832; a += 0.28) { const rr2 = r * (1 + 0.09 * Math.sin(a * 3 + now / 180)); const px = x + Math.cos(a) * rr2, py = y + Math.sin(a) * rr2 * 1.05; a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); ctx.fill(); ctx.restore();
+      ctx.fillStyle = '#241a36';
+      ctx.beginPath(); ctx.moveTo(x - r * 0.5, y - r * 0.7); ctx.lineTo(x - r * 0.62, y - r * 1.05); ctx.lineTo(x - r * 0.3, y - r * 0.82); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x + r * 0.5, y - r * 0.7); ctx.lineTo(x + r * 0.62, y - r * 1.05); ctx.lineTo(x + r * 0.3, y - r * 0.82); ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.shadowColor = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.shadowBlur = 16; ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.beginPath(); ctx.arc(x, y + r * 0.12, r * 0.4, 0, 6.283); ctx.fill(); ctx.restore();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - r * 0.34, y - r * 0.4, r * 0.2, 0, 6.283); ctx.arc(x + r * 0.34, y - r * 0.4, r * 0.2, 0, 6.283); ctx.fill();
+      ctx.fillStyle = danger > 0.6 ? '#ff5b5b' : '#23182f'; ctx.beginPath(); ctx.arc(x - r * 0.34, y - r * 0.36, r * 0.1, 0, 6.283); ctx.arc(x + r * 0.34, y - r * 0.36, r * 0.1, 0, 6.283); ctx.fill();
+    }
     if (label) { ctx.fillStyle = danger > 0.6 ? '#ffd2d2' : 'rgba(255,255,255,0.92)'; ctx.font = '800 13px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, x, y + r + 22); }
   }
 
