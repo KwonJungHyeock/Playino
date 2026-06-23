@@ -994,37 +994,37 @@ function drawSign(ctx, s, active, t) {
     ctx.save(); if (active) { ctx.shadowColor = `rgba(${acc},0.6)`; ctx.shadowBlur = 28; ctx.shadowOffsetY = 6; }
     ctx.drawImage(im, cx - iw / 2, by - ih / 2, iw, ih); ctx.restore();
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#27233a'; ctx.font = '900 26px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by + 6);
-    ctx.fillStyle = 'rgba(39,35,58,0.72)'; ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 26);
+    ctx.fillStyle = '#27233a'; ctx.font = '900 28px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by + 4);
+    ctx.fillStyle = 'rgba(35,31,52,0.78)'; ctx.font = '800 14px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 26);
     ctx.textAlign = 'start';
     signArrow(ctx, cx, by, dir, acc, active, t, iw / 2);
     return;
   }
 
-  // 플라크 본체(흰→파스텔 + 드롭섀도/글로우)
+  // 본체(흰 카드) + 드롭섀도/글로우
   ctx.save();
   ctx.shadowColor = active ? `rgba(${acc},0.6)` : 'rgba(30,20,42,0.3)';
-  ctx.shadowBlur = active ? 32 : 20; ctx.shadowOffsetY = 9;
-  const g = ctx.createLinearGradient(0, top, 0, top + bh);
-  g.addColorStop(0, 'rgba(255,255,255,0.98)'); g.addColorStop(1, `rgba(${acc},0.26)`);
-  ctx.fillStyle = g; signRR(ctx, left, top, bw, bh, 22); ctx.fill();
+  ctx.shadowBlur = active ? 30 : 18; ctx.shadowOffsetY = 8;
+  ctx.fillStyle = '#fff'; signRR(ctx, left, top, bw, bh, 20); ctx.fill();
   ctx.restore();
-  // 아케이드 컬러 프레임
-  ctx.strokeStyle = `rgb(${acc})`; ctx.lineWidth = 4; signRR(ctx, left + 2.5, top + 2.5, bw - 5, bh - 5, 19); ctx.stroke();
+  // 상단 컬러 밴드(아이콘+이름을 흰 글씨로 — 고대비) + 글로시
+  const bandH = bh * 0.6;
+  ctx.save(); signRR(ctx, left, top, bw, bh, 20); ctx.clip();
+  ctx.fillStyle = `rgb(${acc})`; ctx.fillRect(left, top, bw, bandH);
+  const gl = ctx.createLinearGradient(0, top, 0, top + bandH);
+  gl.addColorStop(0, 'rgba(255,255,255,0.38)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gl; ctx.fillRect(left, top, bw, bandH);
+  ctx.restore();
+  // 컬러 테두리
+  ctx.strokeStyle = `rgb(${acc})`; ctx.lineWidth = 3; signRR(ctx, left + 1.5, top + 1.5, bw - 3, bh - 3, 18); ctx.stroke();
 
-  // 마퀴 전구(상단 테두리) — 체이스 점등으로 아케이드 느낌
-  const nb = 9, pad = 18, span = bw - pad * 2;
-  for (let i = 0; i < nb; i++) {
-    const bx = left + pad + (span * i) / (nb - 1), byb = top + 12;
-    const lit = (Math.floor(t * 0.12) + i) % 2 === 0;
-    if (lit) { ctx.save(); ctx.shadowColor = `rgba(${acc},0.9)`; ctx.shadowBlur = 8; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bx, byb, 3.6, 0, 6.283); ctx.fill(); ctx.restore(); }
-    else { ctx.fillStyle = `rgba(${acc},0.5)`; ctx.beginPath(); ctx.arc(bx, byb, 3.2, 0, 6.283); ctx.fill(); }
-  }
-
-  // 텍스트(아이콘+이름, 부제)
+  // 텍스트: 밴드=흰 굵게(아이콘+이름) / 하단=진한 부제
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#2a2438'; ctx.font = '900 26px "Space Grotesk", sans-serif'; ctx.fillText(`${s.icon} ${s.label}`, cx, by + 8);
-  ctx.fillStyle = `rgb(${acc})`; ctx.font = '800 12.5px "Space Grotesk", sans-serif'; ctx.fillText(s.sub, cx, by + 28);
+  ctx.fillStyle = '#fff'; ctx.font = '900 27px "Space Grotesk", sans-serif';
+  ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1;
+  ctx.fillText(`${s.icon} ${s.label}`, cx, top + bandH * 0.5 + 10); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.fillStyle = '#3a3450'; ctx.font = '800 14px "Space Grotesk", sans-serif';
+  ctx.fillText(s.sub, cx, top + bandH + (bh - bandH) * 0.5 + 5);
 
   // 방향 뱃지(문 쪽 원형 + 셰브론, 통통 튐)
   const ax = cx + dir * (bw / 2 + 22) + dir * Math.abs(Math.sin(t * 0.16)) * 6, ay = by;
