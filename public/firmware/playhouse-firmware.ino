@@ -11,8 +11,12 @@
 //   L<pin>:<0|1>         digitalWrite        → "OK"
 //   P<pin>:<0-255>       analogWrite(PWM)    → "OK"
 //   U<trig>:<echo>       초음파(HC-SR04) 거리 → "US:<cm>"  (에코 없음/범위초과 = "US:-1")
+//   N<pin>:<idx>,<r>,<g>,<b> / NA<pin>:<r>,<g>,<b> / NS<pin>  NeoPixel(WS2812, D6) → "OK"
+//
+// ⚠️ 이 .ino 는 계약 참조용(요약). 실제 빌드/플래싱되는 펌웨어는 playhouse-uno.c 이며
+//    NeoPixel·DHT11·tone·analogRead 등 전체 구현은 그쪽에 있다. v5 기준.
 
-const char* FW_ID = "PLAYHOUSE v4";
+const char* FW_ID = "PLAYHOUSE v5";
 
 void setup() {
   Serial.begin(115200);

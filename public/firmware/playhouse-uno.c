@@ -7,7 +7,8 @@
  * 오프라인 컴파일이 가능하도록 레지스터를 직접 다룬다.
  *
  *   H->B : PING / L<pin>:<0|1> / P<pin>:<0-255> / T<pin>:<freq>[,<ms>] / A<ch> / R<pin> / U<trig>:<echo> / DHT
- *   B->H : READY (부팅) / PLAYHOUSE v4 (PING 응답) / OK / ERR:<msg>
+ *          N<pin>:<idx>,<r>,<g>,<b> (네오픽셀 1픽셀) / NA<pin>:<r>,<g>,<b> (전체 채우기) / NS<pin> (반영)
+ *   B->H : READY (부팅) / PLAYHOUSE v5 (PING 응답) / OK / ERR:<msg>
  *          A<ch>:<0-1023> (아날로그) / R<pin>:<0|1> (디지털) / US:<cm> (초음파) / DHT:<t>,<h>
  *
  * 빌드:
@@ -16,11 +17,12 @@
  */
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define FW_ID "PLAYHOUSE v4"
+#define FW_ID "PLAYHOUSE v5"
 #define DHT_BIT 2   /* DHT-11 DATA = D2 (PD2) */
 
 /* ---- UART (115200 @ 16MHz, U2X) ---- */
@@ -203,6 +205,108 @@ static uint8_t dht_read(uint8_t *temp, uint8_t *hum) {
     return 1;
 }
 
+/* ---- NeoPixel (WS2812, D6=PD6) ----
+ * 단일 데이터선 비트뱅잉(cpldcpu light_ws2812 방식). 16MHz 기준 사이클 타이밍.
+ * WS2812 전송 순서는 G,R,B. 호스트는 N/NA 로 버퍼를 채우고 NS 로 반영(show)한다. */
+#define NEO_PIN 6           /* D6 = PD6 (HARDWARE.md 기준) */
+#define NEO_MAX 8           /* 스트립 최대 픽셀 수(실제가 적으면 앞쪽만 점등) */
+static uint8_t neo_buf[NEO_MAX * 3];   /* 픽셀별 G,R,B (전송 순서 그대로 저장) */
+
+/* WS2812 비트뱅잉 — PORTD 고정, maskhi/masklo 는 PD6 만 토글한 포트값 */
+#define w_zeropulse   350
+#define w_onepulse    900
+#define w_totalperiod 1250
+#define w_fixedlow    2
+#define w_fixedhigh   4
+#define w_fixedtotal  8
+#define w_zerocycles  (((F_CPU/1000)*w_zeropulse           )/1000000)
+#define w_onecycles   (((F_CPU/1000)*w_onepulse    + 500000)/1000000)
+#define w_totalcycles (((F_CPU/1000)*w_totalperiod + 500000)/1000000)
+#define w1 (w_zerocycles-w_fixedlow)
+#define w2 (w_onecycles-w_fixedhigh-w1)
+#define w3 (w_totalcycles-w_fixedtotal-w1-w2)
+#define w1_nops w1
+#define w2_nops w2
+#define w3_nops w3
+#define w_nop1  "nop      \n\t"
+#define w_nop2  "rjmp .+0 \n\t"
+#define w_nop4  w_nop2 w_nop2
+#define w_nop8  w_nop4 w_nop4
+#define w_nop16 w_nop8 w_nop8
+
+static void ws2812_send(uint8_t *data, uint16_t datlen, uint8_t maskhi, uint8_t masklo) {
+    uint8_t curbyte, ctr, sreg_prev;
+    sreg_prev = SREG;
+    cli();
+    while (datlen--) {
+        curbyte = *data++;
+        asm volatile(
+        "       ldi   %0,8  \n\t"
+        "loop%=:out   %2,%3 \n\t"
+#if (w1_nops & 1)
+        w_nop1
+#endif
+#if (w1_nops & 2)
+        w_nop2
+#endif
+#if (w1_nops & 4)
+        w_nop4
+#endif
+#if (w1_nops & 8)
+        w_nop8
+#endif
+        "       sbrs  %1,7  \n\t"
+        "       out   %2,%4 \n\t"
+        "       lsl   %1    \n\t"
+#if (w2_nops & 1)
+        w_nop1
+#endif
+#if (w2_nops & 2)
+        w_nop2
+#endif
+#if (w2_nops & 4)
+        w_nop4
+#endif
+#if (w2_nops & 8)
+        w_nop8
+#endif
+        "       out   %2,%4 \n\t"
+#if (w3_nops & 1)
+        w_nop1
+#endif
+#if (w3_nops & 2)
+        w_nop2
+#endif
+#if (w3_nops & 4)
+        w_nop4
+#endif
+#if (w3_nops & 8)
+        w_nop8
+#endif
+        "       dec   %0    \n\t"
+        "       brne  loop%=\n\t"
+        : "=&d"(ctr)
+        : "r"(curbyte), "I"(_SFR_IO_ADDR(PORTD)), "r"(maskhi), "r"(masklo)
+        );
+    }
+    SREG = sreg_prev;
+}
+
+static void neo_set(uint8_t idx, uint8_t r, uint8_t g, uint8_t b) {
+    if (idx >= NEO_MAX) return;
+    neo_buf[idx * 3 + 0] = g; neo_buf[idx * 3 + 1] = r; neo_buf[idx * 3 + 2] = b;
+}
+static void neo_fill(uint8_t r, uint8_t g, uint8_t b) {
+    for (uint8_t i = 0; i < NEO_MAX; i++) { neo_buf[i * 3] = g; neo_buf[i * 3 + 1] = r; neo_buf[i * 3 + 2] = b; }
+}
+static void neo_show(void) {
+    set_output(NEO_PIN); pwm_disconnect(NEO_PIN);
+    uint8_t pinmask = (1 << NEO_PIN);
+    uint8_t hi = PORTD | pinmask, lo = PORTD & ~pinmask;
+    ws2812_send(neo_buf, NEO_MAX * 3, hi, lo);
+    _delay_us(80);          /* 래치(>50us LOW) */
+}
+
 static void handle(char *line) {
     if (strcmp(line, "PING") == 0) { uart_println(FW_ID); return; }
     if (strcmp(line, "DHT") == 0) {
@@ -213,6 +317,23 @@ static void handle(char *line) {
             uart_println("ERR:dht");
         }
         return;
+    }
+
+    /* NeoPixel: NS<pin>=show / NA<pin>:<r>,<g>,<b>=전체채우기+show / N<pin>:<idx>,<r>,<g>,<b>=1픽셀 */
+    if (line[0] == 'N') {
+        if (line[1] == 'S') { neo_show(); uart_println("OK"); return; }
+        char *c = strchr(line, ':');
+        if (!c) { uart_println("ERR:format"); return; }
+        if (line[1] == 'A') {
+            char *c1 = strchr(c + 1, ','), *c2 = c1 ? strchr(c1 + 1, ',') : 0;
+            if (!c1 || !c2) { uart_println("ERR:format"); return; }
+            neo_fill((uint8_t)atoi(c + 1), (uint8_t)atoi(c1 + 1), (uint8_t)atoi(c2 + 1));
+            neo_show(); uart_println("OK"); return;
+        }
+        char *c1 = strchr(c + 1, ','), *c2 = c1 ? strchr(c1 + 1, ',') : 0, *c3 = c2 ? strchr(c2 + 1, ',') : 0;
+        if (!c1 || !c2 || !c3) { uart_println("ERR:format"); return; }
+        neo_set((uint8_t)atoi(c + 1), (uint8_t)atoi(c1 + 1), (uint8_t)atoi(c2 + 1), (uint8_t)atoi(c3 + 1));
+        uart_println("OK"); return;
     }
 
     char type = line[0];

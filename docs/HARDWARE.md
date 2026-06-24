@@ -16,9 +16,11 @@
 | DHT11 | **D2** | 온습도 센서 | ⚠️ 센서 읽기 프로토콜 필요(아래) |
 | 1602 LCD (I2C) | **A4(SDA) / A5(SCL)** | 텍스트 디스플레이 | ⚠️ I2C 출력 프로토콜 필요(아래) |
 
-## 현재 펌웨어(playhouse-uno) 지원 범위
+## 현재 펌웨어(playhouse-uno v5) 지원 범위
 - ✅ `L<pin>:<0|1>` digitalWrite, `P<pin>:<0-255>` analogWrite — **단색 LED 4개(5/9/10/11)** 즉시 사용 가능.
-- ❌ NeoPixel / DHT11 / LCD 는 **미지원** → 해당 콘텐츠 단계에서 프로토콜·펌웨어 확장.
+- ✅ `A<ch>` 아날로그 입력 / `R<pin>` 디지털 입력 / `T<pin>:<freq>,<ms>` 부저 / `U<trig>:<echo>` 초음파 / `DHT` 온습도.
+- ✅ **NeoPixel(WS2812, D6)** — `N`/`NA`/`NS` (v5에서 구현, WS2812 비트뱅잉). 빛 마법 램프·무지개 물감놀이가 사용.
+- ❌ LCD(I2C) 는 아직 미지원 → 해당 콘텐츠 단계에서 확장.
 
 ## 콘텐츠 매핑 (초안 — 방별 미션 설계 시 확정)
 - **거실(메인 조명)**: D5 단색 LED — `digitalWrite` 개념 (불 켜기). *원 스펙 D2 → D5 로 대체.*
@@ -27,19 +29,19 @@
 - **정보 표시**: A4/A5 LCD — 상태/점수/온도 출력.
 - 나머지 단색 LED(D9/D10/D11): 주방·욕실·현관 등 방별 조명에 1:1 배정.
 
-## 향후 프로토콜 확장(계약 초안 — 부록 A 연장)
-라인 단위 ASCII 유지. 추가 예정 명령:
+## 프로토콜 확장 현황 (부록 A 연장)
+라인 단위 ASCII 유지.
 
-| 방향 | 명령 | 의미 |
-|---|---|---|
-| H→B | `N<pin>:<idx>,<r>,<g>,<b>` | NeoPixel 1픽셀 색상 (예 `N6:0,255,0,0`) |
-| H→B | `NA<pin>:<r>,<g>,<b>` | NeoPixel 전체 채우기 |
-| H→B | `NS<pin>` | NeoPixel show(반영) |
-| H→B | `T2?` 또는 `READ2` | DHT11(D2) 읽기 요청 |
-| B→H | `T2:<temp>,<hum>` | DHT11 응답 (온도℃, 습도%) |
-| H→B | `LCD:<line>:<text>` | 1602 LCD 줄 출력 |
+| 방향 | 명령 | 의미 | 상태 |
+|---|---|---|---|
+| H→B | `N<pin>:<idx>,<r>,<g>,<b>` | NeoPixel 1픽셀 색상 (예 `N6:0,255,0,0`) | ✅ v5 |
+| H→B | `NA<pin>:<r>,<g>,<b>` | NeoPixel 전체 채우기 + 반영 | ✅ v5 |
+| H→B | `NS<pin>` | NeoPixel show(반영) | ✅ v5 |
+| H→B | `DHT` | DHT11(D2) 읽기 요청 | ✅ v2+ |
+| B→H | `DHT:<temp>,<hum>` | DHT11 응답 (온도℃, 습도%) | ✅ v2+ |
+| H→B | `LCD:<line>:<text>` | 1602 LCD 줄 출력 | ⏳ 미구현 |
 
-> 위 명령은 **초안**이며 NeoPixel/DHT11/LCD 콘텐츠를 만드는 단계에서
-> `protocol.js` + 펌웨어(`playhouse-uno.c`)에 함께 추가하고 이 표를 확정한다.
-> NeoPixel 은 Adafruit_NeoPixel 상당의 비트뱅잉, DHT11 은 단선 타이밍 프로토콜,
-> LCD 는 I2C(PCF8574) 드라이버가 펌웨어에 필요.
+> NeoPixel 은 D6(PD6) 고정. `playhouse-uno.c` 의 `ws2812_send`(cpldcpu light_ws2812 방식,
+> 16MHz 사이클 타이밍, 전송순서 GRB)로 비트뱅잉한다. 버퍼는 최대 `NEO_MAX`(8)픽셀.
+> 펌웨어 빌드: `avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os …` → `avr-objcopy -O ihex`.
+> LCD 는 I2C(PCF8574) 드라이버가 펌웨어에 필요(추후).

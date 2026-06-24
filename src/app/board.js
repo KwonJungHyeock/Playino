@@ -5,7 +5,7 @@
 
 import { SerialConnection, isSupported as _isSupported } from '../serial/webserial.js';
 import { handshake, flashFirmware } from '../serial/provisioning.js';
-import { encodeDigitalWrite, encodePwm, encodeTone, encodeAnalogRead, encodeDigitalRead, encodeUltrasonic, parseLine, RESPONSE, FIRMWARE_VERSION } from '../serial/protocol.js';
+import { encodeDigitalWrite, encodePwm, encodeTone, encodeAnalogRead, encodeDigitalRead, encodeUltrasonic, encodeNeoPixel, encodeNeoFill, encodeNeoShow, parseLine, RESPONSE, FIRMWARE_VERSION } from '../serial/protocol.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const hex = (n) => (n == null ? '—' : '0x' + n.toString(16).toUpperCase().padStart(4, '0'));
@@ -118,6 +118,24 @@ export const board = {
   /** analogWrite(PWM) */
   async pwm(pin, v) {
     const c = encodePwm(pin, v);
+    await safeWrite(c);
+    emitLine('tx', c);
+  },
+  /** 네오픽셀(WS2812) 1픽셀 색 버퍼 설정 — 반영하려면 neoShow() (펌웨어 v5) */
+  async neoPixel(pin, idx, r, g, b) {
+    const c = encodeNeoPixel(pin, idx, r, g, b);
+    await safeWrite(c);
+    emitLine('tx', c);
+  },
+  /** 네오픽셀 전체를 한 색으로 채우고 즉시 반영 (펌웨어 v5) */
+  async neoFill(pin, r, g, b) {
+    const c = encodeNeoFill(pin, r, g, b);
+    await safeWrite(c);
+    emitLine('tx', c);
+  },
+  /** 네오픽셀 show(버퍼 → LED 반영) (펌웨어 v5) */
+  async neoShow(pin) {
+    const c = encodeNeoShow(pin);
     await safeWrite(c);
     emitLine('tx', c);
   },

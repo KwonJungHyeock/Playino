@@ -47,9 +47,9 @@ const ROOMS_CFG = {
     play: (root, opt) => showBuzzerGame(root, opt),
   },
   rgb: {
-    name: '무지개 물감놀이', sensor: 'RGB LED · 3색 LED', icon: '🌈', accent: '180,140,255',
+    name: '무지개 물감놀이', sensor: '네오픽셀(WS2812) 풀컬러', icon: '🌈', accent: '180,140,255',
     room: 'room-rgb-bg', eddie: null, signL: '120,200,255', signR: '255,150,200', control: 'rgb',
-    pins: { r: 9, g: 10, b: 11 }, blockPin: 9,
+    pins: { neo: 6 }, blockPin: 6,
     intro: '이론관에서 빛의 삼원색을 배우고, 체험관에서 색을 섞어보자! 🌈',
     animTheory: 'rgb',
     captions: [
@@ -240,7 +240,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
     function close() {
       stopBlink(); stopRaf(); stopCdsPoll(); stopJoyPoll(); if (stateUnsub) { stateUnsub(); stateUnsub = null; }
       if (board.connected) {
-        if (cfg.control === 'rgb') { const p = cfg.pins; board.pwm(p.r, 0).catch(() => {}); board.pwm(p.g, 0).catch(() => {}); board.pwm(p.b, 0).catch(() => {}); }
+        if (cfg.control === 'rgb') board.neoFill(cfg.pins.neo, 0, 0, 0).catch(() => {});
         else if (cfg.control === 'led') board.digital(cfg.blockPin, false).catch(() => {});
       }
       v.hidden = true; v.innerHTML = ''; world.teleport(VW * 0.5 - 14, FLOOR_Y - 30); world.resume();
@@ -320,7 +320,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
           <div class="dash-led">
             <div class="rgb-sw" id="rgb-sw"></div>
             <div class="rgb-read"><b id="rgb-hex">#FFFFFF</b><span id="rgb-rgb">R255 · G255 · B255</span></div>
-            <div class="dl-pin">🎨 테스트: <b>R→D9 · G→D10 · B→D11</b><br><span>(공통 캐소드 RGB LED · 각 다리에 220Ω 저항)</span></div>
+            <div class="dl-pin">🎨 테스트: <b>네오픽셀 DIN→D6 · VCC→5V · GND→GND</b><br><span>(WS2812 풀컬러 LED · 데이터선 1가닥으로 모든 색)</span></div>
           </div>
           <div class="dash-cards">
             <div class="dcard">
@@ -343,7 +343,7 @@ export function showSensorRoom(root, { id, onExit } = {}) {
       const cr = bodyEl.querySelector('#cr'), cg = bodyEl.querySelector('#cg'), cb = bodyEl.querySelector('#cb');
       const vr = bodyEl.querySelector('#cvr'), vg = bodyEl.querySelector('#cvg'), vb = bodyEl.querySelector('#cvb');
       const status = bodyEl.querySelector('#dc-status');
-      function sendRGB(r, g, b) { if (board.connected) { board.pwm(P.r, r).catch(() => {}); board.pwm(P.g, g).catch(() => {}); board.pwm(P.b, b).catch(() => {}); } }
+      function sendRGB(r, g, b) { if (board.connected) board.neoFill(P.neo, r, g, b).catch(() => {}); }
       function paint(send) {
         const r = +cr.value, g = +cg.value, b = +cb.value;
         sw.style.background = `rgb(${r},${g},${b})`;

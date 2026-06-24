@@ -7,7 +7,7 @@ import { progress } from '../app/progress.js';
 import { celebrateRoom } from './celebrate.js';
 import { board } from '../app/board.js';
 
-const ADC = 0, RGB = { r: 5, g: 4, b: 3 }, HUE_MAX = 320, PASS = 0.8;
+const ADC = 0, NEO = 6, HUE_MAX = 320, PASS = 0.8;   // 조도센서 A0(입력) · 네오픽셀 D6(출력)
 const ACTS = [
   { key: 'wake', no: 1, mode: 'match', name: '빛 몬스터 처치', icon: '👾',
     story: '<b>어둠 몬스터</b>가 천국의 색을 훔쳐 달아나요! 몬스터의 <b>약점 색</b>을 맞춰 빛 마법으로 물리쳐요. 너무 늦으면 몬스터가 다가와요! ⚠️',
@@ -58,12 +58,12 @@ export function showLampGame(root, { onExit } = {}) {
       <div class="led-prep" id="lp-prep">
         <div class="prep-card" style="max-width:640px;text-align:center">
           <h2>🪔 빛 마법 램프</h2>
-          <p class="prep-sub">에디는 <b>빛의 마법사</b>! 어둠 몬스터가 색을 훔쳐갔어요. <b>손그림자(조도센서)</b>로 램프 색(<b>풀컬러 RGB LED</b>)을 바꿔 <b>몬스터 약점 색</b>에 맞추고 빛 마법으로 처치해요! 👾🌈</p>
-          <p class="prep-sub">조작: <b>아래 슬라이더</b>(또는 ↑ ↓ 키). 조도센서를 <b>A0</b>, <b>풀컬러 RGB LED 1개</b>의 R·G·B 핀을 <b>D5·D4·D3</b>에 연결하면 진짜 손그림자·실물 LED로 즐겨요.</p>
-          <div class="prep-wire"><b>🔌 결선</b> <span style="opacity:.7;font-weight:600">(부품: 조도센서 1 · 풀컬러 RGB LED 1개)</span>
+          <p class="prep-sub">에디는 <b>빛의 마법사</b>! 어둠 몬스터가 색을 훔쳐갔어요. <b>손그림자(조도센서)</b>로 램프 색(<b>네오픽셀</b>)을 바꿔 <b>몬스터 약점 색</b>에 맞추고 빛 마법으로 처치해요! 👾🌈</p>
+          <p class="prep-sub">조작: <b>아래 슬라이더</b>(또는 ↑ ↓ 키). 조도센서를 <b>A0</b>, <b>네오픽셀(WS2812)</b>의 데이터선을 <b>D6</b>에 연결하면 진짜 손그림자·실물 LED로 즐겨요.</p>
+          <div class="prep-wire"><b>🔌 결선</b> <span style="opacity:.7;font-weight:600">(부품: 조도센서 1 · 네오픽셀 풀컬러 LED 1개)</span>
             <table class="prep-table prep-wire-t"><tbody>
               <tr><td>🔆 조도센서(CDS)</td><td><b>A0</b> 포트</td></tr>
-              <tr><td>🌈 풀컬러 RGB LED 1개</td><td>R→<b>D5</b> · G→<b>D4</b> · B→<b>D3</b> · 공통→<b>GND</b></td></tr>
+              <tr><td>🌈 네오픽셀(WS2812)</td><td>DIN→<b>D6</b> · VCC→<b>5V</b> · GND→<b>GND</b></td></tr>
             </tbody></table>
             <img id="lp-wire" alt="결선 회로도" hidden style="display:block;max-width:100%;border-radius:12px;margin-top:10px" />
           </div>
@@ -118,10 +118,11 @@ export function showLampGame(root, { onExit } = {}) {
   }
   function stopSense() { if (senseTimer) { clearInterval(senseTimer); senseTimer = null; } }
   let rgbTimer = null, lastSent = '';
-  function startRgb() { stopRgb(); rgbTimer = setInterval(() => { if (!board.connected) return; const c = `${curRGB[0]},${curRGB[1]},${curRGB[2]}`; if (c === lastSent) return; lastSent = c; board.pwm(RGB.r, curRGB[0]).catch(() => {}); board.pwm(RGB.g, curRGB[1]).catch(() => {}); board.pwm(RGB.b, curRGB[2]).catch(() => {}); }, 120); }
-  function stopRgb() { if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } if (board.connected) { board.pwm(RGB.r, 0).catch(() => {}); board.pwm(RGB.g, 0).catch(() => {}); board.pwm(RGB.b, 0).catch(() => {}); } }
-  root.querySelector('#lp-connect').onclick = async () => { const b = root.querySelector('#lp-connect'); try { await board.connect(); b.textContent = '🔌 연결됨 ✓'; startSense(); startRgb(); } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
-  board.connectAuto().then(() => { startSense(); startRgb(); }).catch(() => {});
+  // 네오픽셀(D6) 출력: 현재 색을 전체 픽셀에 채워 반영. 같은 색이면 전송 생략(시리얼 절약)
+  function startNeo() { stopNeo(); rgbTimer = setInterval(() => { if (!board.connected) return; const c = `${curRGB[0]},${curRGB[1]},${curRGB[2]}`; if (c === lastSent) return; lastSent = c; board.neoFill(NEO, curRGB[0], curRGB[1], curRGB[2]).catch(() => {}); }, 120); }
+  function stopNeo() { if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } if (board.connected) { board.neoFill(NEO, 0, 0, 0).catch(() => {}); } lastSent = ''; }
+  root.querySelector('#lp-connect').onclick = async () => { const b = root.querySelector('#lp-connect'); try { await board.connect(); b.textContent = board.fwOutdated ? `⚠ 펌웨어 v${board.version}→업데이트 필요` : '🔌 연결됨 ✓'; startSense(); startNeo(); } catch (e) { b.textContent = board.classify(e).note.slice(0, 16) + '…'; } };
+  board.connectAuto().then(() => { startSense(); startNeo(); }).catch(() => {});
   root.querySelector('#lp-start').onclick = () => { root.querySelector('#lp-prep').classList.add('hide'); skipBtn.hidden = false; startFlow(); };
   // 결선 회로도 이미지(있으면 표시)
   const wireProbe = new Image(); wireProbe.onload = () => { const el = root.querySelector('#lp-wire'); if (el) { el.src = wireProbe.src; el.hidden = false; } }; wireProbe.src = '/brand/wiring-lamp.webp';
@@ -371,7 +372,7 @@ export function showLampGame(root, { onExit } = {}) {
   let lastT = performance.now();
   function loop(now) { const dt = Math.min(40, now - lastT) / 16.67; lastT = now; update(dt); draw(now); raf = requestAnimationFrame(loop); }
   let raf = requestAnimationFrame(loop);
-  function cleanup() { bgm.setDuck(1); cancelAnimationFrame(raf); stopSense(); stopRgb(); window.removeEventListener('keydown', onKeyDown); window.removeEventListener('resize', resize); }
+  function cleanup() { bgm.setDuck(1); cancelAnimationFrame(raf); stopSense(); stopNeo(); window.removeEventListener('keydown', onKeyDown); window.removeEventListener('resize', resize); }
 }
 
 function rr(ctx, x, y, w, h, r) { r = Math.min(r, w / 2, Math.abs(h) / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
