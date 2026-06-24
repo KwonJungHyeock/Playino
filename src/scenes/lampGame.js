@@ -58,12 +58,12 @@ export function showLampGame(root, { onExit } = {}) {
       <div class="led-prep" id="lp-prep">
         <div class="prep-card" style="max-width:640px;text-align:center">
           <h2>🪔 빛 마법 램프</h2>
-          <p class="prep-sub">에디는 <b>빛의 마법사</b>! 어둠 몬스터가 색을 훔쳐갔어요. <b>손그림자(조도센서)</b>로 램프 색(<b>RGB</b>)을 바꿔 <b>몬스터 약점 색</b>에 맞추고 빛 마법으로 처치해요! 👾🌈</p>
-          <p class="prep-sub">조작: <b>아래 슬라이더</b>(또는 ↑ ↓ 키). 조도센서를 <b>A0</b>, RGB를 <b>D5·D4·D3</b>에 연결하면 진짜 손그림자·실물 LED로 즐겨요.</p>
-          <div class="prep-wire"><b>🔌 결선</b>
+          <p class="prep-sub">에디는 <b>빛의 마법사</b>! 어둠 몬스터가 색을 훔쳐갔어요. <b>손그림자(조도센서)</b>로 램프 색(<b>풀컬러 RGB LED</b>)을 바꿔 <b>몬스터 약점 색</b>에 맞추고 빛 마법으로 처치해요! 👾🌈</p>
+          <p class="prep-sub">조작: <b>아래 슬라이더</b>(또는 ↑ ↓ 키). 조도센서를 <b>A0</b>, <b>풀컬러 RGB LED 1개</b>의 R·G·B 핀을 <b>D5·D4·D3</b>에 연결하면 진짜 손그림자·실물 LED로 즐겨요.</p>
+          <div class="prep-wire"><b>🔌 결선</b> <span style="opacity:.7;font-weight:600">(부품: 조도센서 1 · 풀컬러 RGB LED 1개)</span>
             <table class="prep-table prep-wire-t"><tbody>
               <tr><td>🔆 조도센서(CDS)</td><td><b>A0</b> 포트</td></tr>
-              <tr><td>🌈 RGB LED</td><td><b>D5(R)·D4(G)·D3(B)</b> + GND</td></tr>
+              <tr><td>🌈 풀컬러 RGB LED 1개</td><td>R→<b>D5</b> · G→<b>D4</b> · B→<b>D3</b> · 공통→<b>GND</b></td></tr>
             </tbody></table>
             <img id="lp-wire" alt="결선 회로도" hidden style="display:block;max-width:100%;border-radius:12px;margin-top:10px" />
           </div>
