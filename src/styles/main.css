@@ -875,31 +875,37 @@ html, body {
 .chsel-viewport { flex: 1; height: 100%; overflow: hidden; display: flex; align-items: center; }
 .chsel-track { display: flex; align-items: center; gap: 30px; padding: 0 50vw; transition: transform .34s cubic-bezier(.2,.8,.2,1); will-change: transform; }
 
-.cs-card { flex: 0 0 auto; width: clamp(220px, 26vw, 320px); background: none; border: 0; padding: 0; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-  transform: scale(.78); opacity: .5; filter: saturate(.8) brightness(.85);
-  transition: transform .34s cubic-bezier(.2,.8,.2,1), opacity .34s, filter .34s; }
-.cs-card.is-focus { transform: scale(1); opacity: 1; filter: none; }
+/* 프리미엄 시네마틱 카드: 테두리/프레임 없이 커버 이미지만 풀블리드(세로형) */
+.cs-card { position: relative; flex: 0 0 auto; width: min(clamp(232px, 27vw, 340px), calc(72vh - 168px)); background: none; border: 0; padding: 0; cursor: pointer;
+  display: block; border-radius: 24px;
+  transform: scale(.82); opacity: .42; filter: saturate(.72) brightness(.7);
+  transition: transform .42s cubic-bezier(.2,.8,.2,1), opacity .42s, filter .42s; }
+.cs-card.is-focus { transform: scale(1.04); opacity: 1; filter: none; z-index: 2; }
 .cs-card.shake, .chsel-play.shake { animation: cs-shake .4s; }
 @keyframes cs-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
 
-.cs-cab { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 26px; overflow: hidden;
-  background: #0c0a16; border: 5px solid rgba(255,255,255,.92);
-  box-shadow: 0 22px 55px rgba(0,0,0,.5); }
-.cs-card.is-focus .cs-cab { border-color: rgba(255,255,255,.98);
-  box-shadow: 0 0 0 4px rgba(var(--cs-acc),.55), 0 26px 60px rgba(0,0,0,.55), 0 0 60px rgba(var(--cs-acc),.5); }
-.cs-screen { position: absolute; inset: 0; background-size: cover; background-position: center; }
-.cs-scan { position: absolute; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(180deg, rgba(255,255,255,0) 0 3px, rgba(0,0,0,.05) 3px 4px);
-  opacity: 0; transition: opacity .3s; }
-.cs-card.is-focus .cs-scan { opacity: 1; }
-.cs-badge { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; border-radius: 50%;
+.cs-cab { position: relative; width: 100%; aspect-ratio: 3/4; border-radius: 24px; overflow: hidden;
+  background: #0c0a16; border: 0;
+  box-shadow: 0 18px 44px rgba(0,0,0,.46); transition: box-shadow .42s; }
+/* 하단 그라데이션 스크림 — 오버레이 제목 가독성 */
+.cs-cab::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(8,5,16,0) 38%, rgba(8,5,16,.32) 66%, rgba(8,5,16,.82) 100%); }
+.cs-card.is-focus .cs-cab {
+  box-shadow: 0 30px 70px rgba(0,0,0,.6), 0 0 60px rgba(var(--cs-acc),.32); }
+.cs-screen { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform .6s ease; }
+.cs-card.is-focus .cs-screen { transform: scale(1.06); }
+.cs-scan { display: none; }
+.cs-badge { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 50%; z-index: 3;
   display: grid; place-items: center; font-size: 20px; background: rgba(255,255,255,.95); box-shadow: 0 4px 12px rgba(0,0,0,.35); }
-.cs-lock { position: absolute; inset: 0; background: rgba(14,10,22,.55); backdrop-filter: grayscale(.4) blur(1px); }
-.cs-cap { display: flex; align-items: center; gap: 7px; font-weight: 900; font-size: clamp(15px, 1.9vw, 20px); color: #fff;
-  text-shadow: 0 2px 10px rgba(0,0,0,.6); }
-.cs-card.is-focus .cs-cap { color: #fff; }
-.cs-cap-ico { font-size: 1.1em; }
+.cs-lock { position: absolute; inset: 0; z-index: 2; background: rgba(14,10,22,.55); backdrop-filter: grayscale(.4) blur(1px); }
+/* 제목 — 카드 이미지 하단에 오버레이 */
+.cs-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 0 18px 18px;
+  font-weight: 900; font-size: clamp(15px, 1.9vw, 21px); color: #fff; letter-spacing: -.01em;
+  text-shadow: 0 2px 14px rgba(0,0,0,.7);
+  opacity: .82; transform: translateY(4px); transition: opacity .42s, transform .42s; }
+.cs-card.is-focus .cs-cap { opacity: 1; transform: translateY(0); }
+.cs-cap-ico { font-size: 1.12em; }
 
 .chsel-arw { position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; width: 56px; height: 56px; border-radius: 50%;
   display: grid; place-items: center; font-size: 22px; color: #2c2440; cursor: pointer;
@@ -928,9 +934,11 @@ html, body {
 @media (max-width: 760px) { .chsel-body { bottom: 184px; } .chsel-arw { width: 46px; height: 46px; } }
 
 /* 광장(HUB) 스테이지 카드 — 컬러 패널 + 아이콘/진척/잠금 */
-.cs-stage-cab { background: linear-gradient(160deg, rgba(var(--cs-acc),.95), rgba(var(--cs-acc),.62)); display: grid; place-items: center; border-color: rgba(255,255,255,.95); }
-.cs-stage-cab::before { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.35), transparent 60%); }
-.cs-stage-inner { position: relative; text-align: center; color: #fff; padding: 16px; width: 100%; }
+.cs-stage-cab { background: linear-gradient(160deg, rgba(var(--cs-acc),.95), rgba(var(--cs-acc),.62)); display: grid; place-items: center; }
+.cs-stage-cab::before { content: ''; position: absolute; inset: 0; z-index: 1; background: radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.35), transparent 60%); }
+/* 스테이지 카드는 패널 내부에 제목/진척이 있으므로 오버레이 제목은 숨김 */
+.cs-stage .cs-cap { display: none; }
+.cs-stage-inner { position: relative; z-index: 2; text-align: center; color: #fff; padding: 16px; width: 100%; }
 .cs-stage-no { font-family: "Orbitron","Space Grotesk",sans-serif; font-weight: 900; letter-spacing: 3px; font-size: 12px; opacity: .9; }
 .cs-stage-ico { font-size: clamp(56px, 8.5vw, 92px); line-height: 1; margin: 8px 0 10px; filter: drop-shadow(0 6px 14px rgba(0,0,0,.3)); }
 .cs-stage-name { font-weight: 900; font-size: clamp(16px, 2.1vw, 22px); text-shadow: 0 2px 8px rgba(0,0,0,.35); }
