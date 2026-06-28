@@ -907,6 +907,32 @@ html, body {
 .cs-card.is-focus .cs-cap { opacity: 1; transform: translateY(0); }
 .cs-cap-ico { font-size: 1.12em; }
 
+/* ── 콘솔 게임 포스터 모드(게임 선택): 세로로 길게 꽉 채우고 카드 위에 정보 오버레이 ── */
+.chsel--poster .chsel-body { top: 52px; bottom: 116px; }
+.chsel--poster .chsel-track { gap: 18px; }
+.chsel--poster .cs-card { width: min(clamp(248px, 33vw, 430px), calc((100vh - 160px) * 0.63)); }
+.chsel--poster .cs-cab { aspect-ratio: 0.7; border-radius: 26px; }
+/* 정보가 많아 스크림을 더 길게 */
+.chsel--poster .cs-cab::after { background: linear-gradient(180deg, rgba(8,5,16,0) 30%, rgba(8,5,16,.4) 58%, rgba(8,5,16,.9) 100%); }
+.chsel--poster .chsel-meta { display: none; }     /* 정보를 카드로 옮겼으므로 하단 메타칩 숨김 */
+.chsel--poster .chsel-foot { bottom: 26px; gap: 16px; }
+.cs-info { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 0 22px 22px; text-align: left; }
+.cs-tag { font-size: 11.5px; font-weight: 800; letter-spacing: .6px; color: rgba(255,255,255,.82);
+  text-shadow: 0 1px 8px rgba(0,0,0,.7); opacity: 0; transform: translateY(8px); transition: opacity .42s, transform .42s; }
+.cs-title { font-weight: 900; font-size: clamp(18px, 2.2vw, 27px); color: #fff; letter-spacing: -.015em; line-height: 1.12;
+  text-shadow: 0 2px 16px rgba(0,0,0,.72); }
+.cs-sub { font-size: clamp(12px, 1.25vw, 14px); color: #ddd7ee; line-height: 1.4; text-shadow: 0 1px 8px rgba(0,0,0,.7);
+  opacity: 0; max-height: 0; transform: translateY(8px); overflow: hidden; transition: opacity .42s, max-height .42s, transform .42s; }
+.cs-status { font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 999px; margin-top: 2px;
+  opacity: 0; transform: translateY(8px); transition: opacity .42s, transform .42s; }
+.cs-status.done { background: #e4fff1; color: #1c9b5e; }
+.cs-status.go { background: rgba(var(--cs-acc),.9); color: #1a1206; }
+.cs-status.soon { background: rgba(239,234,246,.92); color: #6f6690; }
+/* 포커스 카드만 풀 정보 전개 */
+.cs-card.is-focus .cs-tag, .cs-card.is-focus .cs-sub, .cs-card.is-focus .cs-status { opacity: 1; transform: translateY(0); }
+.cs-card.is-focus .cs-sub { max-height: 56px; margin-bottom: 4px; }
+
 .chsel-arw { position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; width: 56px; height: 56px; border-radius: 50%;
   display: grid; place-items: center; font-size: 22px; color: #2c2440; cursor: pointer;
   background: rgba(255,255,255,.9); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.7); box-shadow: 0 8px 22px rgba(50,40,90,.28); transition: transform .12s, background .15s; }

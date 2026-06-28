@@ -12,7 +12,7 @@ export function showChapterSelect(root, { chapter, onRoom, onExit, onChapter, sp
   const rooms = chapterRooms(chapter);
 
   root.innerHTML = `
-    <div class="chsel scene-fade">
+    <div class="chsel chsel--poster scene-fade">
       <div class="chsel-bg" id="cs-bg"></div>
       <div class="chsel-shade"></div>
       <button class="snd-toggle" id="snd-toggle">${sfx.muted ? '🔇' : '🔊'}</button>
@@ -106,13 +106,20 @@ export function showChapterSelect(root, { chapter, onRoom, onExit, onChapter, sp
 function cardHtml(r, i) {
   const cleared = isRoomCleared(r.id), soon = r.status !== 'ready';
   const badge = cleared ? '🏅' : soon ? '🔒' : '';
+  const stTxt = cleared ? '🏅 클리어' : soon ? '🔒 준비중' : '▶ 플레이 가능';
+  const stCls = cleared ? 'done' : soon ? 'soon' : 'go';
+  // 콘솔 게임 포스터: 커버 위에 게임 정보(태그·제목·한줄설명·상태) 오버레이
   return `<button class="cs-card${soon ? ' is-soon' : ''}" data-i="${i}" style="--i:${i}">
     <div class="cs-cab">
       <div class="cs-screen" data-cover="${r.id}"></div>
-      <div class="cs-scan"></div>
       ${badge ? `<span class="cs-badge">${badge}</span>` : ''}
       ${soon ? '<div class="cs-lock"></div>' : ''}
+      <div class="cs-info">
+        <div class="cs-tag">${r.icon} ${r.concept}</div>
+        <div class="cs-title">${r.name}</div>
+        <div class="cs-sub">${r.mission}</div>
+        <div class="cs-status ${stCls}">${stTxt}</div>
+      </div>
     </div>
-    <div class="cs-cap"><span class="cs-cap-ico">${r.icon}</span>${r.name}</div>
   </button>`;
 }
