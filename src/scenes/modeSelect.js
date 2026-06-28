@@ -17,12 +17,14 @@ export function showModeSelect(root, { onDone } = {}) {
         <div class="ms-opts">
           <button class="ms-opt ${rec === 'pc' ? 'rec' : ''}" data-m="pc">
             ${recTag('pc')}
+            <div class="ms-art" id="ms-art-pc"></div>
             <div class="ms-screen ms-pc"><div class="ms-scr-glow"></div><span>🖥️</span></div>
             <b>PC 모드</b>
             <span class="ms-desc">키보드 <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> 로 이동</span>
           </button>
           <button class="ms-opt ${rec === 'tablet' ? 'rec' : ''}" data-m="tablet">
             ${recTag('tablet')}
+            <div class="ms-art" id="ms-art-tab"></div>
             <div class="ms-screen ms-tab"><div class="ms-scr-glow"></div><span>📱</span></div>
             <b>태블릿 모드</b>
             <span class="ms-desc">화면 <b>조이스틱</b>으로 터치 이동 🕹️</span>
@@ -31,6 +33,13 @@ export function showModeSelect(root, { onDone } = {}) {
         <p class="ms-foot">아두이노 연결은 데스크톱급 브라우저(Chrome·Edge)에서 동작해요</p>
       </div>
     </div>`;
+  // 실제 일러스트가 있으면 카드 배경에 풀블리드로 적용(없으면 CSS 디바이스 목업 유지)
+  [['pc', 'ms-art-pc'], ['tab', 'ms-art-tab']].forEach(([id, el]) => {
+    const im = new Image();
+    im.onload = () => { const a = root.querySelector('#' + el); if (!a) return; a.style.backgroundImage = `url(${im.src})`; a.closest('.ms-opt')?.classList.add('has-art'); };
+    im.src = `/brand/ms-${id}.webp`;
+  });
+
   const pick = (m) => { sfx.ok(); setMode(m); root.querySelector('.mode-select')?.classList.add('ms-leave'); setTimeout(() => onDone?.(), 240); };
   root.querySelectorAll('.ms-opt').forEach((b) => b.onclick = () => pick(b.dataset.m));
 }
