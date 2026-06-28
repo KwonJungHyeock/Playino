@@ -54,7 +54,8 @@ export function showHubSelect(root, { onEnter, spawnAt } = {}) {
     const c = CHAPTERS[focus], acc = PAL[focus % PAL.length];
     scene.style.setProperty('--cs-acc', acc);
     const locked = !chapterUnlocked(c.id), done = chapterDone(c.id), cc = chapterClearedCount(c.id), tt = chapterTotal(c.id);
-    metaEl.innerHTML = `<span class="cs-ico">${c.icon}</span><b>${c.label}</b>
+    // 카드에 이미 스테이지명이 크게 있으므로 메타엔 부제(act)+진척만 — 중복 제거로 자연스럽게
+    metaEl.innerHTML = `<span class="cs-ico">${c.icon}</span>
       <span class="cs-concept">${c.act}</span>
       <span class="cs-status ${done ? 'done' : locked ? 'soon' : 'go'}">${done ? '🏆 완료' : locked ? '🔒 잠김' : `${cc}/${tt} 클리어`}</span>`;
     playBtn.textContent = locked ? '이전 스테이지를 먼저 🔒' : '▶ 입장하기';
