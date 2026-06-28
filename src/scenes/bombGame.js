@@ -280,9 +280,11 @@ export function showBombGame(root, { onExit, onComplete } = {}) {
 
     // 폭탄 LED(깜빡임) — 정답 근접도 표시
     const lx = x, ly = y - r - 50, on = ledOn || beepPhase > 0.05;
-    if (on) { ctx.save(); ctx.shadowColor = 'rgba(255,70,60,0.95)'; ctx.shadowBlur = 22; ctx.restore(); }
+    ctx.save();
+    if (on) { ctx.shadowColor = 'rgba(255,70,60,0.95)'; ctx.shadowBlur = 22; }   // 글로우는 원을 그리는 동안 유지
     ctx.fillStyle = on ? '#ff4030' : 'rgba(120,40,40,0.7)'; ctx.beginPath(); ctx.arc(lx, ly, 12, 0, 6.283); ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(lx, ly, 12, 0, 6.283); ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '700 12px "Space Grotesk", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('💡 D13', lx + 46, ly);
 
