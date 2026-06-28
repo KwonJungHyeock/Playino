@@ -19,7 +19,7 @@ export function showLogin(root, { onDone } = {}) {
           <p class="lg-sub">구매 시 <b>이메일로 받은 6자리 접속 코드</b>를 입력하세요.<br/><span class="lg-demo">데모 버전 — 아무 코드나 입장할 수 있어요</span></p>
           <label class="lg-label">접속 코드 (6자리)</label>
           <div class="code-inputs" id="code-inputs">
-            ${[0, 1, 2, 3, 4, 5].map((i) => `<input class="code-box" inputmode="numeric" maxlength="1" data-i="${i}" aria-label="코드 ${i + 1}번째" />`).join('')}
+            ${[0, 1, 2, 3, 4, 5].map((i) => `${i === 3 ? '<span class="code-sep">·</span>' : ''}<input class="code-box" inputmode="numeric" maxlength="1" data-i="${i}" aria-label="코드 ${i + 1}번째" />`).join('')}
           </div>
           <button class="btn primary lg-go" id="lf-login">입장하기 ▶</button>
           <a class="lg-help" id="lf-help" href="https://eduino.kr/shopinfo/customer.html?board_no=3" target="_blank" rel="noopener">접속 코드가 없으신가요? · 고객센터 문의</a>

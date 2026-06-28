@@ -977,8 +977,12 @@ html, body {
 @media (max-width: 760px) { .chsel-body { bottom: 184px; } .chsel-arw { width: 46px; height: 46px; } }
 
 /* 광장(HUB) 스테이지 카드 — 컬러 패널 + 아이콘/진척/잠금 */
-.cs-stage-cab { background: linear-gradient(160deg, rgba(var(--cs-acc),.95), rgba(var(--cs-acc),.62)); display: grid; place-items: center; }
-.cs-stage-cab::before { content: ''; position: absolute; inset: 0; z-index: 1; background: radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.35), transparent 60%); }
+/* 프리미엄: 컬러 글로우 → 깊은 다크 베이스로 떨어지는 그라데이션 + 글래스 하이라이트 */
+.cs-stage-cab { background:
+    radial-gradient(115% 80% at 50% 8%, rgba(var(--cs-acc),.92), transparent 60%),
+    linear-gradient(168deg, rgba(var(--cs-acc),.5), rgba(12,9,20,.92) 72%);
+  display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255,255,255,.2), inset 0 0 0 1px rgba(255,255,255,.05); }
+.cs-stage-cab::before { content: ''; position: absolute; inset: 0; z-index: 1; background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.28), transparent 58%); }
 /* 스테이지 카드는 패널 내부에 제목/진척이 있으므로 오버레이 제목은 숨김 */
 .cs-stage .cs-cap { display: none; }
 .cs-stage-inner { position: relative; z-index: 2; text-align: center; color: #fff; padding: 16px; width: 100%; }
@@ -1195,7 +1199,7 @@ html, body {
     radial-gradient(760px 640px at 10% 88%, rgba(155,140,255,.26), transparent 60%),
     linear-gradient(160deg, #3a2230, #34202a 55%, #2a1a22); }
 .pm-bg.has-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,10,20,.12), rgba(8,10,20,.45)); }
-.pm-blobs span { position: absolute; border-radius: 50%; filter: blur(2px); opacity: .5; animation: pm-float 11s ease-in-out infinite; }
+.pm-blobs span { position: absolute; border-radius: 50%; filter: blur(3px); opacity: .16; animation: pm-float 11s ease-in-out infinite; }
 .pm-blobs span:nth-child(1){ width:90px;height:90px;left:12%;top:24%; background:radial-gradient(circle at 30% 30%,#ffe08a,#ff9e3c); animation-delay:0s; }
 .pm-blobs span:nth-child(2){ width:64px;height:64px;left:82%;top:30%; background:radial-gradient(circle at 30% 30%,#ff9ecb,#ff5a8a); animation-delay:-3s; }
 .pm-blobs span:nth-child(3){ width:74px;height:74px;left:74%;top:74%; background:radial-gradient(circle at 30% 30%,#a8f0bf,#46c66a); animation-delay:-6s; }
@@ -1421,9 +1425,10 @@ html, body {
 .eddie-rig.rigged .er-pose { display: none; }
 
 /* 메인 배경: 전경(EDDIE/타이틀)이 떠오르게 배경을 뒤로 밀어내는 recede 처리 */
-.pm-bg.has-img { filter: saturate(.66) brightness(.66) contrast(.96); }
+/* 시네마틱 다크(콘솔 톤) — 상품 타이틀·보드연결 공통 */
+.pm-bg.has-img { filter: saturate(.58) brightness(.44) contrast(1); }
 .pm-bg.has-img::after { content: ''; position: absolute; inset: 0;
-  background: radial-gradient(120% 100% at 70% 60%, rgba(8,10,20,.2), rgba(6,8,16,.55)); }
+  background: radial-gradient(120% 95% at 50% 35%, rgba(8,10,22,.28), rgba(4,5,12,.82) 100%); }
 
 /* ===== 메인 완성도 패스(역제안 일괄) ===== */
 /* 버튼: 좌측 정렬 통일 + 등장(opacity) + hover/press 인터랙션 + 화살표 */
@@ -1523,15 +1528,17 @@ html, body {
 .btn.lg-go:active { transform: translateY(1px) scale(.98); }
 
 /* ===== 로그인: 6자리 접속 코드 ===== */
-.code-inputs { display: flex; gap: 10px; justify-content: space-between; margin: 4px 0 18px; }
+.code-inputs { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 4px 0 18px; }
+.code-inputs .code-box { flex: 1 1 0; min-width: 0; max-width: 64px; }
+.code-sep { flex: 0 0 auto; color: rgba(255,255,255,.32); font-weight: 900; font-size: 22px; line-height: 1; padding: 0 3px; user-select: none; }
 /* 아케이드 네온 코드 입장 칸 */
 /* 콘솔(PS) 코드 입력 — 미니멀 다크 타일, 화이트 포커스 */
 .code-box { width: 100%; aspect-ratio: 3 / 4; text-align: center; font-size: 28px; font-weight: 800;
   font-family: var(--mono); border-radius: 13px; border: 1.5px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.045); color: #fff; caret-color: #8ab6ff;
   transition: border-color .18s, box-shadow .18s, background .18s, transform .18s; }
-.code-box:focus { outline: none; border-color: rgba(150,185,255,.9); background: rgba(255,255,255,.08);
-  box-shadow: 0 0 0 3px rgba(120,170,255,.22), 0 0 22px rgba(120,170,255,.3); }
+.code-box:focus { outline: none; border-color: rgba(150,185,255,.95); background: rgba(255,255,255,.09);
+  box-shadow: 0 0 0 3px rgba(120,170,255,.22), 0 0 22px rgba(120,170,255,.32); transform: translateY(-2px) scale(1.04); }
 .code-box.filled { border-color: rgba(255,255,255,.55); color: #fff; background: rgba(255,255,255,.09);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
 .btn.lg-go { width: 100%; height: 52px !important; max-height: 52px !important; min-height: 0 !important;
@@ -1548,9 +1555,11 @@ html, body {
 .su-stage { position: relative; margin-top: 128px; }   /* EDDIE 머리 공간 */
 .su-eddie { position: absolute; left: 50%; top: -138px; transform: translateX(-50%); width: 210px; z-index: 0; pointer-events: auto; }
 .su-eddie .eddie-rig { max-width: 210px; }
-.su-speech { position: absolute; left: calc(50% + 96px); top: -116px; z-index: 3; background: #fff; color: #1a2440;
-  font-weight: 700; font-size: 13px; line-height: 1.35; padding: 9px 14px; border-radius: 14px 14px 14px 4px;
-  box-shadow: 0 8px 22px rgba(0,0,0,.3); max-width: 250px; }
+.su-speech { position: absolute; left: calc(50% + 96px); top: -116px; z-index: 3;
+  background: rgba(18,16,30,.72); color: #eaf0ff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.14);
+  font-weight: 600; font-size: 13px; line-height: 1.35; padding: 10px 15px; border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.4); max-width: 250px; }
 .su-speech.pop { animation: lg-pop .3s cubic-bezier(.2,.9,.2,1); }
 @media (max-width: 620px) { .su-speech { position: static; transform: none; max-width: none; margin: 0 auto 10px; border-radius: 14px; } }
 
