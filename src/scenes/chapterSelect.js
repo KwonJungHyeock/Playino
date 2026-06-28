@@ -24,6 +24,7 @@ export function showChapterSelect(root, { chapter, onRoom, onExit, onChapter, sp
         <button class="chsel-arw chsel-next" id="cs-next" aria-label="다음">▶</button>
       </div>
       <div class="chsel-foot">
+        <div class="cs-medals" id="cs-medals"></div>
         <div class="chsel-meta" id="cs-meta"></div>
         <button class="chsel-play" id="cs-play">▶ 입장하기</button>
         <div class="chsel-dots" id="cs-dots">${rooms.map((_, i) => `<i data-i="${i}"></i>`).join('')}</div>
@@ -55,6 +56,11 @@ export function showChapterSelect(root, { chapter, onRoom, onExit, onChapter, sp
   const metaEl = root.querySelector('#cs-meta');
   const playBtn = root.querySelector('#cs-play');
   const snd = root.querySelector('#snd-toggle'); snd.onclick = () => { snd.textContent = sfx.toggle() ? '🔇' : '🔊'; };
+
+  // 메달 현황(이 챕터에서 딴 메달 수) — 흰색 이탤릭 텍스트
+  const medalTot = rooms.length, medalGot = rooms.filter((r) => isRoomCleared(r.id)).length;
+  const medalsEl = root.querySelector('#cs-medals');
+  if (medalsEl) medalsEl.innerHTML = `🏅 <b>${medalGot}</b> <span>/ ${medalTot} CLEAR</span>`;
 
   let focus = Math.max(0, rooms.findIndex((r) => r.id === spawnAt));
   if (focus < 0) focus = Math.max(0, rooms.findIndex((r) => r.status === 'ready'));
@@ -105,15 +111,15 @@ export function showChapterSelect(root, { chapter, onRoom, onExit, onChapter, sp
 
 function cardHtml(r, i) {
   const cleared = isRoomCleared(r.id), soon = r.status !== 'ready';
-  const badge = cleared ? '🏅' : soon ? '🔒' : '';
-  const stTxt = cleared ? '🏅 클리어' : soon ? '🔒 준비중' : '▶ 플레이 가능';
+  const stTxt = cleared ? '🏅 클리어 · 다시 플레이' : soon ? '🔒 준비중' : '▶ 플레이 가능';
   const stCls = cleared ? 'done' : soon ? 'soon' : 'go';
-  // 콘솔 게임 포스터: 커버 위에 게임 정보(태그·제목·한줄설명·상태) 오버레이
-  return `<button class="cs-card${soon ? ' is-soon' : ''}" data-i="${i}" style="--i:${i}">
+  // 콘솔 게임 포스터: 커버 위에 게임 정보(태그·제목·한줄설명·상태) 오버레이.
+  //   클리어한 게임은 흰색 이탤릭 'CLEAR' 스탬프(비스듬) 표시.
+  return `<button class="cs-card${soon ? ' is-soon' : ''}${cleared ? ' is-clear' : ''}" data-i="${i}" style="--i:${i}">
     <div class="cs-cab">
       <div class="cs-screen" data-cover="${r.id}"></div>
-      ${badge ? `<span class="cs-badge">${badge}</span>` : ''}
-      ${soon ? '<div class="cs-lock"></div>' : ''}
+      ${cleared ? '<div class="cs-clear">CLEAR</div>' : ''}
+      ${soon ? '<span class="cs-badge">🔒</span><div class="cs-lock"></div>' : ''}
       <div class="cs-info">
         <div class="cs-tag">${r.icon} ${r.concept}</div>
         <div class="cs-title">${r.name}</div>

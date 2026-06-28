@@ -933,6 +933,23 @@ html, body {
 .cs-card.is-focus .cs-tag, .cs-card.is-focus .cs-sub, .cs-card.is-focus .cs-status { opacity: 1; transform: translateY(0); }
 .cs-card.is-focus .cs-sub { max-height: 56px; margin-bottom: 4px; }
 
+/* 클리어 스탬프 — 흰색 이탤릭(비스듬), 콘솔 게임 완료 도장 느낌 */
+.cs-clear { position: absolute; top: 15px; right: 14px; z-index: 4; pointer-events: none;
+  font-family: "Orbitron","Space Grotesk",sans-serif; font-style: italic; font-weight: 900;
+  font-size: clamp(15px, 1.7vw, 21px); letter-spacing: 2px; color: #fff; padding-bottom: 3px;
+  border-bottom: 2px solid rgba(255,255,255,.85);
+  text-shadow: 0 2px 14px rgba(0,0,0,.7), 0 0 20px rgba(255,255,255,.3);
+  transform: rotate(-7deg); filter: drop-shadow(0 4px 10px rgba(0,0,0,.5)); }
+.cs-card.is-clear .cs-cab { box-shadow: 0 18px 44px rgba(0,0,0,.46); }
+.cs-card.is-clear.is-focus .cs-cab { box-shadow: 0 30px 70px rgba(0,0,0,.6), 0 0 60px rgba(255,255,255,.18); }
+
+/* 챕터 메달 현황 — 흰색 이탤릭 */
+.chsel--poster .cs-medals { order: -1; font-family: "Space Grotesk", sans-serif; font-style: italic; font-weight: 800;
+  font-size: 13px; letter-spacing: .6px; color: rgba(255,255,255,.92); text-shadow: 0 2px 10px rgba(0,0,0,.55); }
+.chsel--poster .cs-medals b { color: #ffe08a; font-size: 16px; font-style: italic; }
+.chsel--poster .cs-medals span { opacity: .8; }
+.chsel:not(.chsel--poster) .cs-medals { display: none; }
+
 .chsel-arw { position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; width: 56px; height: 56px; border-radius: 50%;
   display: grid; place-items: center; font-size: 22px; color: #2c2440; cursor: pointer;
   background: rgba(255,255,255,.9); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.7); box-shadow: 0 8px 22px rgba(50,40,90,.28); transition: transform .12s, background .15s; }
@@ -1470,10 +1487,10 @@ html, body {
   display: grid; place-items: center; }
 .kit-img.has-img .kit-ph { display: none; }
 .kit-ph { font-size: clamp(44px, 6vw, 60px); opacity: .55; }
-.kit-name { position: absolute; left: 0; right: 0; bottom: 30px; z-index: 1; padding: 0 14px;
-  font-size: clamp(13px, 1.5vw, 15px); font-weight: 800; color: #fff; line-height: 1.3; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
-.kit-note { position: absolute; left: 0; right: 0; bottom: 12px; z-index: 1; padding: 0 14px;
-  font-size: 12px; color: #ccc4de; text-shadow: 0 1px 8px rgba(0,0,0,.7); }
+.kit-name { position: absolute; left: 0; right: 0; bottom: 34px; z-index: 1; padding: 0 13px;
+  font-size: clamp(11.5px, 1.25vw, 13.5px); font-weight: 800; color: #fff; line-height: 1.22; letter-spacing: -.01em; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
+.kit-note { position: absolute; left: 0; right: 0; bottom: 13px; z-index: 1; padding: 0 13px;
+  font-size: 11.5px; color: #ccc4de; text-shadow: 0 1px 8px rgba(0,0,0,.7); }
 
 .btn.kits-go { align-self: center !important; flex: 0 0 auto !important;
   width: auto !important; height: 56px !important; min-height: 0 !important; max-height: 56px !important; line-height: 1;
