@@ -1341,6 +1341,11 @@ html, body {
 
 /* ===== 로그인(플레이어 입장) — 미니게임천국 톤 ===== */
 .lg { position: relative; min-height: 100dvh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+/* 콘솔(PS) 무드 — 배경 어둡고 시네마틱하게, 들뜬 블롭 톤다운 */
+.lg .pm-bg.has-img { filter: saturate(.62) brightness(.4); }
+.lg .pm-blobs { opacity: .22; }
+.lg::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(120% 95% at 50% 32%, rgba(8,10,22,.32), rgba(3,4,11,.86) 100%); }
 .lg-inner { position: relative; z-index: 1; width: min(1080px, 92%); display: grid;
   grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; }
 @media (max-width: 800px) { .lg-inner { grid-template-columns: 1fr; gap: 20px; } .lg-hero { order: -1; } }
@@ -1367,8 +1372,10 @@ html, body {
 .lg-foot { margin-top: 16px; font-size: 11px; color: #5d6b8c; text-align: center; }
 
 .lg-hero { position: relative; display: grid; place-items: center; }
-/* 일러스트 뒤 컬러 글로우 효과 제거(콘솔 톤) — 접지 그림자만 유지 */
-.lg-hero::before { display: none; }
+/* 콘솔 히어로 리빌 — 에디 뒤 차가운 시네마틱 스포트라이트(은은) */
+.lg-hero::before { content: ''; position: absolute; z-index: 0; bottom: 2%; width: 76%; aspect-ratio: 1 / 1.15; border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 62%, rgba(120,170,255,.34), rgba(150,120,255,.12) 44%, transparent 70%);
+  filter: blur(12px); }
 .lg-hero::after { content: ''; position: absolute; bottom: 4%; width: 42%; height: 24px; border-radius: 50%;
   background: radial-gradient(ellipse, rgba(0,0,0,.4), transparent 70%); filter: blur(4px); animation: eddie-shadow 4.6s ease-in-out infinite; }
 .lg-hero-img, .lg-hero-fallback { position: relative; z-index: 1; transform-origin: 50% 70%; animation: eddie-live 4.6s ease-in-out infinite; }
@@ -1384,7 +1391,7 @@ html, body {
 /* ===== EDDIE 퍼펫 리깅 (부위 분리 → 움직임) ===== */
 .eddie-rig { position: relative; width: 100%; max-width: 520px; aspect-ratio: 1; margin: auto;
   z-index: 1; transform-origin: 50% 72%; animation: eddie-live 4.6s ease-in-out infinite; }
-.lg .eddie-rig { max-width: 440px; }
+.lg .eddie-rig { max-width: 500px; filter: drop-shadow(0 24px 40px rgba(0,0,0,.55)) drop-shadow(0 0 30px rgba(120,170,255,.22)); }
 .eddie-rig .er-part { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; }
 .eddie-rig.rigged .er-part { opacity: 1; }
 .eddie-rig.rigged .er-fallback { display: none; }
@@ -1516,14 +1523,15 @@ html, body {
 /* ===== 로그인: 6자리 접속 코드 ===== */
 .code-inputs { display: flex; gap: 10px; justify-content: space-between; margin: 4px 0 18px; }
 /* 아케이드 네온 코드 입장 칸 */
-.code-box { width: 100%; aspect-ratio: 3 / 4; text-align: center; font-size: 26px; font-weight: 900;
-  font-family: var(--mono); border-radius: 12px; border: 2px solid rgba(140,200,255,.3);
-  background: rgba(16,22,44,.5); color: #cfe6ff; caret-color: #6fb7ff;
-  transition: border-color .18s, box-shadow .18s, background .18s, color .18s, transform .18s; }
-.code-box:focus { outline: none; border-color: #6fb7ff; box-shadow: 0 0 0 3px rgba(111,183,255,.28), 0 0 16px rgba(111,183,255,.5); background: rgba(20,28,56,.7); }
-.code-box.filled { border-color: #5ad17a; color: #eafff1; background: rgba(20,46,34,.6);
-  box-shadow: 0 0 0 2px rgba(90,209,122,.35), 0 0 18px rgba(90,209,122,.55); text-shadow: 0 0 10px rgba(120,255,170,.8);
-  transform: translateY(-2px); }
+/* 콘솔(PS) 코드 입력 — 미니멀 다크 타일, 화이트 포커스 */
+.code-box { width: 100%; aspect-ratio: 3 / 4; text-align: center; font-size: 28px; font-weight: 800;
+  font-family: var(--mono); border-radius: 13px; border: 1.5px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.045); color: #fff; caret-color: #8ab6ff;
+  transition: border-color .18s, box-shadow .18s, background .18s, transform .18s; }
+.code-box:focus { outline: none; border-color: rgba(150,185,255,.9); background: rgba(255,255,255,.08);
+  box-shadow: 0 0 0 3px rgba(120,170,255,.22), 0 0 22px rgba(120,170,255,.3); }
+.code-box.filled { border-color: rgba(255,255,255,.55); color: #fff; background: rgba(255,255,255,.09);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
 .btn.lg-go { width: 100%; height: 52px !important; max-height: 52px !important; min-height: 0 !important;
   font-size: 17px; font-weight: 700; border: none; color: #2a1200;
   background: linear-gradient(92deg,#ff9e3c,#ff5a8a); box-shadow: 0 12px 30px rgba(255,90,120,.35); }

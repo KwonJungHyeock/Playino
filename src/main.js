@@ -5,7 +5,6 @@
 import { showPlatformIntro } from './scenes/platformIntro.js';
 import { showModeSelect } from './scenes/modeSelect.js';
 import { showProductMain } from './scenes/productMain.js';
-import { showKits } from './scenes/kits.js';
 import { showLogin } from './scenes/login.js';
 import { showSetup } from './scenes/setup.js';
 import { showBasics } from './scenes/basics.js';
@@ -32,9 +31,8 @@ let lastRoom = null;      // 챕터 복귀 시 나온 방 앞
 // 모든 전환은 nav 를 통과 → 기기/브라우저 뒤로·ESC·통일 버튼이 한 단계씩 되돌아감.
 function scenePlatformIntro() { showPlatformIntro(app(), { onDone: () => nav.push(sceneModeSelect) }); }     // ① 플랫폼 스튜디오 인트로(로고)
 function sceneModeSelect() { showModeSelect(app(), { onDone: () => nav.push(sceneProductMain) }); }   // ①-b 기기 모드 선택
-function sceneProductMain() { showProductMain(app(), { onDone: () => nav.push(sceneKits) }); }                // ② 상품 메인페이지
-function sceneKits() { showKits(app(), { onDone: () => nav.push(sceneLogin) }); }                              // ②-b 호환 키트 안내
-function sceneLogin() { showLogin(app(), { onDone: () => nav.push(sceneSetup) }); }
+function sceneProductMain() { showProductMain(app(), { onDone: () => nav.push(sceneLogin) }); }                // ② 상품 메인페이지 → 바로 입장
+function sceneLogin() { showLogin(app(), { onDone: () => nav.push(sceneSetup) }); }                            // (호환 키트 안내 페이지는 전용 신제품 출시로 제외)
 function sceneSetup() { showSetup(app(), { onDone: () => { progress.mark('setup'); nav.push(sceneHub); } }); }   // CH1 클리어
 
 function sceneHub() { showHubSelect(app(), { onEnter: (chId) => nav.push(() => enterChapter(chId)), spawnAt: lastChapter }); }
