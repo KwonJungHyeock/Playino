@@ -2451,8 +2451,12 @@ html, body { overflow-x: hidden; }
 
 /* ═══════ ch4 종합: 나만의 인터랙티브 쇼 ═══════ */
 .finaleshow { background: #0a0712; }
-.fs-stage { position: absolute; inset: 0; z-index: 0; background: radial-gradient(circle at 50% 38%, rgba(120,90,200,.25), #0a0712 70%); transition: background .25s; }
-.fs-scrim { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(120% 90% at 50% 30%, transparent 50%, rgba(4,3,10,.7)); }
+.fs-bg { position: absolute; inset: 0; z-index: 0; background: #0a0712 center/cover no-repeat; opacity: 0; filter: brightness(.5) saturate(.92); transition: opacity .5s; }
+.fs-bg.on { opacity: 1; }
+.fs-stage { position: absolute; inset: 0; z-index: 1; background: radial-gradient(circle at 50% 38%, rgba(120,90,200,.16), transparent 60%); transition: background .25s; }
+.fs-scrim { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(120% 95% at 50% 28%, transparent 52%, rgba(4,3,10,.78)); }
+.fs-eddie { position: absolute; left: 24px; bottom: 0; z-index: 2; height: clamp(170px, 28vh, 290px); width: auto; filter: drop-shadow(0 16px 32px rgba(0,0,0,.55)); pointer-events: none; }
+@media (max-width: 820px) { .fs-eddie { display: none; } }
 .fs-play { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: 20px; }
 .fs-play > div { width: min(560px, 94%); }
 

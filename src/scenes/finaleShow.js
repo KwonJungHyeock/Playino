@@ -25,8 +25,10 @@ function hsv2rgb(h, s, v) {
 export function showFinaleShow(root, { onExit } = {}) {
   root.innerHTML = `
     <div class="led scene-fade finaleshow">
+      <div class="fs-bg" id="fs-bg"></div>
       <div class="fs-stage" id="fs-stage"></div>
       <div class="fs-scrim"></div>
+      <img class="fs-eddie" id="fs-eddie" alt="" hidden />
       <div class="brand-badge"><span class="brand-dot"></span>Eduino&nbsp;<b>AI</b></div>
       <button class="snd-toggle" id="snd-toggle">${sfx.muted ? '🔇' : '🔊'}</button>
       <button class="bx-exit" id="fs-exit">✕ 전시관으로</button>
@@ -64,6 +66,10 @@ export function showFinaleShow(root, { onExit } = {}) {
   const elHit = root.querySelector('#fs-hit'), elTot = root.querySelector('#fs-tot'), elScore = root.querySelector('#fs-score'), elAct = root.querySelector('#fs-act'), elHlbl = root.querySelector('#fs-hlbl');
   const snd = root.querySelector('#snd-toggle'); snd.onclick = () => { snd.textContent = sfx.toggle() ? '🔇' : '🔊'; };
   root.querySelector('#fs-exit').onclick = () => { cleanup(); onExit?.(); };
+
+  // 무대 배경 이미지(있으면 풀블리드) + 디렉터 에디(있으면 모서리 히어로) — 없으면 CSS 폴백
+  const bgp = new Image(); bgp.onload = () => { const b = root.querySelector('#fs-bg'); if (b) { b.style.backgroundImage = `url(${bgp.src})`; b.classList.add('on'); } }; bgp.src = '/brand/stage-final-bg.webp';
+  const edp = new Image(); let edStep = 0; edp.onerror = () => { if (edStep++ === 0) edp.src = '/brand/eddie/eddie-hero.webp'; }; edp.onload = () => { const e = root.querySelector('#fs-eddie'); if (e) { e.src = edp.src; e.hidden = false; } }; edp.src = '/brand/eddie-director.webp';
 
   // ── 공용 입력/출력 ──
   let sensorKnob = null, senseTimer = null, btnPollTimer = null;
@@ -158,7 +164,7 @@ export function showFinaleShow(root, { onExit } = {}) {
       if (board.connected && sensorKnob != null) { range.value = Math.round(sensorKnob * 1000); range.disabled = true; range.style.opacity = '.45'; }
       knob = lerp(knob, knobTarget(), 0.3);
       const hue = knob * HUE_MAX, [r, g, b] = hsv2rgb(hue, 1, 1);
-      curBox.style.background = `rgb(${r},${g},${b})`; stage.style.background = `radial-gradient(circle at 50% 40%, rgba(${r},${g},${b},.5), #0a0712 70%)`; neo(r, g, b);
+      curBox.style.background = `rgb(${r},${g},${b})`; stage.style.background = `radial-gradient(circle at 50% 40%, rgba(${r},${g},${b},.5), rgba(10,7,18,0) 72%)`; neo(r, g, b);
       const near = hueDiff(hue, target) <= TOL;
       if (near) hold += ms; else hold = Math.max(0, hold - ms * 0.8);
       holdFill.style.width = clamp(hold / HOLD * 100, 0, 100) + '%';
