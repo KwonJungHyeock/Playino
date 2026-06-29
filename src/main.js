@@ -18,6 +18,7 @@ import { showRelay } from './scenes/relay.js';
 import { showEscapeRoom } from './scenes/escapeRoom.js';
 import { showLampGame } from './scenes/lampGame.js';
 import { showBombGame } from './scenes/bombGame.js';
+import { showFinaleShow } from './scenes/finaleShow.js';
 import { progress } from './app/progress.js';
 import { getRoom } from './content/curriculum.js';
 import { bgm } from './app/bgm.js';
@@ -59,6 +60,7 @@ function enterRoom(roomId) {
     case 'relay': showRelay(app(), { onExit: back }); break;
     case 'lamp': showLampGame(app(), { onExit: back }); break;
     case 'bomb': showBombGame(app(), { onExit: back }); break;
+    case 'final': showFinaleShow(app(), { onExit: back }); break;
     case 'setup': showSetup(app(), { onDone: () => { progress.mark('setup'); back(); } }); break;
     default:
       // 미니게임 부스(rgb·buzzer·keypad·seg …)은 탑다운 환경 → 장치 작동 → 미션
