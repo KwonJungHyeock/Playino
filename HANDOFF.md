@@ -245,3 +245,5 @@ Playino/
 ---
 
 *문의/맥락: 이 문서는 커밋 `d810d91` 기준. 최신 상태는 `git log`와 `content/curriculum.js`를 확인하세요.*
+
+> 배포 파이프라인: `main` → Vercel Production 자동 배포 (검증 f71877c)
